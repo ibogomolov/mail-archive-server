@@ -4,7 +4,7 @@
 
 	<body>
 		<form method="POST" action="/content/mailarchiveserver/import" enctype="multipart/form-data" >
-		    <input type="file" name="myfile" /> <br> 
+		    <input type="file" name="mboxfile" /> <br> 
 		    <input type="submit" value="upload" />
 		</form>
 
