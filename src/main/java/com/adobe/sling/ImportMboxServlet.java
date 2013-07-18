@@ -156,7 +156,7 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 				thread = makeJcrPathFriendly(thread);
 				String path = ROOT_PATH_JCR+"/"+ARCHIVE_NODE+"/"+domain+"/"+project+"/"+list+"/"+thread;
 				Resource parent = resolver.getResource(path);
-				
+
 				if (parent == null) {
 					Queue<String> queue = new LinkedList<String>();
 					queue.add(ARCHIVE_NODE);
@@ -176,10 +176,10 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 						checkParent = resolver.getResource(checkPath);
 					}
 				} 
-				
+
 				parent = resolver.getResource(path);
 				if (parent == null) throw new RuntimeException("Parent resource cannot be null.");
-				
+
 				// TODO overwrite id exists (use case: several imports)
 				Resource r = resolver.create(parent, msgId, msgMap);
 				resolver.commit();
@@ -194,7 +194,7 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 		}
 
 	}
-	
+
 	private String makeJcrPathFriendly(String s) {
 		return s.trim().replaceAll("[\\s\\.-]", "_").replaceAll("\\W", "");
 	}

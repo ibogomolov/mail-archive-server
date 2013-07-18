@@ -1,0 +1,24 @@
+<html>
+	<head>
+		<title><%= currentNode["Subject"] %></title>
+	</head>
+
+	<body>
+		<div class="header">
+			From 
+			<% 
+				var from = currentNode["From"]
+				out.print(from.match(/\w+ \w+/));
+			%> 
+			| <%= currentNode["Subject"] %> 
+			| <%= currentNode["Date"] %>
+		</div>
+		<div class="body">
+			<%  
+				var lines = currentNode.Body.split('\n');
+				for (i in lines) 
+					out.print(lines[i] + "<br/>");
+			%>
+		</div>
+	</body>
+</html>
