@@ -1,24 +1,53 @@
 <html>
-	<head>
-		<title><%= currentNode["Subject"] %></title>
-	</head>
 
-	<body>
-		<div class="header">
-			From 
-			<% 
-				var from = currentNode["From"]
-				out.print(from.match(/\w+ \w+/));
-			%> 
-			| <%= currentNode["Subject"] %> 
-			| <%= currentNode["Date"] %>
-		</div>
-		<div class="body">
-			<%  
-				var lines = currentNode.Body.split('\n');
-				for (i in lines) 
-					out.print(lines[i] + "<br/>");
-			%>
-		</div>
-	</body>
+<head>
+<link rel="stylesheet" href="/apps/mailarchiveserver/styles.css"/>
+<title>
+	From 
+	<% 
+		var from = currentNode.From
+		out.print(from.match(/\w+ \w+/))
+	%>, 
+	<%
+		out.print(currentNode.Subject)
+	%> 
+</title>
+</head>
+
+<body>
+<div class="message">
+	<div class="header">
+		<span class="from">	
+		From 
+		<% 
+			var from = currentNode.From
+			out.print(from.match(/\w+ \w+/))
+		%> 
+		</span>
+		<span class="date">
+		<%
+			var d = new Date(currentNode.Date)
+			var now = Date.now()
+			if (now - d.value < 79200000)
+				out.print(d.getHours()+":"+d.getMinutes())
+			else {
+				var m_names = new Array("Jan", "Feb", "Mar", 
+					"Apr", "May", "Jun", "Jul", "Aug", "Sep", 
+					"Oct", "Nov", "Dec")
+				out.print(m_names[d.getMonth()]+" "+d.getDay())
+			}
+		%>
+		</span>
+		<br/>
+		<%= currentNode["Subject"] %> 
+	</div>
+	<div class="body">
+	<%  
+		var lines = currentNode.Body.split('\n');
+		for (i in lines) 
+			out.print(lines[i] + "<br/>");
+	%>
+	</div>
+</div>
+</body>
 </html>

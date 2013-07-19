@@ -38,6 +38,8 @@ import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestParameter;
 import org.apache.sling.api.resource.LoginException;
+import org.apache.sling.api.resource.ModifiableValueMap;
+import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
@@ -47,30 +49,63 @@ import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("serial")
 @SlingServlet(
-		paths = "/content/mailarchiveserver/import",
+		resourceTypes = "mailarchiveserver/import",
 		methods = "POST")
 public class ImportMboxServlet extends SlingAllMethodsServlet {
 
-	public static final String TEMP_PATH = "temp";
-	public static final String FORM_INPUT_ATTRIB_NAME = "mboxfile";
+	public static final String FS_TEMP_PATH = "temp";
+	public static final String IMPORT_FILE_ATTRIB_NAME = "mboxfile";
 	public static final CharsetEncoder ENCODER = Charset.forName("UTF-8").newEncoder();
 
-	private static final String ROOT_PATH_JCR = "/content/mailarchiveserver";
-	private static final String ARCHIVE_NODE = "archive";
+	private static final String ROOT_NODE_NAME = "mailarchiveserver";
+	private static final String ROOT_JCR_PATH = "/content/"+ROOT_NODE_NAME;
+	private static final String ARCHIVE_NODE_NAME = "archive";
+	private static final String ARCHIVE_PATH = ROOT_JCR_PATH+"/"+ARCHIVE_NODE_NAME;
+	private static final String IMPORT_NODE_NAME = "import";
 	@Reference
 	private ResourceResolverFactory resourceResolverFactory;
+	private ResourceResolver resolver;
 	private static final Logger logger = LoggerFactory.getLogger(ImportMboxServlet.class);
 
 
+	private ResourceResolver resolverInit() {
+		try {
+			return resourceResolverFactory.getAdministrativeResourceResolver(null);
+		} catch (LoginException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
 	@Override
 	public void init() throws ServletException {
-		File tempDir = new File(TEMP_PATH);
+		File tempDir = new File(FS_TEMP_PATH);
 		if (tempDir.exists()) {
 			for (String filePath : tempDir.list())
-				new File(TEMP_PATH,filePath).delete();
+				new File(FS_TEMP_PATH,filePath).delete();
 		} else {
 			tempDir.mkdir();
 		}
+
+		resolver = resolverInit();
+
+		/*
+		// set ROOT_NODE's sling:resourceType
+		Map<String, Object> props = new HashMap<String, Object>();
+		props.put("sling:resourceType", SlingResourceType.ROOT);
+		assertResourceWithLogging(resolver.getResource("/content"), ROOT_NODE_NAME, props);
+
+		// set ARCHIVE_NODE's sling:resourceType
+		props.clear();
+		props.put("sling:resourceType", SlingResourceType.ARCHIVE);
+		assertResourceWithLogging(resolver.getResource(ROOT_JCR_PATH), ARCHIVE_NODE_NAME, props);
+
+		// set IMPORT_NODE's sling:resourceType
+		props.clear();
+		props.put("sling:resourceType", SlingResourceType.IMPORTT);
+		assertResourceWithLogging(resolver.getResource(ROOT_JCR_PATH), IMPORT_NODE_NAME, props);
+		 */
+
 		super.init();
 	}
 
@@ -79,13 +114,13 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 			throws ServletException, IOException {
 
 		try {
-			RequestParameter param = request.getRequestParameter(FORM_INPUT_ATTRIB_NAME);
+			RequestParameter param = request.getRequestParameter(IMPORT_FILE_ATTRIB_NAME);
 			logger.info("Processing attachment: " + param.toString());
 
 			// put attachment to temp file
 			// TODO change this
 			String fileName = param.getFileName();
-			File file = new File(TEMP_PATH,fileName);
+			File file = new File(FS_TEMP_PATH,fileName);
 			FileOutputStream fout = new FileOutputStream(file);
 			FileChannel fileChannel = fout.getChannel();
 			ByteBuffer buf2 = ENCODER.encode(CharBuffer.wrap(param.getString()));
@@ -93,7 +128,6 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 			fileChannel.close();
 			fout.close();
 
-			ResourceResolver resolver = resourceResolverFactory.getAdministrativeResourceResolver(null);
 			MessageBuilder builder = new DefaultMessageBuilder();
 			Map<String, Object> msgMap = new HashMap<String, Object>();
 			SimpleDateFormat sdf = new SimpleDateFormat();
@@ -118,6 +152,7 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 				}
 
 				msgMap.clear();
+				msgMap.put(SlingResourceType.KEY_NAME, SlingResourceType.MESSAGE);
 				msgMap.put("Body", msgBody);
 
 				Header hdr = msg.getHeader();
@@ -153,50 +188,102 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 					}
 					done = true;
 				}
+				String threadName = thread;
 				thread = makeJcrPathFriendly(thread);
-				String path = ROOT_PATH_JCR+"/"+ARCHIVE_NODE+"/"+domain+"/"+project+"/"+list+"/"+thread;
+				String path = ARCHIVE_PATH+"/"+domain+"/"+project+"/"+list+"/"+thread;
 				Resource parent = resolver.getResource(path);
 
 				if (parent == null) {
-					Queue<String> queue = new LinkedList<String>();
-					queue.add(ARCHIVE_NODE);
-					queue.add(domain);
-					queue.add(project);
-					queue.add(list);
-					queue.add(thread);
-					String checkPath = ROOT_PATH_JCR;
-					Resource checkParent = resolver.getResource(checkPath);
-					while (queue.peek() != null) {
-						String name = queue.poll();
-						checkPath += "/"+name;
-						if (resolver.getResource(checkPath) == null) {
-							Resource r = resolver.create(checkParent, name, null);
-							logger.info(String.format("Resource at %s created.", r.getPath()));
-						}
-						checkParent = resolver.getResource(checkPath);
+					Queue<String> nodeNames = new LinkedList<String>();
+					nodeNames.add(domain);
+					nodeNames.add(project);
+					nodeNames.add(list);
+					nodeNames.add(thread);
+
+					Queue<Map<String, Object>> nodeProps = new LinkedList<Map<String, Object>>();
+					
+					//domain
+					Map<String, Object> props = new HashMap<String, Object>();
+					props.put(SlingResourceType.KEY_NAME, SlingResourceType.DOMAIN);
+					props.put("name", domain);
+					nodeProps.add(props);
+					
+					//project
+					props = new HashMap<String, Object>();
+					props.put(SlingResourceType.KEY_NAME, SlingResourceType.PROJECT);
+					props.put("name", project);
+					nodeProps.add(props);
+					
+					//list
+					props = new HashMap<String, Object>();
+					props.put(SlingResourceType.KEY_NAME, SlingResourceType.LIST);
+					props.put("name", list);
+					nodeProps.add(props);
+					
+					//thread
+					props = new HashMap<String, Object>();
+					props.put(SlingResourceType.KEY_NAME, SlingResourceType.THREAD);
+					props.put("name", threadName);
+					nodeProps.add(props);
+
+					parent = resolver.getResource(ARCHIVE_PATH);
+					while (nodeNames.peek() != null) {
+						String name = nodeNames.poll();
+						assertResourceWithLogging(parent, name, nodeProps.poll());
+						parent = resolver.getResource(parent.getPath()+"/"+name);
 					}
 				} 
 
-				parent = resolver.getResource(path);
 				if (parent == null) throw new RuntimeException("Parent resource cannot be null.");
 
-				// TODO overwrite id exists (use case: several imports)
-				Resource r = resolver.create(parent, msgId, msgMap);
-				resolver.commit();
-				logger.info(String.format("Resource at %s created.", r.getPath()));
+				assertResourceWithLogging(parent, msgId, msgMap);
 			}
 
 
 		} catch (MimeException e) {
 			e.printStackTrace();
-		} catch (LoginException e) {
-			e.printStackTrace();
 		}
 
 	}
 
+	void assertResourceWithLogging(Resource parent, String name, Map<String, Object> newProps) {
+		try {
+			String checkPath = parent.getPath()+"/"+name;
+			final Resource checkResource = resolver.getResource(checkPath);
+			if (checkResource == null) {
+				final Resource newResource = resolver.create(parent, name, newProps);
+				resolver.commit();
+				if (newProps == null) {
+					logger.info(String.format("Resource created at %s without parameters.", newResource.getPath()));
+				} else {
+					logger.info(String.format("Resource created at %s with resource type %s.", newResource.getPath(), newProps.get(SlingResourceType.KEY_NAME).toString()));
+				}
+			} else if (newProps != null && !newProps.isEmpty()) {
+				final ModifiableValueMap props = checkResource.adaptTo(ModifiableValueMap.class);
+				props.putAll(newProps);
+				resolver.commit();
+				logger.info(String.format("Resource updated at %s with resource type %s.", checkResource.getPath(), props.get(SlingResourceType.KEY_NAME).toString()));
+			}
+		} catch (PersistenceException e) {
+			e.printStackTrace();
+		}
+	}
+
 	private String makeJcrPathFriendly(String s) {
 		return s.trim().replaceAll("[\\s\\.-]", "_").replaceAll("\\W", "");
+	}
+
+	public static class SlingResourceType {
+		public static final String KEY_NAME = "sling:resourceType";
+		public static final String ROOT = "mailarchiveserver/root";
+		public static final String IMPORTT = "mailarchiveserver/import";
+		public static final String ARCHIVE = "mailarchiveserver/archive";
+
+		public static final String DOMAIN = "mailarchiveserver/domain";
+		public static final String PROJECT = "mailarchiveserver/project";
+		public static final String LIST = "mailarchiveserver/list";
+		public static final String THREAD = "mailarchiveserver/thread";
+		public static final String MESSAGE = "mailarchiveserver/message";
 	}
 
 }

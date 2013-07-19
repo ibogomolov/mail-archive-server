@@ -1,0 +1,30 @@
+body {
+  font-family: Georgia, Verdana, Arial, Sans-Serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.message {
+  margin-bottom: 1em;
+  border: solid #CCCCCC 1px;
+  padding: 1em;
+}
+
+.header {
+  font-size:120%;
+  margin-bottom: 2em;
+  padding-bottom: 0.5em;
+  border-bottom: solid thin blue;
+  text-align: justify;
+}
+
+.from, .date {
+  font-weight: bold;
+}
+
+.date {
+  float: right;
+}
