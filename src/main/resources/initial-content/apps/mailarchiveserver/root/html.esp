@@ -1,0 +1,26 @@
+<html>
+
+<head>
+<link rel="stylesheet" href="/apps/mailarchiveserver/styles.css"/>
+<title>
+
+Mail Archive Server
+
+</title>
+</head>
+
+<body>
+	<div>
+		<h1>Welcome to the Mail Archive Server!</h1>
+		<br>
+	</div>
+
+	<dl>
+	  <dt>Choose what you want to do:</dt> <br>
+	  <dd><a href="<%= currentNode.getPath() %>/import.mbox.html">Import mbox file to the archive</a></dd> <br>
+	  <dd><a href="<%= currentNode.getPath() %>/archive.html">Browse archive</a></dd> <br>
+	</dl>
+
+</body>
+
+</html>

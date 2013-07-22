@@ -2,7 +2,7 @@ body {
   font-family: Georgia, Verdana, Arial, Sans-Serif;
 }
 
-a {
+.nolinkstyle {
   color: inherit;
   text-decoration: none;
 }
@@ -27,4 +27,9 @@ a {
 
 .date {
   float: right;
+}
+
+.mailinglists {
+  width:75%;
+  margin:0 auto;
 }

@@ -1,0 +1,14 @@
+<html>
+
+<head>
+<link rel="stylesheet" href="/apps/mailarchiveserver/styles.css"/>
+<title><%= currentNode["jcr:text"] %></title>
+</head>
+
+<body>
+	<% sling.include(currentNode.getPath(), "forceResourceType=mailarchiveserver,replaceSelectors=navbar"); %>
+
+
+</body>
+
+</html>

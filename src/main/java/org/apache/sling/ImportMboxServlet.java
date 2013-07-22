@@ -1,4 +1,4 @@
-package com.adobe.sling;
+package org.apache.sling;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -10,12 +10,12 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 import java.util.TimeZone;
 
@@ -66,6 +66,7 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 	private ResourceResolverFactory resourceResolverFactory;
 	private ResourceResolver resolver;
 	private static final Logger logger = LoggerFactory.getLogger(ImportMboxServlet.class);
+	private static final String TEXT_ATTRIBUTE = "jcr:text";
 
 
 	private ResourceResolver resolverInit() {
@@ -118,7 +119,6 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 			logger.info("Processing attachment: " + param.toString());
 
 			// put attachment to temp file
-			// TODO change this
 			String fileName = param.getFileName();
 			File file = new File(FS_TEMP_PATH,fileName);
 			FileOutputStream fout = new FileOutputStream(file);
@@ -138,7 +138,7 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 				String msgBody = "";
 
 				Body body = msg.getBody();
-				//TODO ! multipart types of body
+				//TODO add multipart types of body
 				if (body instanceof SingleBody) {
 					if (body instanceof TextBody) {
 						TextBody tbody = (TextBody) body;
@@ -152,7 +152,7 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 				}
 
 				msgMap.clear();
-				msgMap.put(SlingResourceType.KEY_NAME, SlingResourceType.MESSAGE);
+				msgMap.put(SlingResourceType.KEY, SlingResourceType.MESSAGE);
 				msgMap.put("Body", msgBody);
 
 				Header hdr = msg.getHeader();
@@ -190,46 +190,53 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 				}
 				String threadName = thread;
 				thread = makeJcrPathFriendly(thread);
+				
 				String path = ARCHIVE_PATH+"/"+domain+"/"+project+"/"+list+"/"+thread;
 				Resource parent = resolver.getResource(path);
 
 				if (parent == null) {
-					Queue<String> nodeNames = new LinkedList<String>();
+					int cnt = 0;
+					do {
+						cnt++;
+						path = path.substring(0, path.lastIndexOf("/"));
+						parent = resolver.getResource(path);
+					} while (parent == null);
+					
+					List<String> nodeNames = new ArrayList<String>();
 					nodeNames.add(domain);
 					nodeNames.add(project);
 					nodeNames.add(list);
 					nodeNames.add(thread);
 
-					Queue<Map<String, Object>> nodeProps = new LinkedList<Map<String, Object>>();
+					List<Map<String, Object>> nodeProps = new ArrayList<Map<String, Object>>();
 					
 					//domain
 					Map<String, Object> props = new HashMap<String, Object>();
-					props.put(SlingResourceType.KEY_NAME, SlingResourceType.DOMAIN);
-					props.put("name", domain);
+					props.put(SlingResourceType.KEY, SlingResourceType.DOMAIN);
+					props.put(TEXT_ATTRIBUTE, domain);
 					nodeProps.add(props);
 					
 					//project
 					props = new HashMap<String, Object>();
-					props.put(SlingResourceType.KEY_NAME, SlingResourceType.PROJECT);
-					props.put("name", project);
+					props.put(SlingResourceType.KEY, SlingResourceType.PROJECT);
+					props.put(TEXT_ATTRIBUTE, project);
 					nodeProps.add(props);
 					
 					//list
 					props = new HashMap<String, Object>();
-					props.put(SlingResourceType.KEY_NAME, SlingResourceType.LIST);
-					props.put("name", list);
+					props.put(SlingResourceType.KEY, SlingResourceType.LIST);
+					props.put(TEXT_ATTRIBUTE, list);
 					nodeProps.add(props);
 					
 					//thread
 					props = new HashMap<String, Object>();
-					props.put(SlingResourceType.KEY_NAME, SlingResourceType.THREAD);
-					props.put("name", threadName);
+					props.put(SlingResourceType.KEY, SlingResourceType.THREAD);
+					props.put(TEXT_ATTRIBUTE, threadName);
 					nodeProps.add(props);
 
-					parent = resolver.getResource(ARCHIVE_PATH);
-					while (nodeNames.peek() != null) {
-						String name = nodeNames.poll();
-						assertResourceWithLogging(parent, name, nodeProps.poll());
+					for (int i = nodeNames.size()-cnt; i < nodeNames.size(); i++) {
+						String name = nodeNames.get(i);
+						assertResourceWithLogging(parent, name, nodeProps.get(i));
 						parent = resolver.getResource(parent.getPath()+"/"+name);
 					}
 				} 
@@ -238,7 +245,6 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 
 				assertResourceWithLogging(parent, msgId, msgMap);
 			}
-
 
 		} catch (MimeException e) {
 			e.printStackTrace();
@@ -256,13 +262,13 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 				if (newProps == null) {
 					logger.info(String.format("Resource created at %s without parameters.", newResource.getPath()));
 				} else {
-					logger.info(String.format("Resource created at %s with resource type %s.", newResource.getPath(), newProps.get(SlingResourceType.KEY_NAME).toString()));
+					logger.info(String.format("Resource created at %s with resource type %s.", newResource.getPath(), newProps.get(SlingResourceType.KEY).toString()));
 				}
 			} else if (newProps != null && !newProps.isEmpty()) {
 				final ModifiableValueMap props = checkResource.adaptTo(ModifiableValueMap.class);
 				props.putAll(newProps);
 				resolver.commit();
-				logger.info(String.format("Resource updated at %s with resource type %s.", checkResource.getPath(), props.get(SlingResourceType.KEY_NAME).toString()));
+				logger.info(String.format("Resource updated at %s with resource type %s.", checkResource.getPath(), props.get(SlingResourceType.KEY).toString()));
 			}
 		} catch (PersistenceException e) {
 			e.printStackTrace();
@@ -274,7 +280,7 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 	}
 
 	public static class SlingResourceType {
-		public static final String KEY_NAME = "sling:resourceType";
+		public static final String KEY = "sling:resourceType";
 		public static final String ROOT = "mailarchiveserver/root";
 		public static final String IMPORTT = "mailarchiveserver/import";
 		public static final String ARCHIVE = "mailarchiveserver/archive";

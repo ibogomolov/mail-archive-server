@@ -1,0 +1,6 @@
+<div>
+Home > Archive > List > Thread
+<%
+var stack = [];
+%>
+</div>

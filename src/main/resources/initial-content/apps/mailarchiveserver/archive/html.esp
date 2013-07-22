@@ -1,0 +1,59 @@
+<html>
+
+<head>
+<link rel="stylesheet" href="/apps/mailarchiveserver/styles.css"/>
+<title>Mail archive</title>
+</head>
+
+<body>
+
+<div class="mailinglists">
+
+<table>
+	<%
+	var cnt = 0;
+	var archiveChildren = currentNode.getChildren();
+	for(i in archiveChildren) {
+		var domain = archiveChildren[i];
+		var domainChildren = domain.getChildren();
+		for(j in domainChildren) {
+			var project = domainChildren[j];
+
+			if (cnt % 3 == 0)
+				out.print("<tr>");
+	%>
+
+	<td>
+	<div class="project">
+		<h4><%= project["jcr:text"] %>.<%= domain["jcr:text"] %>  lists:</h4>
+		<ul>
+		<%
+			var projectChildren = project.getChildren();
+			for(k in projectChildren) {
+				var list = projectChildren[k];
+		%>
+			<li><a href="<%= list.getPath() %>.html">  <%= list["jcr:text"] %></a></li>
+	<% 
+			}
+	%>
+		</ul>
+	</div>
+	</td>
+
+	<% 
+			cnt++;
+			if (cnt % 3 == 2)
+				out.print("</tr>");
+		}
+	} 
+	if (cnt % 3 != 2)
+		out.print("</tr>");
+	%>
+
+</table>
+</div>
+
+
+</body>
+
+</html>

@@ -1,4 +1,4 @@
-package com.adobe.sling;
+package org.apache.sling;
 
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 @SlingServlet(
 		 paths = "/content/mailarchiveserver/init"
 		)
-// FIXME how to do initialization correctly? 
 public class InitServlet extends SlingAllMethodsServlet {
 
 	public static final String FS_TEMP_PATH = "temp";
