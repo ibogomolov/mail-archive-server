@@ -2,6 +2,7 @@
 
 <head>
 <link rel="stylesheet" href="/apps/mailarchiveserver/styles.css"/>
+<script type="text/javascript" src="/apps/mailarchiveserver/util.js"></script>
 <title>
 	From 
 	<% 
@@ -15,6 +16,8 @@
 </head>
 
 <body>
+<% sling.include(currentNode.getPath(), "forceResourceType=mailarchiveserver,replaceSelectors=navbar"); %>
+
 <div class="message">
 	<div class="header">
 		<span class="from">	
@@ -26,7 +29,7 @@
 		</span>
 		<span class="date">
 		<%
-			var d = new Date(currentNode.Date)
+			var d = new Date(currentNode["Date"])
 			var now = Date.now()
 			if (now - d.value < 79200000)
 				out.print(d.getHours()+":"+d.getMinutes())
@@ -34,19 +37,26 @@
 				var m_names = new Array("Jan", "Feb", "Mar", 
 					"Apr", "May", "Jun", "Jul", "Aug", "Sep", 
 					"Oct", "Nov", "Dec")
-				out.print(m_names[d.getMonth()]+" "+d.getDay())
+				out.print(m_names[d.getMonth()]+" "+d.getDate())
 			}
 		%>
 		</span>
 		<br/>
-		<%= currentNode["Subject"] %> 
+		<a class="nolinkstyle" href="<%= currentNode.getParent().getPath() %>.html"><%= currentNode["Subject"] %></a>
 	</div>
 	<div class="body">
-	<%  
-		var lines = currentNode.Body.split('\n');
-		for (i in lines) 
-			out.print(lines[i] + "<br/>");
-	%>
+		<%  
+			var lines = currentNode["Body"].split('\n');
+			for (i in lines) {
+				var line = lines[i];
+		%>
+		<script type="text/javascript">
+			document.write(toHtmlString("<%= new String(line) %>"));
+		</script>
+		<%
+				out.print("<br>");
+			}
+		%>
 	</div>
 </div>
 </body>

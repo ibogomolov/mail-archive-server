@@ -7,7 +7,9 @@
 
 <body>
 
-<div class="mailinglists">
+<% sling.include(currentNode.getPath(), "forceResourceType=mailarchiveserver,replaceSelectors=navbar"); %>
+
+<div class="content">
 
 <table>
 	<%

@@ -1,14 +1,42 @@
 <html>
-
 <head>
 <link rel="stylesheet" href="/apps/mailarchiveserver/styles.css"/>
 <title><%= currentNode["jcr:text"] %></title>
 </head>
 
 <body>
-	<% sling.include(currentNode.getPath(), "forceResourceType=mailarchiveserver,replaceSelectors=navbar"); %>
+<% sling.include(currentNode.getPath(), "forceResourceType=mailarchiveserver,replaceSelectors=navbar"); %>
+
+<%
+var email = [];
+
+var threads = currentNode.getChildren();
+for (i in threads) {
+	var thread = threads[i];
+	var messages = thread.getChildren();
+	for (j in messages) {
+		var message = messages[j];
+		var obj = new Object();
+		obj.path = message.getPath();
+		obj.date = new Date(message["Date"]);
+		email.push(obj);
+	}
+}
+
+email.sort(comparator);
+while (email.length > 0) {
+	 sling.include(email.pop().path, "replaceSelectors=preview"); 
+}
 
 
+function comparator(a, b) {
+	if (a.date > b.date)
+		return 1;
+	else if (a.date < b.date)
+		return -1;
+	else
+		return 0;
+}
+%>
 </body>
-
 </html>

@@ -15,7 +15,7 @@ body {
 
 .header {
   font-size:120%;
-  margin-bottom: 2em;
+  margin-bottom: 1em;
   padding-bottom: 0.5em;
   border-bottom: solid thin blue;
   text-align: justify;
@@ -29,7 +29,16 @@ body {
   float: right;
 }
 
-.mailinglists {
+.content {
   width:75%;
-  margin:0 auto;
+  margin:1em auto;
+}
+
+.navbar {
+  margin: 1em;
+}
+
+.bodypreview {
+  margin-top: 1em;
+  font-size:80%;
 }

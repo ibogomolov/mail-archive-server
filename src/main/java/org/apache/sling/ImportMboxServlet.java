@@ -9,15 +9,12 @@ import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TimeZone;
 
 import javax.servlet.ServletException;
 
@@ -25,9 +22,11 @@ import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.james.mime4j.MimeException;
 import org.apache.james.mime4j.dom.Body;
+import org.apache.james.mime4j.dom.Entity;
 import org.apache.james.mime4j.dom.Header;
 import org.apache.james.mime4j.dom.Message;
 import org.apache.james.mime4j.dom.MessageBuilder;
+import org.apache.james.mime4j.dom.Multipart;
 import org.apache.james.mime4j.dom.SingleBody;
 import org.apache.james.mime4j.dom.TextBody;
 import org.apache.james.mime4j.mboxiterator.CharBufferWrapper;
@@ -129,16 +128,11 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 			fout.close();
 
 			MessageBuilder builder = new DefaultMessageBuilder();
-			Map<String, Object> msgMap = new HashMap<String, Object>();
-			SimpleDateFormat sdf = new SimpleDateFormat();
-			sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
-
 			for (CharBufferWrapper messageCharBuffer : MboxIterator.fromFile(file).charset(ENCODER.charset()).build()) {
 				Message msg = builder.parseMessage(messageCharBuffer.asInputStream(ENCODER.charset()));
 				String msgBody = "";
 
 				Body body = msg.getBody();
-				//TODO add multipart types of body
 				if (body instanceof SingleBody) {
 					if (body instanceof TextBody) {
 						TextBody tbody = (TextBody) body;
@@ -149,9 +143,22 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 						}   
 						msgBody = msgBody.substring(0, msgBody.length()-1);
 					}
+				} else if (body instanceof Multipart) {
+					Multipart mpart = (Multipart) body;
+					Entity bodyPart = mpart.getBodyParts().get(0);
+					body = bodyPart.getBody();
+					if (body instanceof TextBody) {
+						TextBody tbody = (TextBody) bodyPart.getBody();
+						BufferedReader br = new BufferedReader(tbody.getReader());
+						String line = null;
+						while ((line = br.readLine()) != null) {
+							msgBody += line+"\n";
+						}   
+						msgBody = msgBody.substring(0, msgBody.length()-1);
+					}
 				}
 
-				msgMap.clear();
+				Map<String, Object> msgMap = new HashMap<String, Object>();
 				msgMap.put(SlingResourceType.KEY, SlingResourceType.MESSAGE);
 				msgMap.put("Body", msgBody);
 
@@ -178,6 +185,7 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 				String domain = split[2];
 				String msgId = hdr.getField("Message-ID").getBody();
 				msgId = msgId.substring(1, msgId.length()-1);
+				msgMap.put(TEXT_ATTRIBUTE, msgId);
 				msgId = makeJcrPathFriendly(msgId);
 				String thread = hdr.getField("Subject").getBody();
 				boolean done = false;
@@ -190,7 +198,7 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 				}
 				String threadName = thread;
 				thread = makeJcrPathFriendly(thread);
-				
+
 				String path = ARCHIVE_PATH+"/"+domain+"/"+project+"/"+list+"/"+thread;
 				Resource parent = resolver.getResource(path);
 
@@ -201,7 +209,7 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 						path = path.substring(0, path.lastIndexOf("/"));
 						parent = resolver.getResource(path);
 					} while (parent == null);
-					
+
 					List<String> nodeNames = new ArrayList<String>();
 					nodeNames.add(domain);
 					nodeNames.add(project);
@@ -209,25 +217,25 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 					nodeNames.add(thread);
 
 					List<Map<String, Object>> nodeProps = new ArrayList<Map<String, Object>>();
-					
+
 					//domain
 					Map<String, Object> props = new HashMap<String, Object>();
 					props.put(SlingResourceType.KEY, SlingResourceType.DOMAIN);
 					props.put(TEXT_ATTRIBUTE, domain);
 					nodeProps.add(props);
-					
+
 					//project
 					props = new HashMap<String, Object>();
 					props.put(SlingResourceType.KEY, SlingResourceType.PROJECT);
 					props.put(TEXT_ATTRIBUTE, project);
 					nodeProps.add(props);
-					
+
 					//list
 					props = new HashMap<String, Object>();
 					props.put(SlingResourceType.KEY, SlingResourceType.LIST);
 					props.put(TEXT_ATTRIBUTE, list);
 					nodeProps.add(props);
-					
+
 					//thread
 					props = new HashMap<String, Object>();
 					props.put(SlingResourceType.KEY, SlingResourceType.THREAD);
@@ -250,6 +258,7 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 			e.printStackTrace();
 		}
 
+		response.sendRedirect("/content/mailarchiveserver/archive.html");
 	}
 
 	void assertResourceWithLogging(Resource parent, String name, Map<String, Object> newProps) {
