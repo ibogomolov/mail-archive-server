@@ -11,7 +11,12 @@
 
 <div class="content">
 
-<table>
+<table width="100%">
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
 	<%
 	var cnt = 0;
 	var archiveChildren = currentNode.getChildren();
@@ -43,9 +48,9 @@
 	</td>
 
 	<% 
-			cnt++;
 			if (cnt % 3 == 2)
 				out.print("</tr>");
+			cnt++;
 		}
 	} 
 	if (cnt % 3 != 2)

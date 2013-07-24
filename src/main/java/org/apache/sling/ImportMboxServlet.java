@@ -52,20 +52,17 @@ import org.slf4j.LoggerFactory;
 		methods = "POST")
 public class ImportMboxServlet extends SlingAllMethodsServlet {
 
-	public static final String FS_TEMP_PATH = "temp";
-	public static final String IMPORT_FILE_ATTRIB_NAME = "mboxfile";
-	public static final CharsetEncoder ENCODER = Charset.forName("UTF-8").newEncoder();
-
-	private static final String ROOT_NODE_NAME = "mailarchiveserver";
-	private static final String ROOT_JCR_PATH = "/content/"+ROOT_NODE_NAME;
-	private static final String ARCHIVE_NODE_NAME = "archive";
-	private static final String ARCHIVE_PATH = ROOT_JCR_PATH+"/"+ARCHIVE_NODE_NAME;
-	private static final String IMPORT_NODE_NAME = "import";
+	private static final String FS_TEMP_PATH = "temp";
+	private static final String IMPORT_FILE_ATTRIB_NAME = "mboxfile";
+	private static final CharsetEncoder ENCODER = Charset.forName("UTF-8").newEncoder();
+	
+	private static final String ARCHIVE_PATH = "/content/mailarchiveserver/archive";
+	private static final String TEXT_ATTRIBUTE = "jcr:text";
 	@Reference
 	private ResourceResolverFactory resourceResolverFactory;
 	private ResourceResolver resolver;
+	
 	private static final Logger logger = LoggerFactory.getLogger(ImportMboxServlet.class);
-	private static final String TEXT_ATTRIBUTE = "jcr:text";
 
 
 	private ResourceResolver resolverInit() {
@@ -89,23 +86,6 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 
 		resolver = resolverInit();
 
-		/*
-		// set ROOT_NODE's sling:resourceType
-		Map<String, Object> props = new HashMap<String, Object>();
-		props.put("sling:resourceType", SlingResourceType.ROOT);
-		assertResourceWithLogging(resolver.getResource("/content"), ROOT_NODE_NAME, props);
-
-		// set ARCHIVE_NODE's sling:resourceType
-		props.clear();
-		props.put("sling:resourceType", SlingResourceType.ARCHIVE);
-		assertResourceWithLogging(resolver.getResource(ROOT_JCR_PATH), ARCHIVE_NODE_NAME, props);
-
-		// set IMPORT_NODE's sling:resourceType
-		props.clear();
-		props.put("sling:resourceType", SlingResourceType.IMPORTT);
-		assertResourceWithLogging(resolver.getResource(ROOT_JCR_PATH), IMPORT_NODE_NAME, props);
-		 */
-
 		super.init();
 	}
 
@@ -128,6 +108,7 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 			fout.close();
 
 			MessageBuilder builder = new DefaultMessageBuilder();
+			int mcount = 0;
 			for (CharBufferWrapper messageCharBuffer : MboxIterator.fromFile(file).charset(ENCODER.charset()).build()) {
 				Message msg = builder.parseMessage(messageCharBuffer.asInputStream(ENCODER.charset()));
 				String msgBody = "";
@@ -183,8 +164,13 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 				String list = split[0];
 				String project = split[1];
 				String domain = split[2];
-				String msgId = hdr.getField("Message-ID").getBody();
-				msgId = msgId.substring(1, msgId.length()-1);
+				String msgId;
+				if (hdr.getField("Message-ID") != null) {
+					msgId = hdr.getField("Message-ID").getBody();
+					msgId = msgId.substring(1, msgId.length()-1);
+				} else {
+					msgId = Integer.toHexString(hdr.getField("Date").hashCode());
+				}
 				msgMap.put(TEXT_ATTRIBUTE, msgId);
 				msgId = makeJcrPathFriendly(msgId);
 				String thread = hdr.getField("Subject").getBody();
@@ -252,7 +238,11 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 				if (parent == null) throw new RuntimeException("Parent resource cannot be null.");
 
 				assertResourceWithLogging(parent, msgId, msgMap);
+			
+				mcount++;
 			}
+			
+			logger.info(mcount+" messages processed.");
 
 		} catch (MimeException e) {
 			e.printStackTrace();
