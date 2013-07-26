@@ -48,4 +48,4 @@ Browse your archive by mailing list and conversation thread. Message preview and
 
 KNOWN ISSUES
 ------------
-Sometimes building the dom module of Mime4j bundle produces a .jar file that is not a bundle - META-INF/MANIFEST.MF file does not contain bundle description. The nature of this problems is unknown. A workaround is to substitute wrong MANIFEST.MF with the one from target/classes/META-INF/ which is correct.
+Sometimes building the Mime4j bundles produces .jar files that are not bundle - META-INF/MANIFEST.MF file does not contain bundle description. We are still not sure what causes that. A workaround is to substitute wrong MANIFEST.MF with the one from target/classes/META-INF/ which is correct.
