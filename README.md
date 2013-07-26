@@ -19,10 +19,13 @@ HOW TO INSTALL
 2. Currently there is no release of Mime4j with all required functionality, so you need to build a snapshot version yourself:
 
 	http://james.apache.org/mime4j/start/build.html
+        (source code is at http://svn.apache.org/repos/asf/james/mime4j/trunk/)
 
 After, install required bundles using OSGi console at 
 
 	http://localhost:8080/system/console/bundles
+
+Or use WebDAV to create an install folder like /apps/mailserver/install and copy the bundles there.
 
 3. Clone this project: 
 
@@ -45,4 +48,4 @@ Browse your archive by mailing list and conversation thread. Message preview and
 
 KNOWN ISSUES
 ------------
-Sometimes building Mime4j bundle produces .jar file that is not a bundle - META-INF/MANIFEST.MF file does not contain bundle description. The nature of this problems is unknown. A workaround is to substitute wrong MANIFEST.MF with one from classes/META-INF/ .
+Sometimes building the dom module of Mime4j bundle produces a .jar file that is not a bundle - META-INF/MANIFEST.MF file does not contain bundle description. The nature of this problems is unknown. A workaround is to substitute wrong MANIFEST.MF with the one from target/classes/META-INF/ which is correct.
