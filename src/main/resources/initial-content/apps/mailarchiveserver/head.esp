@@ -1,0 +1,3 @@
+<link rel="stylesheet" href="/apps/mailarchiveserver/styles.css"/>
+<script type="text/javascript" src="/apps/mailarchiveserver/util.js"></script>
+<% var threadNodesNumber = 3; %>

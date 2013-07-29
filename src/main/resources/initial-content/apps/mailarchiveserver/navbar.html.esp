@@ -10,17 +10,20 @@
 	var folding = false;
 	var fname = "";
 	var fhref = "";
-	while (node.getName() != "archive" && node.getName() != "import") {
-		if (node["sling:resourceType"] == "mailarchiveserver/list")
+	while (node.getName() != "archive") {
+		var rt = node["sling:resourceType"];
+		if (rt == "mailarchiveserver/list") 
 			folding = true;
-
-		if (!folding) {
-			name.push(node["jcr:text"]);
-			href.push(node.getPath()+".html");
-		} else {
-			fname += node["jcr:text"]+".";
-			if (fhref == "")
-				fhref = node.getPath()+".html";
+		
+		if (rt != undefined) {
+			if (!folding) {
+				name.push(node["jcr:text"]);
+				href.push(node.getPath()+".html");
+			} else {
+				fname += node["jcr:text"]+".";
+				if (fhref == "")
+					fhref = node.getPath()+".html";
+			}
 		}
 		node = node.getParent();
 	}

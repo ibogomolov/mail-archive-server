@@ -5,5 +5,5 @@ import org.apache.james.mime4j.dom.Message;
 public interface ThreadKeyGenerator {
 
 	String getThreadKey(Message m);
-	
+
 }

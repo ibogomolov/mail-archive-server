@@ -1,7 +1,7 @@
 <html>
 
 <head>
-<link rel="stylesheet" href="/apps/mailarchiveserver/styles.css"/>
+<% load("../head.esp"); %>
 <title>Mail archive</title>
 </head>
 

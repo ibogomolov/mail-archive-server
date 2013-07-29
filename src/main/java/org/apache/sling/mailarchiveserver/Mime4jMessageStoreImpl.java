@@ -32,6 +32,7 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.mailarchiveserver.api.Mime4jMessageStore;
+import org.apache.sling.mailarchiveserver.api.ThreadKeyGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +43,8 @@ public class Mime4jMessageStoreImpl implements Mime4jMessageStore {
 	@Reference
 	private ResourceResolverFactory resourceResolverFactory;
 	private ResourceResolver resolver = null;
+	@Reference
+	private ThreadKeyGenerator threadKeyGen;
 
 	private static final Logger logger = LoggerFactory.getLogger(Mime4jMessageStoreImpl.class);
 
@@ -125,18 +128,18 @@ public class Mime4jMessageStoreImpl implements Mime4jMessageStore {
 			msgMap.put(SlingConstants.TEXT_ATTRIBUTE, msgId);
 			msgId = makeJcrFriendly(msgId);
 			
-			String thread = hdr.getField("Subject").getBody();
+			String threadName = hdr.getField("Subject").getBody();
 			boolean done = false;
 			while (!done) {
-				if (thread.toLowerCase().startsWith("re:")) {
-					thread = thread.substring(3).trim();
+				if (threadName.toLowerCase().startsWith("re:")) {
+					threadName = threadName.substring(3).trim();
 					continue;
 				}
 				done = true;
 			}
-			// TODO ThreadKeyGen goes somewhere here
-			String threadName = thread;
-			thread = makeJcrFriendly(thread);
+			
+			String thread = threadKeyGen.getThreadKey(msg);
+			int threadNodesNumber = thread.split("/").length;
 
 			// checking each node of path path
 			String path = SlingConstants.ARCHIVE_PATH+"/"+domain+"/"+project+"/"+list+"/"+thread;
@@ -150,16 +153,18 @@ public class Mime4jMessageStoreImpl implements Mime4jMessageStore {
 					parent = resolver.getResource(path);
 				} while (parent == null);
 
-				List<String> nodeNames = new ArrayList<String>();
-				nodeNames.add(domain);
-				nodeNames.add(project);
-				nodeNames.add(list);
-				nodeNames.add(thread);
+				List<String> nodePaths = new ArrayList<String>();
+				nodePaths.add(domain);
+				nodePaths.add(project);
+				nodePaths.add(list);
+				for (String node : thread.split("/")) {
+					nodePaths.add(node);
+				}
 
-				List<Map<String, Object>> nodeProps = generateNodesProperties(list, project, domain, threadName);
+				List<Map<String, Object>> nodeProps = generateNodesProperties(domain, project, list, threadName, threadNodesNumber);
 
-				for (int i = nodeNames.size()-cnt; i < nodeNames.size(); i++) {
-					String name = nodeNames.get(i);
+				for (int i = nodePaths.size()-cnt; i < nodePaths.size(); i++) {
+					String name = nodePaths.get(i);
 					assertResourceWithLogging(parent, name, nodeProps.get(i));
 					parent = resolver.getResource(parent.getPath()+"/"+name);
 				}
@@ -174,10 +179,10 @@ public class Mime4jMessageStoreImpl implements Mime4jMessageStore {
 		}
 	}
 
-	public void saveAll(MboxIterator iterator) {
+	public void saveAll(MboxIterator iteratable) {
 		try {
 			int mcount = 0;
-			for (CharBufferWrapper messageCharBuffer : iterator) {
+			for (CharBufferWrapper messageCharBuffer : iteratable) {
 				MessageBuilder builder = new DefaultMessageBuilder();
 				Message msg = builder.parseMessage(messageCharBuffer.asInputStream(ImportMboxServlet.ENCODER.charset()));
 
@@ -201,7 +206,7 @@ public class Mime4jMessageStoreImpl implements Mime4jMessageStore {
 		return s.trim().replaceAll("[\\s\\.-]", "_").replaceAll("\\W", "");
 	}
 	
-	private List<Map<String, Object>> generateNodesProperties(String list, String project, String domain, String threadName) {
+	private List<Map<String, Object>> generateNodesProperties(String domain, String project, String list, String threadName, int threadNodesNumber) {
 		List<Map<String, Object>> nodeProps = new ArrayList<Map<String, Object>>();
 	
 		//domain
@@ -222,7 +227,11 @@ public class Mime4jMessageStoreImpl implements Mime4jMessageStore {
 		props.put(SlingConstants.TEXT_ATTRIBUTE, list);
 		nodeProps.add(props);
 	
-		//thread
+		for (int i = 0; i < threadNodesNumber-1; i++) {
+			nodeProps.add(null);
+		}
+		
+		//thread's last node
 		props = new HashMap<String, Object>();
 		props.put(SlingConstants.RT_KEY, SlingConstants.RT_THREAD);
 		props.put(SlingConstants.TEXT_ATTRIBUTE, threadName);
