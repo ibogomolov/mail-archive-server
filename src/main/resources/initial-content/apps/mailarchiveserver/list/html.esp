@@ -1,6 +1,6 @@
 <html>
 <head>
-<link rel="stylesheet" href="/apps/mailarchiveserver/styles.css"/>
+<% load("../head.esp"); %>
 <title><%= currentNode["jcr:text"] %></title>
 </head>
 
@@ -10,18 +10,27 @@
 <%
 var email = [];
 
-var threads = currentNode.getChildren();
-for (i in threads) {
-	var thread = threads[i];
-	var messages = thread.getChildren();
-	for (j in messages) {
-		var message = messages[j];
-		var obj = new Object();
-		obj.path = message.getPath();
-		obj.date = new Date(message["Date"]);
-		email.push(obj);
+function iterate(node, lvl) {
+	for (i in node.getChildren()) {
+		var child = node[i];
+		if (lvl == 0) {
+			layout(child);
+		} else {
+			iterate(child, lvl-1);
+		}
 	}
 }
+
+function layout(message) {
+	var obj = new Object();
+	obj.path = message.getPath();
+	obj.date = new Date(message["Date"]);
+	email.push(obj);
+}
+
+
+var list = currentNode;
+iterate(list, threadNodesNumber);
 
 email.sort(comparator);
 while (email.length > 0) {

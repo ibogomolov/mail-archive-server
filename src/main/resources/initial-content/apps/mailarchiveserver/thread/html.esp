@@ -1,6 +1,6 @@
 <html>
 	<head>
-	<link rel="stylesheet" href="/apps/mailarchiveserver/styles.css"/>
+	<% load("../head.esp"); %>
 	<title>
 	<%= currentNode["jcr:text"] %>
 	</title>

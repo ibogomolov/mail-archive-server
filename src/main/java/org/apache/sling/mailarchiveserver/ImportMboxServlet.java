@@ -57,6 +57,9 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 		super.init();
 	}
 
+	@Reference
+	Runnable run;
+
 	@Override
 	protected void doPost(SlingHttpServletRequest request, SlingHttpServletResponse response) 
 			throws ServletException, IOException {
@@ -80,7 +83,6 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 		fileOut.close();
 		mboxIn.close();
 
-		// TODO null checks
 		store.saveAll(parser.parse(file));
 
 		response.sendRedirect(SlingConstants.ARCHIVE_PATH + ".html");
