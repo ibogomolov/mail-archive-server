@@ -128,21 +128,14 @@ public class Mime4jMessageStoreImpl implements Mime4jMessageStore {
 			msgMap.put(SlingConstants.TEXT_ATTRIBUTE, msgId);
 			msgId = makeJcrFriendly(msgId);
 			
-			String threadName = hdr.getField("Subject").getBody();
-			boolean done = false;
-			while (!done) {
-				if (threadName.toLowerCase().startsWith("re:")) {
-					threadName = threadName.substring(3).trim();
-					continue;
-				}
-				done = true;
-			}
+			String subject = hdr.getField("Subject").getBody();
+			String threadName = removeRe(subject);
 			
-			String thread = threadKeyGen.getThreadKey(msg);
-			int threadNodesNumber = thread.split("/").length;
+			String threadPath = threadKeyGen.getThreadKey(msg);
+			int threadNodesNumber = threadPath.split("/").length;
 
 			// checking each node of path path
-			String path = SlingConstants.ARCHIVE_PATH+"/"+domain+"/"+project+"/"+list+"/"+thread;
+			String path = SlingConstants.ARCHIVE_PATH+"/"+domain+"/"+project+"/"+list+"/"+threadPath;
 			Resource parent = resolver.getResource(path);
 
 			if (parent == null) {
@@ -157,7 +150,7 @@ public class Mime4jMessageStoreImpl implements Mime4jMessageStore {
 				nodePaths.add(domain);
 				nodePaths.add(project);
 				nodePaths.add(list);
-				for (String node : thread.split("/")) {
+				for (String node : threadPath.split("/")) {
 					nodePaths.add(node);
 				}
 
@@ -202,10 +195,6 @@ public class Mime4jMessageStoreImpl implements Mime4jMessageStore {
 		}
 	}
 
-	static String makeJcrFriendly(String s) {
-		return s.trim().replaceAll("[\\s\\.-]", "_").replaceAll("\\W", "");
-	}
-	
 	private List<Map<String, Object>> generateNodesProperties(String domain, String project, String list, String threadName, int threadNodesNumber) {
 		List<Map<String, Object>> nodeProps = new ArrayList<Map<String, Object>>();
 	
@@ -262,6 +251,17 @@ public class Mime4jMessageStoreImpl implements Mime4jMessageStore {
 		} catch (PersistenceException e) {
 			e.printStackTrace();
 		}
+	}
+
+	static String makeJcrFriendly(String s) {
+		return s.trim().replaceAll("[\\s\\.-]", "_").replaceAll("\\W", "");
+	}
+
+	static String removeRe(String s) {
+		while (s.toLowerCase().startsWith("re:")) {
+			s = s.substring(3).trim();
+		}
+		return s.trim();
 	}
 
 	static class SlingConstants {

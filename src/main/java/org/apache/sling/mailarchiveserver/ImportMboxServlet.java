@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 public class ImportMboxServlet extends SlingAllMethodsServlet {
 
 	static final CharsetEncoder ENCODER = Charset.forName("UTF-8").newEncoder();
-	
+
 	private static final String FS_TEMP_PATH = "temp";
 	private static final String IMPORT_FILE_ATTRIB_NAME = "mboxfile";
 	private final int BUFFER_SIZE = 10*1024*1024;
@@ -42,8 +42,8 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 	@Reference
 	private Mime4jMessageStore store;
 
-	
-	
+
+
 	@Override
 	public void init() throws ServletException {
 		File tempDir = new File(FS_TEMP_PATH);
@@ -65,26 +65,30 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 			throws ServletException, IOException {
 
 		RequestParameter param = request.getRequestParameter(IMPORT_FILE_ATTRIB_NAME);
-		logger.info("Processing attachment: " + param.toString());
+		if (param != null) {
+			logger.info("Processing attachment: " + param.toString());
 
-		// put attachment to temp file
-		String fileName = param.getFileName();
-		File file = new File(FS_TEMP_PATH,fileName);
-		FileOutputStream fileOut = new FileOutputStream(file);
-		FileChannel fileChannel = fileOut.getChannel();
-		InputStream mboxIn = param.getInputStream();
-		byte[] buffer = new byte[BUFFER_SIZE];
-		int read = 0;
-		while ((read = mboxIn.read(buffer)) != -1) {
-			ByteBuffer buf2 = ENCODER.encode(CharBuffer.wrap(new String(buffer, 0, read)));
-			fileChannel.write(buf2);
+			// put attachment to temp file
+			String fileName = param.getFileName();
+			File file = new File(FS_TEMP_PATH,fileName);
+			FileOutputStream fileOut = new FileOutputStream(file);
+			FileChannel fileChannel = fileOut.getChannel();
+			InputStream mboxIn = param.getInputStream();
+			byte[] buffer = new byte[BUFFER_SIZE];
+			int read = 0;
+			while ((read = mboxIn.read(buffer)) != -1) {
+				ByteBuffer buf2 = ENCODER.encode(CharBuffer.wrap(new String(buffer, 0, read)));
+				fileChannel.write(buf2);
+			}
+			fileChannel.close();
+			fileOut.close();
+			mboxIn.close();
+
+			store.saveAll(parser.parse(file));
+
+			response.sendRedirect(SlingConstants.ARCHIVE_PATH + ".html");
+		} else {
+			logger.info("No attachment to process.");
 		}
-		fileChannel.close();
-		fileOut.close();
-		mboxIn.close();
-
-		store.saveAll(parser.parse(file));
-
-		response.sendRedirect(SlingConstants.ARCHIVE_PATH + ".html");
 	}
 }
