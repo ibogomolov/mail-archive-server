@@ -14,7 +14,6 @@ import org.apache.sling.api.resource.ValueMap;
  * Util class to calculate entropy of a letter position in the message subject
  * 
  * @author bogomolo
- *
  */
 
 @Component

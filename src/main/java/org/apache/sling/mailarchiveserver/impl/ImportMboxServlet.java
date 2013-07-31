@@ -1,4 +1,4 @@
-package org.apache.sling.mailarchiveserver;
+package org.apache.sling.mailarchiveserver.impl;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -12,15 +12,17 @@ import java.nio.charset.CharsetEncoder;
 
 import javax.servlet.ServletException;
 
+import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestParameter;
 import org.apache.sling.api.servlets.SlingAllMethodsServlet;
-import org.apache.sling.mailarchiveserver.Mime4jMessageStoreImpl.SlingConstants;
 import org.apache.sling.mailarchiveserver.api.MboxParser;
-import org.apache.sling.mailarchiveserver.api.Mime4jMessageStore;
+import org.apache.sling.mailarchiveserver.api.MessageStore;
+import org.apache.sling.mailarchiveserver.impl.MessageStoreImpl.SlingConstants;
+import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,12 +42,12 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 	@Reference
 	private MboxParser parser;
 	@Reference
-	private Mime4jMessageStore store;
-
-
-
-	@Override
-	public void init() throws ServletException {
+	private MessageStore store;
+	
+	
+	// TODO remove and change temp file procedure
+	@Activate
+	public void activate(ComponentContext ctx) {
 		File tempDir = new File(FS_TEMP_PATH);
 		if (tempDir.exists()) {
 			for (String filePath : tempDir.list())
@@ -53,12 +55,7 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 		} else {
 			tempDir.mkdir();
 		}
-
-		super.init();
 	}
-
-	@Reference
-	Runnable run;
 
 	@Override
 	protected void doPost(SlingHttpServletRequest request, SlingHttpServletResponse response) 
