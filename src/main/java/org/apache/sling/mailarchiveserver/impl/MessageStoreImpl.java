@@ -1,4 +1,4 @@
-package org.apache.sling.mailarchiveserver;
+package org.apache.sling.mailarchiveserver.impl;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,18 +12,13 @@ import java.util.Set;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
-import org.apache.james.mime4j.MimeException;
 import org.apache.james.mime4j.dom.Body;
 import org.apache.james.mime4j.dom.Entity;
 import org.apache.james.mime4j.dom.Header;
 import org.apache.james.mime4j.dom.Message;
-import org.apache.james.mime4j.dom.MessageBuilder;
 import org.apache.james.mime4j.dom.Multipart;
 import org.apache.james.mime4j.dom.SingleBody;
 import org.apache.james.mime4j.dom.TextBody;
-import org.apache.james.mime4j.mboxiterator.CharBufferWrapper;
-import org.apache.james.mime4j.mboxiterator.MboxIterator;
-import org.apache.james.mime4j.message.DefaultMessageBuilder;
 import org.apache.james.mime4j.stream.Field;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.ModifiableValueMap;
@@ -31,14 +26,14 @@ import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
-import org.apache.sling.mailarchiveserver.api.Mime4jMessageStore;
+import org.apache.sling.mailarchiveserver.api.MessageStore;
 import org.apache.sling.mailarchiveserver.api.ThreadKeyGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Component
-@Service(Mime4jMessageStore.class)
-public class Mime4jMessageStoreImpl implements Mime4jMessageStore {
+@Service(MessageStore.class)
+public class MessageStoreImpl implements MessageStore {
 
 	@Reference
 	private ResourceResolverFactory resourceResolverFactory;
@@ -46,7 +41,7 @@ public class Mime4jMessageStoreImpl implements Mime4jMessageStore {
 	@Reference
 	private ThreadKeyGenerator threadKeyGen;
 
-	private static final Logger logger = LoggerFactory.getLogger(Mime4jMessageStoreImpl.class);
+	private static final Logger logger = LoggerFactory.getLogger(MessageStoreImpl.class);
 
 	private void resolverInit() {
 		try {
@@ -57,7 +52,7 @@ public class Mime4jMessageStoreImpl implements Mime4jMessageStore {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void save(Message msg) {
 		resolverInit();
 		try {
@@ -127,10 +122,10 @@ public class Mime4jMessageStoreImpl implements Mime4jMessageStore {
 			}
 			msgMap.put(SlingConstants.TEXT_ATTRIBUTE, msgId);
 			msgId = makeJcrFriendly(msgId);
-			
+
 			String subject = hdr.getField("Subject").getBody();
 			String threadName = removeRe(subject);
-			
+
 			String threadPath = threadKeyGen.getThreadKey(msg);
 			int threadNodesNumber = threadPath.split("/").length;
 
@@ -172,60 +167,49 @@ public class Mime4jMessageStoreImpl implements Mime4jMessageStore {
 		}
 	}
 
-	public void saveAll(MboxIterator iteratable) {
-		try {
-			int mcount = 0;
-			for (CharBufferWrapper messageCharBuffer : iteratable) {
-				MessageBuilder builder = new DefaultMessageBuilder();
-				Message msg = builder.parseMessage(messageCharBuffer.asInputStream(ImportMboxServlet.ENCODER.charset()));
-
-				save(msg);
-
-				mcount++;
-				if (mcount % 100 == 0) {
-					logger.debug(mcount+" messages processed.");
-				}
+	public void saveAll(Iterable<Message> iteratable) {
+		int mcount = 0;
+		for (Message msg : iteratable) {
+			save(msg);
+			mcount++;
+			if (mcount % 100 == 0) {
+				logger.debug(mcount+" messages processed.");
 			}
-
-			logger.info(mcount+" messages processed.");
-		} catch (MimeException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
+		logger.info(mcount+" messages processed.");
 	}
 
 	private List<Map<String, Object>> generateNodesProperties(String domain, String project, String list, String threadName, int threadNodesNumber) {
 		List<Map<String, Object>> nodeProps = new ArrayList<Map<String, Object>>();
-	
+
 		//domain
 		Map<String, Object> props = new HashMap<String, Object>();
 		props.put(SlingConstants.RT_KEY, SlingConstants.RT_DOMAIN);
 		props.put(SlingConstants.TEXT_ATTRIBUTE, domain);
 		nodeProps.add(props);
-	
+
 		//project
 		props = new HashMap<String, Object>();
 		props.put(SlingConstants.RT_KEY, SlingConstants.RT_PROJECT);
 		props.put(SlingConstants.TEXT_ATTRIBUTE, project);
 		nodeProps.add(props);
-	
+
 		//list
 		props = new HashMap<String, Object>();
 		props.put(SlingConstants.RT_KEY, SlingConstants.RT_LIST);
 		props.put(SlingConstants.TEXT_ATTRIBUTE, list);
 		nodeProps.add(props);
-	
+
 		for (int i = 0; i < threadNodesNumber-1; i++) {
 			nodeProps.add(null);
 		}
-		
+
 		//thread's last node
 		props = new HashMap<String, Object>();
 		props.put(SlingConstants.RT_KEY, SlingConstants.RT_THREAD);
 		props.put(SlingConstants.TEXT_ATTRIBUTE, threadName);
 		nodeProps.add(props);
-		
+
 		return nodeProps;
 	}
 
@@ -254,7 +238,7 @@ public class Mime4jMessageStoreImpl implements Mime4jMessageStore {
 	}
 
 	static String makeJcrFriendly(String s) {
-		return s.trim().replaceAll("[\\s\\.-]", "_").replaceAll("\\W", "");
+		return s.replaceAll("[\\s\\.-]", "_").replaceAll("\\W", "").replaceAll("\\_", " ").trim().replaceAll(" ", "_");
 	}
 
 	static String removeRe(String s) {

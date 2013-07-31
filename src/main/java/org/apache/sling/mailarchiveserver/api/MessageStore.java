@@ -1,11 +1,11 @@
 package org.apache.sling.mailarchiveserver.api;
 
-import java.io.File;
-
 import org.apache.james.mime4j.dom.Message;
 
-public interface MboxParser {
+public interface MessageStore {
 	
-	Iterable<Message> parse(File f);
+	void save(Message m);
+	
+	void saveAll(Iterable<Message> iterable);
 	
 }
