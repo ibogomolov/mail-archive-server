@@ -12,7 +12,6 @@ import java.nio.charset.CharsetEncoder;
 
 import javax.servlet.ServletException;
 
-import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -22,7 +21,6 @@ import org.apache.sling.api.servlets.SlingAllMethodsServlet;
 import org.apache.sling.mailarchiveserver.api.MboxParser;
 import org.apache.sling.mailarchiveserver.api.MessageStore;
 import org.apache.sling.mailarchiveserver.impl.MessageStoreImpl.SlingConstants;
-import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +32,6 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 
 	static final CharsetEncoder ENCODER = Charset.forName("UTF-8").newEncoder();
 
-	private static final String FS_TEMP_PATH = "temp";
 	private static final String IMPORT_FILE_ATTRIB_NAME = "mboxfile";
 	private final int BUFFER_SIZE = 10*1024*1024;
 	private static final Logger logger = LoggerFactory.getLogger(ImportMboxServlet.class);
@@ -43,49 +40,43 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 	private MboxParser parser;
 	@Reference
 	private MessageStore store;
-	
-	
-	// TODO remove and change temp file procedure
-	@Activate
-	public void activate(ComponentContext ctx) {
-		File tempDir = new File(FS_TEMP_PATH);
-		if (tempDir.exists()) {
-			for (String filePath : tempDir.list())
-				new File(FS_TEMP_PATH,filePath).delete();
-		} else {
-			tempDir.mkdir();
-		}
-	}
 
 	@Override
 	protected void doPost(SlingHttpServletRequest request, SlingHttpServletResponse response) 
 			throws ServletException, IOException {
+		File file = null;
+		try {
+			RequestParameter param = request.getRequestParameter(IMPORT_FILE_ATTRIB_NAME);
+			if (param != null) {
+				logger.info("Processing attachment: " + param.toString());
 
-		RequestParameter param = request.getRequestParameter(IMPORT_FILE_ATTRIB_NAME);
-		if (param != null) {
-			logger.info("Processing attachment: " + param.toString());
+				// put attachment to temp file
+				file = File.createTempFile("MAS_", ".mbox");
+				FileOutputStream fileOut = new FileOutputStream(file);
+				FileChannel fileChannel = fileOut.getChannel();
+				InputStream mboxIn = param.getInputStream();
+				byte[] buffer = new byte[BUFFER_SIZE];
+				int read = 0;
+				while ((read = mboxIn.read(buffer)) != -1) {
+					ByteBuffer buf2 = ENCODER.encode(CharBuffer.wrap(new String(buffer, 0, read)));
+					fileChannel.write(buf2);
+				}
+				fileChannel.close();
+				fileOut.close();
+				mboxIn.close();
 
-			// put attachment to temp file
-			String fileName = param.getFileName();
-			File file = new File(FS_TEMP_PATH,fileName);
-			FileOutputStream fileOut = new FileOutputStream(file);
-			FileChannel fileChannel = fileOut.getChannel();
-			InputStream mboxIn = param.getInputStream();
-			byte[] buffer = new byte[BUFFER_SIZE];
-			int read = 0;
-			while ((read = mboxIn.read(buffer)) != -1) {
-				ByteBuffer buf2 = ENCODER.encode(CharBuffer.wrap(new String(buffer, 0, read)));
-				fileChannel.write(buf2);
+				store.saveAll(parser.parse(file));
+
+				response.sendRedirect(SlingConstants.ARCHIVE_PATH + ".html");
+			} else {
+				logger.info("No attachment to process.");
 			}
-			fileChannel.close();
-			fileOut.close();
-			mboxIn.close();
-
-			store.saveAll(parser.parse(file));
-
-			response.sendRedirect(SlingConstants.ARCHIVE_PATH + ".html");
-		} else {
-			logger.info("No attachment to process.");
+		} finally {
+			if (file != null) {
+				file.delete();
+				file = null;
+			}
 		}
 	}
+	
 }
