@@ -36,10 +36,11 @@ import org.slf4j.LoggerFactory;
 public class MessageStoreImpl implements MessageStore {
 
 	@Reference
-	private ResourceResolverFactory resourceResolverFactory;
+	ResourceResolverFactory resourceResolverFactory;
 	private ResourceResolver resolver = null;
 	@Reference
 	private ThreadKeyGenerator threadKeyGen;
+	String archivePath = SlingConstants.ARCHIVE_PATH;
 
 	private static final Logger logger = LoggerFactory.getLogger(MessageStoreImpl.class);
 
@@ -130,7 +131,7 @@ public class MessageStoreImpl implements MessageStore {
 			int threadNodesNumber = threadPath.split("/").length;
 
 			// checking each node of path path
-			String path = SlingConstants.ARCHIVE_PATH+"/"+domain+"/"+project+"/"+list+"/"+threadPath;
+			String path = archivePath+"/"+domain+"/"+project+"/"+list+"/"+threadPath;
 			Resource parent = resolver.getResource(path);
 
 			if (parent == null) {
@@ -235,6 +236,28 @@ public class MessageStoreImpl implements MessageStore {
 		} catch (PersistenceException e) {
 			e.printStackTrace();
 		}
+	}
+
+	// TODO public? add to interface?
+	String getResourcePath(Message msg) {
+		Header hdr = msg.getHeader();
+		String listId = hdr.getField("List-Id").getBody();
+		listId = listId.substring(1, listId.length()-1);
+		String[] split = listId.split("\\.", 3);
+		String list = split[0];
+		String project = split[1];
+		String domain = split[2];
+		String msgId;
+		if (hdr.getField("Message-ID") != null) {
+			msgId = hdr.getField("Message-ID").getBody();
+			msgId = msgId.substring(1, msgId.length()-1);
+		} else {
+			msgId = Integer.toHexString(hdr.getField("Date").hashCode());
+		}
+		msgId = makeJcrFriendly(msgId);
+		String threadPath = threadKeyGen.getThreadKey(msg);
+		String path = archivePath+"/"+domain+"/"+project+"/"+list+"/"+threadPath+"/"+msgId;
+		return path;
 	}
 
 	static String makeJcrFriendly(String s) {
