@@ -36,11 +36,16 @@ import org.slf4j.LoggerFactory;
 public class MessageStoreImpl implements MessageStore {
 
 	@Reference
-	ResourceResolverFactory resourceResolverFactory;
-	private ResourceResolver resolver = null;
+	private	ResourceResolverFactory resourceResolverFactory;
+	ResourceResolver resolver = null;
 	@Reference
-	private ThreadKeyGenerator threadKeyGen;
+	ThreadKeyGenerator threadKeyGen;
+
+	static final String FIELD_SEPARATOR = " : ";
+
+	// for testing
 	String archivePath = SlingConstants.ARCHIVE_PATH;
+	String resourceTypeKey = SlingConstants.RT_KEY;
 
 	private static final Logger logger = LoggerFactory.getLogger(MessageStoreImpl.class);
 
@@ -58,7 +63,7 @@ public class MessageStoreImpl implements MessageStore {
 		resolverInit();
 		try {
 			Map<String, Object> msgMap = new HashMap<String, Object>();
-			msgMap.put(SlingConstants.RT_KEY, SlingConstants.RT_MESSAGE);
+			msgMap.put(resourceTypeKey, SlingConstants.RT_MESSAGE);
 
 			// process body
 			String msgBody = "";
@@ -100,9 +105,9 @@ public class MessageStoreImpl implements MessageStore {
 					String value = "";
 					List<Field> fields = hdr.getFields(name);
 					for (Field fl : fields) {
-						value += fl.getBody()+",";
+						value += fl.getBody()+FIELD_SEPARATOR;
 					}
-					msgMap.put(name, value.substring(0, value.length()-1));
+					msgMap.put(name, value.substring(0, value.length()-FIELD_SEPARATOR.length()));
 				}
 			}				
 
@@ -131,7 +136,7 @@ public class MessageStoreImpl implements MessageStore {
 			int threadNodesNumber = threadPath.split("/").length;
 
 			// checking each node of path path
-			String path = archivePath+"/"+domain+"/"+project+"/"+list+"/"+threadPath;
+			String path = archivePath+domain+"/"+project+"/"+list+"/"+threadPath;
 			Resource parent = resolver.getResource(path);
 
 			if (parent == null) {
@@ -154,14 +159,14 @@ public class MessageStoreImpl implements MessageStore {
 
 				for (int i = nodePaths.size()-cnt; i < nodePaths.size(); i++) {
 					String name = nodePaths.get(i);
-					assertResourceWithLogging(parent, name, nodeProps.get(i));
+					assertResource(parent, name, nodeProps.get(i));
 					parent = resolver.getResource(parent.getPath()+"/"+name);
 				}
 			} 
 
 			if (parent == null) throw new RuntimeException("Parent resource cannot be null.");
 
-			assertResourceWithLogging(parent, msgId, msgMap);
+			assertResource(parent, msgId, msgMap);
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -185,19 +190,19 @@ public class MessageStoreImpl implements MessageStore {
 
 		//domain
 		Map<String, Object> props = new HashMap<String, Object>();
-		props.put(SlingConstants.RT_KEY, SlingConstants.RT_DOMAIN);
+		props.put(resourceTypeKey, SlingConstants.RT_DOMAIN);
 		props.put(SlingConstants.TEXT_ATTRIBUTE, domain);
 		nodeProps.add(props);
 
 		//project
 		props = new HashMap<String, Object>();
-		props.put(SlingConstants.RT_KEY, SlingConstants.RT_PROJECT);
+		props.put(resourceTypeKey, SlingConstants.RT_PROJECT);
 		props.put(SlingConstants.TEXT_ATTRIBUTE, project);
 		nodeProps.add(props);
 
 		//list
 		props = new HashMap<String, Object>();
-		props.put(SlingConstants.RT_KEY, SlingConstants.RT_LIST);
+		props.put(resourceTypeKey, SlingConstants.RT_LIST);
 		props.put(SlingConstants.TEXT_ATTRIBUTE, list);
 		nodeProps.add(props);
 
@@ -207,14 +212,14 @@ public class MessageStoreImpl implements MessageStore {
 
 		//thread's last node
 		props = new HashMap<String, Object>();
-		props.put(SlingConstants.RT_KEY, SlingConstants.RT_THREAD);
+		props.put(resourceTypeKey, SlingConstants.RT_THREAD);
 		props.put(SlingConstants.TEXT_ATTRIBUTE, threadName);
 		nodeProps.add(props);
 
 		return nodeProps;
 	}
 
-	private void assertResourceWithLogging(Resource parent, String name, Map<String, Object> newProps) {
+	private void assertResource(Resource parent, String name, Map<String, Object> newProps) {
 		resolverInit();
 		try {
 			String checkPath = parent.getPath()+"/"+name;
@@ -225,39 +230,17 @@ public class MessageStoreImpl implements MessageStore {
 				if (newProps == null) {
 					logger.debug(String.format("Resource created at %s without parameters.", newResource.getPath()));
 				} else {
-					logger.debug(String.format("Resource created at %s with resource type %s.", newResource.getPath(), newProps.get(SlingConstants.RT_KEY).toString()));
+					logger.debug(String.format("Resource created at %s with resource type %s.", newResource.getPath(), newProps.get(resourceTypeKey).toString()));
 				}
 			} else if (newProps != null && !newProps.isEmpty()) {
 				final ModifiableValueMap props = checkResource.adaptTo(ModifiableValueMap.class);
 				props.putAll(newProps);
 				resolver.commit();
-				logger.debug(String.format("Resource updated at %s with resource type %s.", checkResource.getPath(), props.get(SlingConstants.RT_KEY).toString()));
+				logger.debug(String.format("Resource updated at %s with resource type %s.", checkResource.getPath(), props.get(resourceTypeKey).toString()));
 			}
 		} catch (PersistenceException e) {
 			e.printStackTrace();
 		}
-	}
-
-	// TODO public? add to interface?
-	String getResourcePath(Message msg) {
-		Header hdr = msg.getHeader();
-		String listId = hdr.getField("List-Id").getBody();
-		listId = listId.substring(1, listId.length()-1);
-		String[] split = listId.split("\\.", 3);
-		String list = split[0];
-		String project = split[1];
-		String domain = split[2];
-		String msgId;
-		if (hdr.getField("Message-ID") != null) {
-			msgId = hdr.getField("Message-ID").getBody();
-			msgId = msgId.substring(1, msgId.length()-1);
-		} else {
-			msgId = Integer.toHexString(hdr.getField("Date").hashCode());
-		}
-		msgId = makeJcrFriendly(msgId);
-		String threadPath = threadKeyGen.getThreadKey(msg);
-		String path = archivePath+"/"+domain+"/"+project+"/"+list+"/"+threadPath+"/"+msgId;
-		return path;
 	}
 
 	static String makeJcrFriendly(String s) {
@@ -272,7 +255,7 @@ public class MessageStoreImpl implements MessageStore {
 	}
 
 	static class SlingConstants {
-		static final String ARCHIVE_PATH = "/content/mailarchiveserver/archive";
+		static final String ARCHIVE_PATH = "/content/mailarchiveserver/archive/";
 		static final String TEXT_ATTRIBUTE = "jcr:text";
 
 		//RT = ResourceType

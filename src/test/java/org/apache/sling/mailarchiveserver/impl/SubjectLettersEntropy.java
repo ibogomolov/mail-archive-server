@@ -1,4 +1,4 @@
-package util;
+package org.apache.sling.mailarchiveserver.impl;
 
 import java.io.PrintStream;
 
