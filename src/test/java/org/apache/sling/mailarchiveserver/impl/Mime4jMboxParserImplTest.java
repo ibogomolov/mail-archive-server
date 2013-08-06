@@ -1,0 +1,52 @@
+package org.apache.sling.mailarchiveserver.impl;
+
+import static org.junit.Assert.assertEquals;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.james.mime4j.dom.Message;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+
+@RunWith(Parameterized.class)
+public class Mime4jMboxParserImplTest {
+
+	private Mime4jMboxParserImpl parser = new Mime4jMboxParserImpl();
+	private String filePath;
+	private int expectedMessagesCount;
+	
+	static final String TEST_FILES_FOLDER = "test_files/";
+	
+	@Parameters(name="{0}")
+    public static Collection<Object[]> data() {
+        List<Object[]> params = new ArrayList<Object[]>();
+        params.add(new Object[] {TEST_FILES_FOLDER+"three_messages.txt", 3} );
+        params.add(new Object[] {TEST_FILES_FOLDER+"mbox/jackrabbit-dev-201201.mbox", 323} );
+        params.add(new Object[] {TEST_FILES_FOLDER+"mbox/hadoop-common-dev-201202.mbox", 296} );
+        params.add(new Object[] {TEST_FILES_FOLDER+"mbox/sling-dev-201203.mbox", 227} );
+        params.add(new Object[] {TEST_FILES_FOLDER+"mbox/tomcat-dev-201204.mbox", 658} );
+        return params;
+    }
+    
+    public Mime4jMboxParserImplTest(String path, int count) {
+    	filePath = path;
+    	expectedMessagesCount = count;
+    }
+
+	@Test
+	public void testParse() throws IOException {
+		List<Message> list = parser.parse(new File(filePath));
+		assertEquals("Expecting correct number of messages parsed", expectedMessagesCount, list.size());
+		Set<Message> set = new HashSet<Message>(list);
+		assertEquals("Expecting all messages unique", expectedMessagesCount, set.size());
+	}
+
+}

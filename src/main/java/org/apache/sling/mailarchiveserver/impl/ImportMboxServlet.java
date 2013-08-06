@@ -31,10 +31,10 @@ import org.slf4j.LoggerFactory;
 public class ImportMboxServlet extends SlingAllMethodsServlet {
 
 	static final CharsetEncoder ENCODER = Charset.forName("UTF-8").newEncoder();
+	static final Logger logger = LoggerFactory.getLogger(ImportMboxServlet.class);
 
 	private static final String IMPORT_FILE_ATTRIB_NAME = "mboxfile";
 	private final int BUFFER_SIZE = 10*1024*1024;
-	private static final Logger logger = LoggerFactory.getLogger(ImportMboxServlet.class);
 
 	@Reference
 	private MboxParser parser;
@@ -78,5 +78,5 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 			}
 		}
 	}
-	
+
 }
