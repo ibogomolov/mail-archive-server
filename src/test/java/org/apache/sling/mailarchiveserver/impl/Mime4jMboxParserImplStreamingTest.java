@@ -1,5 +1,7 @@
 package org.apache.sling.mailarchiveserver.impl;
 
+import static org.junit.Assert.fail;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -42,6 +44,9 @@ public class Mime4jMboxParserImplStreamingTest {
 			fos = null;
 			
 			parser.parse(tempf);
+			
+		} catch(OutOfMemoryError e) {
+			fail("Parser is not streaming");
 		} finally {
 			if (tempf != null) {
 				tempf.delete();
