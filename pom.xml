@@ -33,8 +33,45 @@
 					</instructions>
 				</configuration>
 			</plugin>
-		</plugins>
-	</build>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.6.2.201302030002</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>check</id>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <check>
+                                <!-- start with low values -->
+                                <classRatio>50</classRatio>
+                                <instructionRatio>50</instructionRatio>
+                                <methodRatio>50</methodRatio>
+                                <branchRatio>50</branchRatio>
+                                <complexityRatio>50</complexityRatio>
+                                <lineRatio>50</lineRatio>
+                            </check>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
 	<dependencies>
 		<dependency>
