@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -43,9 +44,16 @@ public class Mime4jMboxParserImplTest {
 
 	@Test
 	public void testParse() throws IOException {
-		List<Message> list = parser.parse(new File(filePath));
-		assertEquals("Expecting correct number of messages parsed", expectedMessagesCount, list.size());
-		Set<Message> set = new HashSet<Message>(list);
+		Iterator<Message> iter = parser.parse(new File(filePath));
+		
+		int cnt = 0;
+		Set<Message> set = new HashSet<Message>();
+		while (iter.hasNext()) {
+			Message message = (Message) iter.next();
+			cnt++;
+			set.add(message);
+		}
+		assertEquals("Expecting correct number of messages parsed", expectedMessagesCount, cnt);
 		assertEquals("Expecting all messages unique", expectedMessagesCount, set.size());
 	}
 

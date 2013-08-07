@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -173,10 +174,13 @@ public class MessageStoreImpl implements MessageStore {
 		}
 	}
 
-	public void saveAll(Iterable<Message> iteratable) {
+	public void saveAll(Iterator<Message> iterator) {
 		int mcount = 0;
-		for (Message msg : iteratable) {
+		while (iterator.hasNext()) {
+			Message msg = (Message) iterator.next();
+			
 			save(msg);
+
 			mcount++;
 			if (mcount % 100 == 0) {
 				logger.debug(mcount+" messages processed.");
