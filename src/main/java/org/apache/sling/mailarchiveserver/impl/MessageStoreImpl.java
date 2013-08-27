@@ -45,8 +45,8 @@ public class MessageStoreImpl implements MessageStore {
 	static final String FIELD_SEPARATOR = " : ";
 
 	// for testing
-	String archivePath = SlingConstants.ARCHIVE_PATH;
-	String resourceTypeKey = SlingConstants.RT_KEY;
+	String archivePath = MailArchiveServerConstants.ARCHIVE_PATH;
+	String resourceTypeKey = MailArchiveServerConstants.RT_KEY;
 
 	private static final Logger logger = LoggerFactory.getLogger(MessageStoreImpl.class);
 
@@ -64,7 +64,7 @@ public class MessageStoreImpl implements MessageStore {
 		resolverInit();
 		try {
 			Map<String, Object> msgMap = new HashMap<String, Object>();
-			msgMap.put(resourceTypeKey, SlingConstants.RT_MESSAGE);
+			msgMap.put(resourceTypeKey, MailArchiveServerConstants.RT_MESSAGE);
 
 			// process body
 			String msgBody = "";
@@ -127,7 +127,7 @@ public class MessageStoreImpl implements MessageStore {
 			} else {
 				msgId = Integer.toHexString(hdr.getField("Date").hashCode());
 			}
-			msgMap.put(SlingConstants.TEXT_ATTRIBUTE, msgId);
+			msgMap.put(MailArchiveServerConstants.TEXT_ATTRIBUTE, msgId);
 			msgId = makeJcrFriendly(msgId);
 
 			String subject = hdr.getField("Subject").getBody();
@@ -194,20 +194,20 @@ public class MessageStoreImpl implements MessageStore {
 
 		//domain
 		Map<String, Object> props = new HashMap<String, Object>();
-		props.put(resourceTypeKey, SlingConstants.RT_DOMAIN);
-		props.put(SlingConstants.TEXT_ATTRIBUTE, domain);
+		props.put(resourceTypeKey, MailArchiveServerConstants.RT_DOMAIN);
+		props.put(MailArchiveServerConstants.TEXT_ATTRIBUTE, domain);
 		nodeProps.add(props);
 
 		//project
 		props = new HashMap<String, Object>();
-		props.put(resourceTypeKey, SlingConstants.RT_PROJECT);
-		props.put(SlingConstants.TEXT_ATTRIBUTE, project);
+		props.put(resourceTypeKey, MailArchiveServerConstants.RT_PROJECT);
+		props.put(MailArchiveServerConstants.TEXT_ATTRIBUTE, project);
 		nodeProps.add(props);
 
 		//list
 		props = new HashMap<String, Object>();
-		props.put(resourceTypeKey, SlingConstants.RT_LIST);
-		props.put(SlingConstants.TEXT_ATTRIBUTE, list);
+		props.put(resourceTypeKey, MailArchiveServerConstants.RT_LIST);
+		props.put(MailArchiveServerConstants.TEXT_ATTRIBUTE, list);
 		nodeProps.add(props);
 
 		for (int i = 0; i < threadNodesNumber-1; i++) {
@@ -216,8 +216,8 @@ public class MessageStoreImpl implements MessageStore {
 
 		//thread's last node
 		props = new HashMap<String, Object>();
-		props.put(resourceTypeKey, SlingConstants.RT_THREAD);
-		props.put(SlingConstants.TEXT_ATTRIBUTE, threadName);
+		props.put(resourceTypeKey, MailArchiveServerConstants.RT_THREAD);
+		props.put(MailArchiveServerConstants.TEXT_ATTRIBUTE, threadName);
 		nodeProps.add(props);
 
 		return nodeProps;
@@ -256,19 +256,6 @@ public class MessageStoreImpl implements MessageStore {
 			s = s.substring(3).trim();
 		}
 		return s.trim();
-	}
-
-	static class SlingConstants {
-		static final String ARCHIVE_PATH = "/content/mailarchiveserver/archive/";
-		static final String TEXT_ATTRIBUTE = "jcr:text";
-
-		//RT = ResourceType
-		static final String RT_KEY = "sling:resourceType";
-		static final String RT_DOMAIN = "mailarchiveserver/domain";
-		static final String RT_PROJECT = "mailarchiveserver/project";
-		static final String RT_LIST = "mailarchiveserver/list";
-		static final String RT_THREAD = "mailarchiveserver/thread";
-		static final String RT_MESSAGE = "mailarchiveserver/message";
 	}
 
 }
