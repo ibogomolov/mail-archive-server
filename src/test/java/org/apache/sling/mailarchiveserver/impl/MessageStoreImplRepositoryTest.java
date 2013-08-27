@@ -27,7 +27,6 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.discovery.impl.setup.MockedResourceResolver;
 import org.apache.sling.mailarchiveserver.api.MboxParser;
-import org.apache.sling.mailarchiveserver.impl.MessageStoreImpl.SlingConstants;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,7 +47,7 @@ public class MessageStoreImplRepositoryTest {
 	private static final String HEADERS_SUFFIX = "_headers";
 
 	/**
-	 * Code is taken from http://svn.apache.org/repos/asf/sling/trunk/launchpad/test-services/src/main/java/org/apache/sling/launchpad/testservices/serversidetests/WriteableResourcesTest.java
+	 * Some code is taken from http://svn.apache.org/repos/asf/sling/trunk/launchpad/test-services/src/main/java/org/apache/sling/launchpad/testservices/serversidetests/WriteableResourcesTest.java
 	 */
 	@Before
 	public void setup() throws Exception {
@@ -69,6 +68,7 @@ public class MessageStoreImplRepositoryTest {
 
 	@After
 	public void cleanup() throws Exception {
+		resolver.close();
 		resolver = null;
 		testRoot = null;
 		store = null;
@@ -113,6 +113,7 @@ public class MessageStoreImplRepositoryTest {
 			}
 			values.add(value);
 		}
+		sc.close();
 
 		assertEquals("Expecting same number of headers", expectedHeaders.size(), m.keySet().size()-1); // -1 for body
 
@@ -143,22 +144,22 @@ public class MessageStoreImplRepositoryTest {
 	}
 
 	@Test
-	public void testSaveAll() {
+	public void testSaveAll() throws FileNotFoundException {
 		MboxParser parser = new Mime4jMboxParserImpl();
 		final File file = new File(TEST_FILES_FOLDER + MBOX_FILE);
-		store.saveAll(parser.parse(file));
+		store.saveAll(parser.parse(new FileInputStream(file)));
 		assertStructure();
 	}
 
 	private void assertStructure() {
 		List<String> types = new ArrayList<String>();
-		types.add(SlingConstants.RT_DOMAIN);
-		types.add(SlingConstants.RT_PROJECT);
-		types.add(SlingConstants.RT_LIST);
+		types.add(MailArchiveServerConstants.RT_DOMAIN);
+		types.add(MailArchiveServerConstants.RT_PROJECT);
+		types.add(MailArchiveServerConstants.RT_LIST);
 		types.add(null);
 		types.add(null);
-		types.add(SlingConstants.RT_THREAD);
-		types.add(SlingConstants.RT_MESSAGE);
+		types.add(MailArchiveServerConstants.RT_THREAD);
+		types.add(MailArchiveServerConstants.RT_MESSAGE);
 
 		assertLayer(testRoot, types, 0);
 	}

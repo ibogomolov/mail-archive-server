@@ -3,6 +3,7 @@ package org.apache.sling.mailarchiveserver.impl;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,7 +45,7 @@ public class Mime4jMboxParserImplTest {
 
 	@Test
 	public void testParse() throws IOException {
-		Iterator<Message> iter = parser.parse(new File(filePath));
+		Iterator<Message> iter = parser.parse(new FileInputStream(new File(filePath)));
 		
 		int cnt = 0;
 		Set<Message> set = new HashSet<Message>();

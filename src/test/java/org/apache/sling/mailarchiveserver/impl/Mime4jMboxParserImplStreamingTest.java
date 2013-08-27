@@ -17,7 +17,7 @@ public class Mime4jMboxParserImplStreamingTest {
 	private Mime4jMboxParserImpl parser = new Mime4jMboxParserImpl();
 
 	private static final String TEST_FILES_FOLDER = Mime4jMboxParserImplTest.TEST_FILES_FOLDER;
-	private static final double TEST_FILE_RATIO = 2.0;
+	private static final double TEST_FILE_RATIO = 1.2;
 
 	@Test
 	public void testParseIsStreaming() throws IOException {
@@ -43,7 +43,7 @@ public class Mime4jMboxParserImplStreamingTest {
 			fos.close();
 			fos = null;
 			
-			parser.parse(tempf);
+			parser.parse(new FileInputStream(tempf));
 			
 		} catch(OutOfMemoryError e) {
 			fail("Parser is not streaming");

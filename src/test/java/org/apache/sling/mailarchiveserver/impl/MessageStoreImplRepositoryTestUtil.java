@@ -10,6 +10,7 @@ import java.util.Scanner;
 import org.apache.james.mime4j.dom.Header;
 import org.apache.james.mime4j.dom.Message;
 import org.apache.sling.api.resource.ValueMap;
+import org.apache.sling.mailarchiveserver.impl.MessageStoreImpl;
 
 public class MessageStoreImplRepositoryTestUtil {
 
