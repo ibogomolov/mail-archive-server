@@ -144,7 +144,7 @@ public class MessageStoreImplRepositoryTest {
 	}
 
 	@Test
-	public void testSaveAll() throws FileNotFoundException {
+	public void testSaveAll() throws IOException {
 		MboxParser parser = new Mime4jMboxParserImpl();
 		final File file = new File(TEST_FILES_FOLDER + MBOX_FILE);
 		store.saveAll(parser.parse(new FileInputStream(file)));

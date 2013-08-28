@@ -4,11 +4,14 @@ import static java.lang.Character.isLetter;
 import static org.apache.sling.mailarchiveserver.impl.MessageStoreImpl.makeJcrFriendly;
 import static org.apache.sling.mailarchiveserver.impl.MessageStoreImpl.removeRe;
 
+import java.util.Random;
+
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.james.mime4j.dom.Header;
 import org.apache.james.mime4j.dom.Message;
 import org.apache.sling.mailarchiveserver.api.ThreadKeyGenerator;
+import org.apache.sling.mailarchiveserver.util.SubjectLettersEntropy;
 
 @Component
 @Service(ThreadKeyGenerator.class)
@@ -29,9 +32,16 @@ public class ThreadKeyGeneratorImpl implements ThreadKeyGenerator {
 	public String getThreadKey(Message m) {
 		Header hdr = m.getHeader();
 		String subject = hdr.getField("Subject").getBody();
-
-		char prefix1 = assignPrefix(subject, LETTER_POS_WITH_BIGGEST_ENTROPY);
-		char prefix2 = assignPrefix(subject, LETTER_POS_WITH_2ND_BIGGEST_ENTROPY);
+		char prefix1 = 'o';
+		char prefix2 = 'k';
+		try {
+			prefix1 = assignPrefix(subject, LETTER_POS_WITH_BIGGEST_ENTROPY);
+			prefix2 = assignPrefix(subject, LETTER_POS_WITH_2ND_BIGGEST_ENTROPY);
+		} catch (IllegalArgumentException e) {
+			Random rand = new Random();
+			prefix1 = (char) (rand.nextInt(26) + 'A'); 
+			prefix1 = (char) (rand.nextInt(26) + 'a'); 
+		}
 		return ""+prefix1+"/"+prefix1+prefix2+"/"+ makeJcrFriendly(removeRe(subject));
 	}
 
