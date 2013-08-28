@@ -26,26 +26,24 @@ import org.apache.sling.mailarchiveserver.api.MboxParser;
 @Service(MboxParser.class)
 public class Mime4jMboxParserImpl implements MboxParser {
 
-	public Iterator<Message> parse(InputStream is) {
-		try {
-			return new Mime4jParserIterator(is);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return null;
+	public Iterator<Message> parse(InputStream is) throws IOException {
+		return new Mime4jParserIterator(is);
 	}
 
 	static class Mime4jParserIterator implements Iterator<Message> {
 
 		private Iterator<CharBufferWrapper> mboxIterator;
 		private static final int BUFFER_SIZE = 10*1024*1024;
+		String tempFileAbsPath = null;
 
 		public Mime4jParserIterator(InputStream is) throws IOException {
 			File tempFile = null;
+			FileOutputStream fileOS = null;
 			try {
 				// create temp file
 				tempFile = File.createTempFile("MAS_", ".mbox");
-				FileOutputStream fileOS = new FileOutputStream(tempFile);
+				tempFileAbsPath = tempFile.getAbsolutePath();
+				fileOS = new FileOutputStream(tempFile);
 				FileChannel fileChannel = fileOS.getChannel();
 				byte[] buffer = new byte[BUFFER_SIZE];
 				int read = 0;
@@ -54,8 +52,6 @@ public class Mime4jMboxParserImpl implements MboxParser {
 					fileChannel.write(buf2);
 				}
 				fileChannel.close();
-				fileOS.close();
-				is.close();
 
 				createMboxIterator(tempFile);
 			} finally {
@@ -63,17 +59,19 @@ public class Mime4jMboxParserImpl implements MboxParser {
 					tempFile.delete();
 					tempFile = null;
 				}
+				if (fileOS != null) {
+					fileOS.close();
+					fileOS = null;
+				}
+				if (is != null) {
+					is.close();
+					is = null;
+				}
 			}
 		}
 
-		private void createMboxIterator(File f) {
-			try {
-				mboxIterator = MboxIterator.fromFile(f).charset(ENCODER.charset()).build().iterator();
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+		private void createMboxIterator(File f) throws FileNotFoundException, IOException {
+			mboxIterator = MboxIterator.fromFile(f).charset(ENCODER.charset()).build().iterator();
 		}
 
 		public boolean hasNext() {
@@ -82,15 +80,15 @@ public class Mime4jMboxParserImpl implements MboxParser {
 
 		public Message next() {
 			MessageBuilder builder = new DefaultMessageBuilder();
+			Message message = null;
 			try {
-				Message message = builder.parseMessage(mboxIterator.next().asInputStream(ENCODER.charset()));
-				return message;
+				message = builder.parseMessage(mboxIterator.next().asInputStream(ENCODER.charset()));
 			} catch (MimeException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			return null;
+			return message;
 		}
 
 		public void remove() {

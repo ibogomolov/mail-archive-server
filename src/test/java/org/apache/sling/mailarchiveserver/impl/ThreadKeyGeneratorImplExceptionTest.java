@@ -26,8 +26,6 @@ public class ThreadKeyGeneratorImplExceptionTest {
 		final List<Object[]> result = new ArrayList<Object[]>();
 		
 		result.add(new Object[] {null, "subject header should exist"} ); 
-		result.add(new Object[] {"", "subject should not be empty"} ); 
-		result.add(new Object[] {"0123456789 \t!@#$^&()_+=-[]{}/?.>,<\\", "subject should contain at least 1 letter"} ); 
 
 		return result;
 	}

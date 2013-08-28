@@ -50,19 +50,15 @@ public class MessageStoreImpl implements MessageStore {
 
 	private static final Logger logger = LoggerFactory.getLogger(MessageStoreImpl.class);
 
-	private void resolverInit() {
-		try {
-			if (resolver == null) {
-				resolver = resourceResolverFactory.getAdministrativeResourceResolver(null);
-			}
-		} catch (LoginException e) {
-			e.printStackTrace();
+	private void resolverInit() throws LoginException {
+		if (resolver == null) {
+			resolver = resourceResolverFactory.getAdministrativeResourceResolver(null);
 		}
 	}
 
-	public void save(Message msg) {
-		resolverInit();
+	public void save(Message msg) throws IOException {
 		try {
+			resolverInit();
 			Map<String, Object> msgMap = new HashMap<String, Object>();
 			msgMap.put(resourceTypeKey, MailArchiveServerConstants.RT_MESSAGE);
 
@@ -169,16 +165,16 @@ public class MessageStoreImpl implements MessageStore {
 
 			assertResource(parent, msgId, msgMap);
 
-		} catch (IOException e) {
-			e.printStackTrace();
+		} catch (LoginException e) {
+			throw new RuntimeException("LoginException");
 		}
 	}
 
-	public void saveAll(Iterator<Message> iterator) {
+	public void saveAll(Iterator<Message> iterator) throws IOException {
 		int mcount = 0;
 		while (iterator.hasNext()) {
 			Message msg = (Message) iterator.next();
-			
+
 			save(msg);
 
 			mcount++;
@@ -223,27 +219,23 @@ public class MessageStoreImpl implements MessageStore {
 		return nodeProps;
 	}
 
-	private void assertResource(Resource parent, String name, Map<String, Object> newProps) {
+	private void assertResource(Resource parent, String name, Map<String, Object> newProps) throws LoginException, PersistenceException {
 		resolverInit();
-		try {
-			String checkPath = parent.getPath()+"/"+name;
-			final Resource checkResource = resolver.getResource(checkPath);
-			if (checkResource == null) {
-				final Resource newResource = resolver.create(parent, name, newProps);
-				resolver.commit();
-				if (newProps == null) {
-					logger.debug(String.format("Resource created at %s without parameters.", newResource.getPath()));
-				} else {
-					logger.debug(String.format("Resource created at %s with resource type %s.", newResource.getPath(), newProps.get(resourceTypeKey).toString()));
-				}
-			} else if (newProps != null && !newProps.isEmpty()) {
-				final ModifiableValueMap props = checkResource.adaptTo(ModifiableValueMap.class);
-				props.putAll(newProps);
-				resolver.commit();
-				logger.debug(String.format("Resource updated at %s with resource type %s.", checkResource.getPath(), props.get(resourceTypeKey).toString()));
+		String checkPath = parent.getPath()+"/"+name;
+		final Resource checkResource = resolver.getResource(checkPath);
+		if (checkResource == null) {
+			final Resource newResource = resolver.create(parent, name, newProps);
+			resolver.commit();
+			if (newProps == null) {
+				logger.debug(String.format("Resource created at %s without parameters.", newResource.getPath()));
+			} else {
+				logger.debug(String.format("Resource created at %s with resource type %s.", newResource.getPath(), newProps.get(resourceTypeKey).toString()));
 			}
-		} catch (PersistenceException e) {
-			e.printStackTrace();
+		} else if (newProps != null && !newProps.isEmpty()) {
+			final ModifiableValueMap props = checkResource.adaptTo(ModifiableValueMap.class);
+			props.putAll(newProps);
+			resolver.commit();
+			logger.debug(String.format("Resource updated at %s with resource type %s.", checkResource.getPath(), props.get(resourceTypeKey).toString()));
 		}
 	}
 

@@ -11,7 +11,7 @@ import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.api.resource.ValueMap;
 
 /**
- * Util class to calculate entropy of a letter position in the message subject
+ * Util class to calculate entropy of a letter position in the message subject.
  * 
  * @author bogomolo
  */
@@ -24,7 +24,7 @@ public class SubjectLettersEntropy {
 	private static final double THRESHOLD = 0.9;
 
 	private static final double MAX_THEOR_ENTROPY = -Math.log10(1./ALPHABET_LENGTH);
-	
+
 	@Reference
 	ResourceResolverFactory resourceResolverFactory;
 	private ResourceResolver resolver = null;
@@ -46,36 +46,37 @@ public class SubjectLettersEntropy {
 				System.out.println("resourceResolverFactory is NULL");
 			}
 			resolver = resourceResolverFactory.getAdministrativeResourceResolver(null);
+
+			String root = "/content/mailarchiveserver/archive"; // /domain/project/list/t/th/thread/message
+			Resource main = resolver.getResource(root);
+			iterate(main, 6);
+			int[] sum = new int[SAMPLE_LENGTH];
+
+			for (int i = 0; i < sum.length; i++) {
+				for (int j = 0; j < ALPHABET_LENGTH; j++) {
+					sum[i] += count[i][j];
+				}
+			}
+
+			for (int i = 0; i < sum.length; i++) {
+				for (int j = 0; j < ALPHABET_LENGTH; j++) {
+					if (count[i][j] > 0) {
+						double num = count[i][j]/1./sum[i];
+						entropy[i] += - num * Math.log10(num); 
+					}
+				}
+			}
+
+			System.out.println(String.format("%s\t%s\t%s", "charAt","entropy", "sum"));
+			for (int i = 0; i < sum.length; i++) {
+				if (entropy[i] >= MAX_THEOR_ENTROPY*THRESHOLD || sum[i] >= messages*THRESHOLD) 
+					System.out.println(String.format("%d\t%.3f\t%d", i, entropy[i], sum[i]));
+			}
+			out.println("Messages #: "+messages);
+			
 		} catch (LoginException e) {
 			e.printStackTrace();
 		}
-
-		String root = "/content/mailarchiveserver/archive"; // /domain/project/list/t/th/thread/message
-		Resource main = resolver.getResource(root);
-		iterate(main, 6);
-		int[] sum = new int[SAMPLE_LENGTH];
-
-		for (int i = 0; i < sum.length; i++) {
-			for (int j = 0; j < ALPHABET_LENGTH; j++) {
-				sum[i] += count[i][j];
-			}
-		}
-
-		for (int i = 0; i < sum.length; i++) {
-			for (int j = 0; j < ALPHABET_LENGTH; j++) {
-				if (count[i][j] > 0) {
-					double num = count[i][j]/1./sum[i];
-					entropy[i] += - num * Math.log10(num); 
-				}
-			}
-		}
-
-		System.out.println(String.format("%s\t%s\t%s", "charAt","entropy", "sum"));
-		for (int i = 0; i < sum.length; i++) {
-			if (entropy[i] >= MAX_THEOR_ENTROPY*THRESHOLD || sum[i] >= messages*THRESHOLD) 
-				System.out.println(String.format("%d\t%.3f\t%d", i, entropy[i], sum[i]));
-		}
-		out.println("Messages #: "+messages);
 	}
 
 	private void countLetters(Resource r) {

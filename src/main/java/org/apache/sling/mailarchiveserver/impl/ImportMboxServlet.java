@@ -43,7 +43,6 @@ public class ImportMboxServlet extends SlingAllMethodsServlet {
 
 			InputStream mboxIS = param.getInputStream();
 			store.saveAll(parser.parse(mboxIS));
-			mboxIS.close();
 
 			response.sendRedirect(MailArchiveServerConstants.ARCHIVE_PATH + ".html");
 		} else {

@@ -7,10 +7,11 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import org.apache.sling.mailarchiveserver.impl.Mime4jMboxParserImpl.Mime4jParserIterator;
 import org.junit.Test;
 
 /**
- * In this class there is only 1 test that parses a big file. I will take to execute it a while.
+ * In this class there is a test that parses big file. It will take a while to execute.
  */
 public class Mime4jMboxParserImplStreamingTest {
 
@@ -42,9 +43,9 @@ public class Mime4jMboxParserImplStreamingTest {
 			fos.flush();
 			fos.close();
 			fos = null;
-			
+
 			parser.parse(new FileInputStream(tempf));
-			
+
 		} catch(OutOfMemoryError e) {
 			fail("Parser is not streaming");
 		} finally {
@@ -59,5 +60,13 @@ public class Mime4jMboxParserImplStreamingTest {
 			}
 		}
 	}
+
+	@Test
+	public void testTempFileIsDeleted() throws IOException {
+		File testFile = new File(TEST_FILES_FOLDER + "mbox/tomcat-dev-201204.mbox");
+		Mime4jParserIterator iter = (Mime4jParserIterator) parser.parse(new FileInputStream(testFile));
+		if (new File(iter.tempFileAbsPath).exists())
+			fail("Temp file was not deleted");
+	}	
 
 }
