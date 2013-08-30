@@ -11,7 +11,6 @@ import org.apache.felix.scr.annotations.Service;
 import org.apache.james.mime4j.dom.Header;
 import org.apache.james.mime4j.dom.Message;
 import org.apache.sling.mailarchiveserver.api.ThreadKeyGenerator;
-import org.apache.sling.mailarchiveserver.util.SubjectLettersEntropy;
 
 @Component
 @Service(ThreadKeyGenerator.class)
