@@ -14,3 +14,7 @@ maven-eclipse.xml
 .vlt
 .DS_Store
 generated
+sling
+derby.log
+site
+
