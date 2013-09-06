@@ -4,38 +4,61 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>org.apache.sling</groupId>
-	<artifactId>org.apache.sling.mailarchiveserver</artifactId>
-	<packaging>bundle</packaging>
-	<version>0.1.0-SNAPSHOT</version>
-	<name>Mail Archive Server</name>
-	
 	<parent>
 		<groupId>org.apache.sling</groupId>
 		<artifactId>sling</artifactId>
 		<version>16</version>
 	</parent>
+    
+    <groupId>org.apache.sling</groupId>
+    <artifactId>mailarchiveserver-parent</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>Mail Archive Server (Builder)</name>
+    <description>Parent project to build complete Mail Archive Server.</description>
+    <inceptionYear>2013</inceptionYear>
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/ibogomolov/mail-archive-server/issues</url>
+    </issueManagement>
+    <scm>
+        <connection>https://github.com/ibogomolov/mail-archive-server.git</connection>
+        <developerConnection>git@github.com:ibogomolov/mail-archive-server.git</developerConnection>
+        <tag>HEAD</tag>
+        <url>https://github.com/ibogomolov/mail-archive-server</url>
+    </scm>
 
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>org.apache.felix</groupId>
-				<artifactId>maven-scr-plugin</artifactId>
+		        <groupId>org.apache.maven.plugins</groupId>
+		        <artifactId>maven-compiler-plugin</artifactId>
+		        <version>3.1</version>
+		        <configuration>
+		           <source>1.7</source>
+		           <target>1.7</target>
+		        </configuration>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.felix</groupId>
-				<artifactId>maven-bundle-plugin</artifactId>
-				<extensions>true</extensions>
-				<configuration>
-					<instructions>
-						<Sling-Initial-Content>initial-content</Sling-Initial-Content>
-					</instructions>
-				</configuration>
-			</plugin>
+            <plugin>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>2.2</version>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>${basedir}</directory>
+                            <includes>
+                                <include>derby.log</include>
+                                <include>sling</include>
+                            </includes>
+                        </fileset>
+                    </filesets>
+                </configuration>
+            </plugin>
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
-				<version>0.6.2.201302030002</version>
+				<version>0.6.2.201302030002</version> <!-- 0.6.3.201306030806 -->
 				<executions>
 					<execution>
 						<id>prepare-agent</id>
@@ -58,12 +81,12 @@
 						<configuration>
 							<check>
 								start with low values
-								<classRatio>50</classRatio>
-								<instructionRatio>50</instructionRatio>
-								<methodRatio>50</methodRatio>
-								<branchRatio>50</branchRatio>
-								<complexityRatio>50</complexityRatio>
-								<lineRatio>50</lineRatio>
+								<classRatio>1</classRatio>
+								<instructionRatio>1</instructionRatio>
+								<methodRatio>1</methodRatio>
+								<branchRatio>1</branchRatio>
+								<complexityRatio>1</complexityRatio>
+								<lineRatio>1</lineRatio>
 							</check>
 						</configuration>
 					</execution>
@@ -72,89 +95,22 @@
 		</plugins>
 	</build>
 
-	<dependencies>
-		<dependency>
-			<groupId>org.apache.james</groupId>
-			<artifactId>apache-mime4j-core</artifactId>
-			<version>0.8.0-SNAPSHOT</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.james</groupId>
-			<artifactId>apache-mime4j-mbox-iterator</artifactId>
-			<version>0.8.0-SNAPSHOT</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.james</groupId>
-			<artifactId>apache-mime4j-dom</artifactId>
-			<version>0.8.0-SNAPSHOT</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.felix</groupId>
-			<artifactId>org.apache.felix.http.jetty</artifactId>
-			<version>2.2.0</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.osgi</groupId>
-			<artifactId>org.osgi.core</artifactId>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.osgi</groupId>
-			<artifactId>org.osgi.compendium</artifactId>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.sling</groupId>
-			<artifactId>org.apache.sling.api</artifactId>
-			<version>2.4.2</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.sling</groupId>
-			<artifactId>org.apache.sling.jcr.api</artifactId>
-			<version>2.1.0</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>javax.jcr</groupId>
-			<artifactId>jcr</artifactId>
-			<version>2.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.felix</groupId>
-			<artifactId>org.apache.felix.scr.annotations</artifactId>
-		</dependency>
+	<modules>
+        <module>launchpad</module>
+        <module>exchange-connector</module>
+        <module>server</module>
+    </modules>
 
-
-		<!-- Testing -->
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.11</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.mockito</groupId>
-			<artifactId>mockito-core</artifactId>
-			<version>1.9.5</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.sling</groupId>
-			<artifactId>org.apache.sling.commons.testing</artifactId>
-			<version>2.0.14</version>
-			<scope>test</scope>
-		</dependency>
-
-	</dependencies>
-
+    <!-- prevent updating james-mime4j snapshot bundles -->
+    <repositories>
+        <repository>
+            <id>apache.snapshots</id>
+            <name>Apache Snapshot Repository</name>
+            <url>http://repository.apache.org/snapshots</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+    
 </project>

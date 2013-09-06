@@ -40,7 +40,7 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.commons.testing.jcr.RepositoryProvider;
 
-// FIXME get this package with Maven
+// TODO get this package with Maven
 public class MockedResourceResolver implements ResourceResolver {
 
 	private final Repository repository;
@@ -291,22 +291,22 @@ public class MockedResourceResolver implements ResourceResolver {
     }
 
     public String getParentResourceType(Resource resource) {
-        // TODO Auto-generated method stub
+        //  Auto-generated method stub
         return null;
     }
 
     public String getParentResourceType(String resourceType) {
-        // TODO Auto-generated method stub
+        //  Auto-generated method stub
         return null;
     }
 
     public boolean isResourceType(Resource resource, String resourceType) {
-        // TODO Auto-generated method stub
+        //  Auto-generated method stub
         return false;
     }
 
     public void refresh() {
-        // TODO Auto-generated method stub
+        //  Auto-generated method stub
 
     }
 

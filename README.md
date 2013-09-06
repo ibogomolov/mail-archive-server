@@ -48,4 +48,16 @@ Browse your archive by mailing list and conversation thread. Message preview and
 
 KNOWN ISSUES
 ------------
-Sometimes building the Mime4j bundles produces .jar files that are not bundle - META-INF/MANIFEST.MF file does not contain bundle description. We are still not sure what causes that. A workaround is to substitute wrong MANIFEST.MF with the one from target/classes/META-INF/ which is correct.
+Sometimes built project includes Mime4j bundles that happen to be not valid OSGi bundles because META-INF/MANIFEST.MF file does not contain bundle description. The causes is Maven that updates Apache snapshot bundles from Apache Snapshot Repository (http://repository.apache.org/snapshots). This repository is included in a Sling parent pom. To prevent Maven updating Apache snapshot bundles add following to the project's pom.xml:
+
+<repositories>
+    <repository>
+        <id>apache.snapshots</id>
+        <name>Apache Snapshot Repository</name>
+        <url>http://repository.apache.org/snapshots</url>
+        <snapshots>
+            <enabled>false</enabled>
+        </snapshots>
+    </repository>
+</repositories> 
+

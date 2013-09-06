@@ -416,7 +416,7 @@
         <bundle>
             <groupId>org.apache.felix</groupId>
             <artifactId>org.apache.felix.scr</artifactId>
-            <version>1.6.0</version>
+            <version>1.6.2</version>
         </bundle>
         <bundle>
             <groupId>org.apache.felix</groupId>
@@ -525,6 +525,16 @@
     <startLevel level="16">
         <!-- MAS bundles -->
         <bundle>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.mailarchiveserver</artifactId>
+            <version>${project.version}</version>
+        </bundle>
+        <bundle>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.mailarchiveserver.exchange</artifactId>
+            <version>${project.version}</version>
+        </bundle>
+        <bundle>
             <groupId>org.apache.james</groupId>
             <artifactId>apache-mime4j-core</artifactId>
             <version>0.8.0-SNAPSHOT</version>
@@ -538,11 +548,6 @@
             <groupId>org.apache.james</groupId>
             <artifactId>apache-mime4j-mbox-iterator</artifactId>
             <version>0.8.0-SNAPSHOT</version>
-        </bundle>
-        <bundle>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.mailarchiveserver</artifactId>
-            <version>0.1.0-SNAPSHOT</version>
         </bundle>
     </startLevel>
 </bundles>

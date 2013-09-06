@@ -14,7 +14,10 @@ maven-eclipse.xml
 .vlt
 .DS_Store
 generated
-sling
-derby.log
-site
+*.log
+
+Services.wsdl
+config.txt
+-*
+scrapbook.jpage
 

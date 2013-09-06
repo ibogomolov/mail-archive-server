@@ -26,6 +26,7 @@ import org.apache.sling.mailarchiveserver.api.MboxParser;
 @Service(MboxParser.class)
 public class Mime4jMboxParserImpl implements MboxParser {
 
+	@Override
 	public Iterator<Message> parse(InputStream is) throws IOException {
 		return new Mime4jParserIterator(is);
 	}
