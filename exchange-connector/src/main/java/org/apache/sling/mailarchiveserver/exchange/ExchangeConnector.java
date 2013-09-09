@@ -5,12 +5,21 @@ import java.io.IOException;
 import java.net.Authenticator;
 import java.net.MalformedURLException;
 import java.net.PasswordAuthentication;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.ws.Holder;
+
+import org.apache.felix.scr.annotations.Reference;
+import org.apache.james.mime4j.dom.Message;
+import org.apache.james.mime4j.message.MessageImpl;
+import org.apache.sling.mailarchiveserver.api.Ingestor;
+import org.apache.sling.mailarchiveserver.api.SchedulableMailServerConnector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import exchange2007.ws.client.ArrayOfRealItemsType;
 import exchange2007.ws.client.ArrayOfResponseMessagesType;
@@ -38,26 +47,34 @@ import exchange2007.ws.client.NonEmptyArrayOfBaseItemIdsType;
 import exchange2007.ws.client.RequestServerVersion;
 import exchange2007.ws.client.ResponseMessageType;
 
-//@Component
-public class ExchangeConnector {
+public class ExchangeConnector implements SchedulableMailServerConnector {
 
-	private static final String CONFIG_FILE = "/Users/bogomolo/workspace/MailArchiveServer/launchpad/config.txt"; // TODO change
-	private static String USERNAME;
-	private static String PASSWORD;
-	private static String WSDL_FILE_LOCATION;
-//	private static final Logger logger = LoggerFactory.getLogger(ExchangeConnector.class);
-	
-//	@Activate
+	private final String CONFIG_FILE = "config.txt"; // TODO remove
+	private int batchSize;
+	private byte priority;
+	private int schedulingInterval;
+
+	private String username;
+	private String password;
+	private String wsdlFileLocation;
+
+	private static final Logger logger = LoggerFactory.getLogger(ExchangeConnector.class);
+	@Reference
+	private Ingestor ingestor;
+
+	// TODO add constructors
+
+	// TODO move to constructors
 	public void activate() throws IOException {
 		FileInputStream config = null;
 		try {
 			config = new FileInputStream(CONFIG_FILE);
 			Properties props = new Properties();
 			props.load(config);
-			WSDL_FILE_LOCATION = props.getProperty("wsdlPath");
-			USERNAME = props.getProperty("username");
-			PASSWORD = props.getProperty("password");
-//			logger.info("Configuration loaded from file."); // TODO uncomment
+			wsdlFileLocation = props.getProperty("wsdlPath");
+			username = props.getProperty("username");
+			password = props.getProperty("password");
+			logger.info("Configuration loaded from file."); 
 		} finally {
 			if (config != null) {
 				config.close();
@@ -66,21 +83,21 @@ public class ExchangeConnector {
 		}
 	}
 
-	public void getNewMessages() throws MalformedURLException { 
+	@Override
+	public void checkNewMessages() { 
 
 		// TODO fixme for production
-		
+
+		URL wsdlURL = null;
 		try {
-			activate();
-		} catch (IOException e) {
+			wsdlURL = new URL(wsdlFileLocation);
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-//		URL wsdlURL = new URL(WSDL_FILE_LOCATION);
-//		ExchangeServices service = new ExchangeServices(wsdlURL);
-		ExchangeServices service = new ExchangeServices();
+		ExchangeServices service = new ExchangeServices(wsdlURL);
 		ExchangeServicePortType port = service.getExchangeServicePort();
-		NtlmAuthenticator authenticator = new NtlmAuthenticator(USERNAME, PASSWORD);
+		NtlmAuthenticator authenticator = new NtlmAuthenticator(username, password);
 		Authenticator.setDefault(authenticator);
 
 		// CHECK INBOX
@@ -106,7 +123,7 @@ public class ExchangeConnector {
 
 		port.findItem(findRequest, requestVersion, findItemResult);
 
-		List<BaseItemIdType> messagesId = new ArrayList<BaseItemIdType>();
+		List<BaseItemIdType> messageIds = new ArrayList<BaseItemIdType>();
 
 		FindItemResponseType findItemResponse = findItemResult.value;
 		ArrayOfResponseMessagesType arrayOfResponseMessages = findItemResponse.getResponseMessages();
@@ -118,7 +135,7 @@ public class ExchangeConnector {
 			List<ItemType> items = itemsElement.getItemOrMessageOrCalendarItem();
 			for( ItemType item : items ) {
 				MessageType message = (MessageType) item;
-				messagesId.add(message.getItemId());
+				messageIds.add(message.getItemId());
 			}
 		}
 
@@ -132,7 +149,7 @@ public class ExchangeConnector {
 
 		NonEmptyArrayOfBaseItemIdsType itemIds = new NonEmptyArrayOfBaseItemIdsType();
 		List<BaseItemIdType> itemsList = itemIds.getItemIdOrOccurrenceItemIdOrRecurringMasterItemId();
-		itemsList.addAll(messagesId);
+		itemsList.addAll(messageIds);
 		getRequest.setItemIds(itemIds);
 
 		Holder<GetItemResponseType> getItemResult = new Holder<GetItemResponseType>();
@@ -148,16 +165,19 @@ public class ExchangeConnector {
 			List<ItemType> items = itemsElement.getItemOrMessageOrCalendarItem();
 			for( ItemType item : items ) {
 				MessageType message = (MessageType) item;
-				String title = message.getItemId().getId() +"  "+ message.getItemId().getChangeKey();
-				System.out.println(title + ":");
-				System.out.println("\tSubj: "+message.getSubject());
-				System.out.println("\tFrom: "+message.getSender().getMailbox().getName());
-				System.out.println("\tFrom: "+message.getSender().getMailbox().getEmailAddress());
-				System.out.println("\tFrom: "+message.getSender().getMailbox().getMailboxType().name());
-				System.out.println("\tFrom: "+message.getSender().getMailbox().getRoutingType());
-				System.out.println("\tDate: "+message.getDateTimeSent());
-				System.out.println("\tBody: "+message.getBody().getValue());
-				System.out.println("*** EOM ***\n");
+				Message mime4jMessage = convertExchangeMessageToMime4jMessage(message);
+				//				store.save(mime4jMessage);
+
+				//				String title = message.getItemId().getId() +"  "+ message.getItemId().getChangeKey();
+				//				System.out.println(title + ":");
+				//				System.out.println("\tSubj: "+message.getSubject());
+				//				System.out.println("\tFrom: "+message.getSender().getMailbox().getName());
+				//				System.out.println("\tFrom: "+message.getSender().getMailbox().getEmailAddress());
+				//				System.out.println("\tFrom: "+message.getSender().getMailbox().getMailboxType().name());
+				//				System.out.println("\tFrom: "+message.getSender().getMailbox().getRoutingType());
+				//				System.out.println("\tDate: "+message.getDateTimeSent());
+				//				System.out.println("\tBody: "+message.getBody().getValue());
+				//				System.out.println("*** EOM ***\n");
 			}
 		}
 
@@ -165,20 +185,39 @@ public class ExchangeConnector {
 
 		//		port.deleteItem(request, requestVersion, deleteItemResult); 
 		// FIXME continue
-		
+
+	}
+
+	public static Message convertExchangeMessageToMime4jMessage(MessageType in) {
+		Message out = new MessageImpl();
+		//		out.se
+
+		return out;
+	}
+
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void removeMessages(Iterable<String> ids) {
+		// TODO Auto-generated method stub
+
 	}
 
 	private static class NtlmAuthenticator extends Authenticator {
-
+	
 		private final String username;
 		private final String password;
-
+	
 		public NtlmAuthenticator(final String username, final String password) {
 			super();
 			this.username = username;
 			this.password = password; 
 		}
-
+	
 		@Override
 		public PasswordAuthentication getPasswordAuthentication() {
 			return (new PasswordAuthentication (username, password.toCharArray()));
