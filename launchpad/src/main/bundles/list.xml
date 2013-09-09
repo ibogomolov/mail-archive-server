@@ -526,12 +526,12 @@
         <!-- MAS bundles -->
         <bundle>
             <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.mailarchiveserver</artifactId>
+            <artifactId>mailarchiveserver</artifactId>
             <version>${project.version}</version>
         </bundle>
         <bundle>
             <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.mailarchiveserver.exchange</artifactId>
+            <artifactId>mailarchiveserver-exchange</artifactId>
             <version>${project.version}</version>
         </bundle>
         <bundle>

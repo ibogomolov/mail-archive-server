@@ -96,9 +96,9 @@
 	</build>
 
 	<modules>
-        <module>launchpad</module>
-        <module>exchange-connector</module>
         <module>server</module>
+        <module>exchange-connector</module>
+        <module>launchpad</module>
     </modules>
 
     <!-- prevent updating james-mime4j snapshot bundles -->

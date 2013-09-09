@@ -17,78 +17,78 @@ import javax.xml.ws.WebServiceFeature;
  * Generated source version: 2.2
  * 
  */
-@WebServiceClient(name = "ExchangeServices", targetNamespace = "http://schemas.microsoft.com/exchange/services/2006/messages", wsdlLocation = "file:/Users/bogomolo/workspace/MailArchiveServer/launchpad/Services.wsdl") // TODO change
+@WebServiceClient(name = "ExchangeServices", targetNamespace = "http://schemas.microsoft.com/exchange/services/2006/messages")
 public class ExchangeServices
-    extends Service
+extends Service
 {
 
-    private final static URL EXCHANGESERVICES_WSDL_LOCATION;
-    private final static WebServiceException EXCHANGESERVICES_EXCEPTION;
-    private final static QName EXCHANGESERVICES_QNAME = new QName("http://schemas.microsoft.com/exchange/services/2006/messages", "ExchangeServices");
+	private final static URL EXCHANGESERVICES_WSDL_LOCATION;
+	private final static WebServiceException EXCHANGESERVICES_EXCEPTION;
+	private final static QName EXCHANGESERVICES_QNAME = new QName("http://schemas.microsoft.com/exchange/services/2006/messages", "ExchangeServices");
 
-    static {
-        URL url = null;
-        WebServiceException e = null;
-        try {
-            url = new URL("file:/Users/bogomolo/workspace/MailArchiveServer/launchpad/Services.wsdl"); // TODO change
-        } catch (MalformedURLException ex) {
-            e = new WebServiceException(ex);
-        }
-        EXCHANGESERVICES_WSDL_LOCATION = url;
-        EXCHANGESERVICES_EXCEPTION = e;
-    }
+	static {
+		URL url = null;
+		WebServiceException e = null;
+		try {
+			url = new URL(""); 
+		} catch (MalformedURLException ex) {
+			e = new WebServiceException(ex);
+		}
+		EXCHANGESERVICES_WSDL_LOCATION = url;
+		EXCHANGESERVICES_EXCEPTION = e;
+	}
 
-    public ExchangeServices() {
-        super(__getWsdlLocation(), EXCHANGESERVICES_QNAME);
-    }
+	public ExchangeServices() {
+		super(__getWsdlLocation(), EXCHANGESERVICES_QNAME);
+	}
 
-    public ExchangeServices(WebServiceFeature... features) {
-        super(__getWsdlLocation(), EXCHANGESERVICES_QNAME, features);
-    }
+	public ExchangeServices(WebServiceFeature... features) {
+		super(__getWsdlLocation(), EXCHANGESERVICES_QNAME, features);
+	}
 
-    public ExchangeServices(URL wsdlLocation) {
-        super(wsdlLocation, EXCHANGESERVICES_QNAME);
-    }
+	public ExchangeServices(URL wsdlLocation) {
+		super(wsdlLocation, EXCHANGESERVICES_QNAME);
+	}
 
-    public ExchangeServices(URL wsdlLocation, WebServiceFeature... features) {
-        super(wsdlLocation, EXCHANGESERVICES_QNAME, features);
-    }
+	public ExchangeServices(URL wsdlLocation, WebServiceFeature... features) {
+		super(wsdlLocation, EXCHANGESERVICES_QNAME, features);
+	}
 
-    public ExchangeServices(URL wsdlLocation, QName serviceName) {
-        super(wsdlLocation, serviceName);
-    }
+	public ExchangeServices(URL wsdlLocation, QName serviceName) {
+		super(wsdlLocation, serviceName);
+	}
 
-    public ExchangeServices(URL wsdlLocation, QName serviceName, WebServiceFeature... features) {
-        super(wsdlLocation, serviceName, features);
-    }
+	public ExchangeServices(URL wsdlLocation, QName serviceName, WebServiceFeature... features) {
+		super(wsdlLocation, serviceName, features);
+	}
 
-    /**
-     * 
-     * @return
-     *     returns ExchangeServicePortType
-     */
-    @WebEndpoint(name = "ExchangeServicePort")
-    public ExchangeServicePortType getExchangeServicePort() {
-        return super.getPort(new QName("http://schemas.microsoft.com/exchange/services/2006/messages", "ExchangeServicePort"), ExchangeServicePortType.class);
-    }
+	/**
+	 * 
+	 * @return
+	 *     returns ExchangeServicePortType
+	 */
+	@WebEndpoint(name = "ExchangeServicePort")
+	public ExchangeServicePortType getExchangeServicePort() {
+		return super.getPort(new QName("http://schemas.microsoft.com/exchange/services/2006/messages", "ExchangeServicePort"), ExchangeServicePortType.class);
+	}
 
-    /**
-     * 
-     * @param features
-     *     A list of {@link javax.xml.ws.WebServiceFeature} to configure on the proxy.  Supported features not in the <code>features</code> parameter will have their default values.
-     * @return
-     *     returns ExchangeServicePortType
-     */
-    @WebEndpoint(name = "ExchangeServicePort")
-    public ExchangeServicePortType getExchangeServicePort(WebServiceFeature... features) {
-        return super.getPort(new QName("http://schemas.microsoft.com/exchange/services/2006/messages", "ExchangeServicePort"), ExchangeServicePortType.class, features);
-    }
+	/**
+	 * 
+	 * @param features
+	 *     A list of {@link javax.xml.ws.WebServiceFeature} to configure on the proxy.  Supported features not in the <code>features</code> parameter will have their default values.
+	 * @return
+	 *     returns ExchangeServicePortType
+	 */
+	@WebEndpoint(name = "ExchangeServicePort")
+	public ExchangeServicePortType getExchangeServicePort(WebServiceFeature... features) {
+		return super.getPort(new QName("http://schemas.microsoft.com/exchange/services/2006/messages", "ExchangeServicePort"), ExchangeServicePortType.class, features);
+	}
 
-    private static URL __getWsdlLocation() {
-        if (EXCHANGESERVICES_EXCEPTION!= null) {
-            throw EXCHANGESERVICES_EXCEPTION;
-        }
-        return EXCHANGESERVICES_WSDL_LOCATION;
-    }
+	private static URL __getWsdlLocation() {
+		if (EXCHANGESERVICES_EXCEPTION!= null) {
+			throw EXCHANGESERVICES_EXCEPTION;
+		}
+		return EXCHANGESERVICES_WSDL_LOCATION;
+	}
 
 }
