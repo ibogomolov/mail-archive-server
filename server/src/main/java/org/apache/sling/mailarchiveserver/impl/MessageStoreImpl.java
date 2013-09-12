@@ -110,12 +110,22 @@ public class MessageStoreImpl implements MessageStore {
 
 
 			// message JCR path
+			// TODO check if list-id is list.domain.com, not dev.sling.apache.org
 			String listId = hdr.getField("List-Id").getBody();
 			listId = listId.substring(1, listId.length()-1);
-			String[] split = listId.split("\\.", 3);
-			String list = split[0];
-			String project = split[1];
-			String domain = split[2];
+			
+			String[] testSplit = listId.split("\\.");
+			if (testSplit.length > 4 || testSplit.length < 3) {
+				throw new RuntimeException("List-Id is invalid: too many dots.");
+			}
+			String[] split = listId.split("\\.", testSplit.length - 1);
+			int idx = 0;
+			String list = split[idx++];
+			String project = "default";
+			if (split.length == 3) {
+				project = split[idx++];
+			}
+			String domain = split[idx++];
 			String msgId;
 			if (hdr.getField("Message-ID") != null) {
 				msgId = hdr.getField("Message-ID").getBody();

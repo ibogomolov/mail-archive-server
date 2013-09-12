@@ -3,19 +3,24 @@ package org.apache.sling.mailarchiveserver.exchange;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.Authenticator;
-import java.net.MalformedURLException;
 import java.net.PasswordAuthentication;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.ws.Holder;
 
 import org.apache.felix.scr.annotations.Reference;
+import org.apache.james.mime4j.dom.Header;
 import org.apache.james.mime4j.dom.Message;
+import org.apache.james.mime4j.dom.address.Mailbox;
+import org.apache.james.mime4j.message.BodyBuilder;
 import org.apache.james.mime4j.message.MessageImpl;
+import org.apache.james.mime4j.stream.RawField;
 import org.apache.sling.mailarchiveserver.api.Connector;
 import org.apache.sling.mailarchiveserver.api.Pipeline;
 import org.slf4j.Logger;
@@ -32,6 +37,7 @@ import exchange2007.ws.client.DeleteItemType;
 import exchange2007.ws.client.DisposalType;
 import exchange2007.ws.client.DistinguishedFolderIdNameType;
 import exchange2007.ws.client.DistinguishedFolderIdType;
+import exchange2007.ws.client.EmailAddressType;
 import exchange2007.ws.client.ExchangeServicePortType;
 import exchange2007.ws.client.ExchangeServices;
 import exchange2007.ws.client.ExchangeVersionType;
@@ -53,8 +59,8 @@ import exchange2007.ws.client.ResponseMessageType;
 
 public class ExchangeConnector implements Connector {
 
-	private byte priority;
-
+	private byte priority; // PROD not used for now
+	private Set<String> mailingLists;
 	private String username;
 	private String password;
 	private String wsdlPath;
@@ -67,7 +73,6 @@ public class ExchangeConnector implements Connector {
 
 
 	public ExchangeConnector(String configFilePath) {
-		// TODO refactor
 		FileInputStream config = null;
 		try {
 			config = new FileInputStream(configFilePath);
@@ -75,7 +80,21 @@ public class ExchangeConnector implements Connector {
 			props.load(config);
 
 			priority = new Byte(props.getProperty("priority"));
-			setExchangeServerCredentialsAndInitializeServicePort(props);
+			wsdlPath = props.getProperty("wsdlPath");
+			username = props.getProperty("username");
+			password = props.getProperty("password");
+			mailingLists = new HashSet<String>();
+			String lists = props.getProperty("lists");
+			for (String list : lists.split(",")) {
+				mailingLists.add(list.trim());
+			}
+			
+			// init ExchangeServicePortType
+			URL wsdlURL = new URL(wsdlPath);
+			ExchangeServices service = new ExchangeServices(wsdlURL);
+			port = service.getExchangeServicePort();
+			NtlmAuthenticator authenticator = new NtlmAuthenticator(username, password);
+			Authenticator.setDefault(authenticator);
 		} catch (IOException e) {
 			throw new RuntimeException(e.getMessage());
 		} finally {
@@ -87,60 +106,12 @@ public class ExchangeConnector implements Connector {
 			}
 		}
 	}
-
-	public ExchangeConnector(byte priority, String credentialsFilePath) {
-		Properties props = getPropertiesFromFile(credentialsFilePath);
-		this.priority = priority;
-		setExchangeServerCredentialsAndInitializeServicePort(props);
-	}
-
-	private void setExchangeServerCredentialsAndInitializeServicePort(Properties props) {
-		wsdlPath = props.getProperty("wsdlPath");
-		username = props.getProperty("username");
-		password = props.getProperty("password");
-		initExchangeServicePortType();
-	}
-
-	private ExchangeServicePortType initExchangeServicePortType() {
-		URL wsdlURL = null;
-		try {
-			wsdlURL = new URL(wsdlPath);
-		} catch (MalformedURLException e) {
-			throw new RuntimeException(e.getMessage());
-		}
-		ExchangeServices service = new ExchangeServices(wsdlURL);
-		ExchangeServicePortType port = service.getExchangeServicePort();
-		NtlmAuthenticator authenticator = new NtlmAuthenticator(username, password);
-		Authenticator.setDefault(authenticator);
-		return port;
-	}
-
-	public static Properties getPropertiesFromFile(String path) {
-		FileInputStream config = null;
-		try {
-			config = new FileInputStream(path);
-			Properties props = new Properties();
-			props.load(config);
-			logger.info("Configuration loaded from file."); 
-			return props;
-		} catch (IOException e) {
-			throw new RuntimeException(e.getMessage());
-		} finally {
-			if (config != null) {
-				try {
-					config.close();
-				} catch (IOException e) {}
-				config = null;				
-			}
-		}
-	}
-
 
 	@Override
 	public int checkNewMessages(int limit) { 
 
 		List<BaseItemIdType> messageIds = null;
-		boolean deletion = true;
+		boolean deletion = false; // FIXME set to true
 
 		try {
 
@@ -205,20 +176,18 @@ public class ExchangeConnector implements Connector {
 			GetItemResponseType getItemResponse = getItemResult.value;
 			ArrayOfResponseMessagesType arrayOfResponseMessages2 = getItemResponse.getResponseMessages();
 			List<JAXBElement<? extends ResponseMessageType>> responseMessageTypeList2 = arrayOfResponseMessages2.getCreateItemResponseMessageOrDeleteItemResponseMessageOrGetItemResponseMessage();
+			List<Message> messages = new ArrayList<Message>();
 			for (JAXBElement<? extends ResponseMessageType> jaxbElement : responseMessageTypeList2) {
 				ItemInfoResponseMessageType response = (ItemInfoResponseMessageType) jaxbElement.getValue();
 				ArrayOfRealItemsType itemsElement = response.getItems();
 				List<ItemType> items = itemsElement.getItemOrMessageOrCalendarItem();
-				List<Message> messages = new ArrayList<Message>();
 				for( ItemType item : items ) {
 					MessageType message = (MessageType) item;
-					Message mime4jMessage = convertExchangeMessageToMime4jMessage(message);
-					messages.add(mime4jMessage);
+					messages.addAll(convertExchangeMessageToMime4jMessages(message));
 				}
-				if (!mailProcessor.processNewMasseges(messages.iterator())) {
-					deletion = false;
-					break;
-				}
+			}
+			if (!mailProcessor.processNewMasseges(messages.iterator())) {
+				deletion = false;
 			}
 
 			return messageIds.size();
@@ -260,23 +229,104 @@ public class ExchangeConnector implements Connector {
 	}
 
 
-	public static Message convertExchangeMessageToMime4jMessage(MessageType in) {
-		// TODO write
-		Message out = new MessageImpl();
-		//		out.se
+	public List<Message> convertExchangeMessageToMime4jMessages(MessageType in) {
 
-		//		String title = message.getItemId().getId() +"  "+ message.getItemId().getChangeKey();
-		//				System.out.println(title + ":");
-		//				System.out.println("\tSubj: "+message.getSubject());
-		//				System.out.println("\tFrom: "+message.getSender().getMailbox().getName());
-		//				System.out.println("\tFrom: "+message.getSender().getMailbox().getEmailAddress());
-		//				System.out.println("\tFrom: "+message.getSender().getMailbox().getMailboxType().name());
-		//				System.out.println("\tFrom: "+message.getSender().getMailbox().getRoutingType());
-		//				System.out.println("\tDate: "+message.getDateTimeSent());
-		//				System.out.println("\tBody: "+message.getBody().getValue());
-		//				System.out.println("*** EOM ***\n");
+		List<Message> result = new ArrayList<Message>();
+		Message sample = new MessageImpl();
+		Set<String> recepients = new HashSet<String>();
 
-		return out;
+		// Message-Id
+		sample.createMessageId(in.getInternetMessageId());
+
+		// From (sender)
+		sample.setSender(convertMailAddressTypeToMailbox(in.getSender().getMailbox()));
+
+		// To
+		final List<Mailbox> toList = convertMailAddressTypeListToMailboxList(in.getToRecipients().getMailbox());
+		for (Mailbox mailbox : toList) {
+			recepients.add(mailbox.getAddress().trim());
+		}
+		sample.setTo(toList);
+
+		// Cc
+		final List<Mailbox> ccList = convertMailAddressTypeListToMailboxList(in.getCcRecipients().getMailbox());
+		for (Mailbox mailbox : ccList) {
+			recepients.add(mailbox.getAddress().trim());
+		}
+		sample.setCc(ccList);
+
+		// Subject
+		sample.setSubject(in.getSubject());
+
+		// Date (sent date)
+		sample.setDate(in.getDateTimeSent().toGregorianCalendar().getTime());
+
+		// Body
+		BodyBuilder bb = BodyBuilder.create();
+		bb.setText(in.getBody().getValue());
+		sample.setBody(bb.build());
+
+		for (String address : recepients) {
+			if (mailingLists.contains(address)) {
+				Message out = new MessageImpl();
+				out.setBody(sample.getBody());
+				Header h = sample.getHeader();
+				// In-Reply-To
+				h.addField(new RawField(AdditionalFieldName.IN_REPLY_TO, in.getInReplyTo()));
+				// List-Id
+				h.addField(new RawField(AdditionalFieldName.LIST_ID, address.replace("@", ".")));
+				out.setHeader(h);
+				result.add(out);
+			}
+		}
+
+		// TODO remove
+		System.out.println("*** begin ***");
+		//		String title = in.getItemId().getId() +"  "+ in.getItemId().getChangeKey();
+		//		System.out.println(title + ":");
+		//		System.out.println("\t getOriginalDisplayName: "+in.getSender().getMailbox().getOriginalDisplayName());
+		//		System.out.println("\t getSender().getMailbox().getName: "+in.getSender().getMailbox().getName());
+		//		System.out.println("\t getSender().getMailbox().getEmailAddress: "+in.getSender().getMailbox().getEmailAddress());
+		//		System.out.println("\t getRoutingType: "+in.getSender().getMailbox().getRoutingType());
+		//		System.out.println("\t getMailboxType().name: "+in.getSender().getMailbox().getMailboxType().name());
+		//		System.out.println("\t getItemId().getId: "+in.getSender().getMailbox().getItemId().getId()); // NPE
+		//		System.out.println("\tDate: "+in.getDateTimeSent());
+		//		System.out.println("\tBody: "+in.getBody().getValue());
+		//		System.out.println("\t getCulture: "+in.getCulture()); // en-US
+		//		System.out.println("\tSubj: "+in.getSubject());
+		//		System.out.println("\t getConversationTopic: "+in.getConversationTopic());
+		//		System.out.println("\t getToRecipients: "+in.getToRecipients().getMailbox().get(0).getEmailAddress());
+		//		System.out.println("\t getCcRecipients: "+in.getCcRecipients().getMailbox().get(0).getEmailAddress());
+		//		System.out.println("\t getBccRecipients: "+in.getBccRecipients().getMailbox().get(0).getEmailAddress()); NPE
+		//		System.out.println("\t getDisplayTo: "+in.getDisplayTo());
+		//		System.out.println("\t getFrom().getMailbox().getName: "+in.getFrom().getMailbox().getName());
+		//		System.out.println("\t getFrom().getMailbox().getEmailAddress: "+in.getFrom().getMailbox().getEmailAddress());
+		//		System.out.println("\t getUniqueBody().getValue: "+in.getUniqueBody().getValue()); // NPE
+		//		System.out.println("\t getInReplyTo:  "+in.getInReplyTo()); // this =
+		//		System.out.println("\t getReferences: "+in.getReferences()); // = that
+		//		System.out.println("\t getInternetMessageId: "+in.getInternetMessageId()); // this is Message-Id
+		//		System.out.println("\t getReceivedBy().getMailbox().getName: "+in.getReceivedBy().getMailbox().getName());
+		//		System.out.println("\t getReceivedBy().getMailbox().getEmailAddress: "+in.getReceivedBy().getMailbox().getEmailAddress());
+		//		System.out.println("\t getCulture: "+in.get);
+		//		System.out.println("\t getCulture: "+in.get);
+		//		System.out.println("\t getCulture: "+in.get);
+		//		System.out.println("\t getCulture: "+in.get);
+		System.out.println("*** EOM ***\n");
+
+		return result;
+	}
+
+	private static Mailbox convertMailAddressTypeToMailbox(EmailAddressType in) {
+		String[] email = in.getEmailAddress().split("@", 2);
+		return new Mailbox(in.getName(), email[0], email[1]);
+	}
+
+	private static List<Mailbox> convertMailAddressTypeListToMailboxList(List<EmailAddressType> inList) {
+		List<Mailbox> outList = new ArrayList<>();
+		for (EmailAddressType el : inList) {
+			outList.add(convertMailAddressTypeToMailbox(el));
+		}
+		return outList;
 	}
 
 	private static class NtlmAuthenticator extends Authenticator {
