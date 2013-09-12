@@ -26,7 +26,7 @@ public class ConnectorScheduler {
 		// TODO check Bertran's example - sling.ScriptEngineManagerFactory
 		while (true) {
 			logger.info("Checking new mail.");
-			Collections.sort(scheduledConnectors, null); // TODO comparator
+			Collections.sort(scheduledConnectors, null); // PROD comparator, introduce class abstract PriorityConnector implements Connector
 			executionQueue = new ArrayDeque<>(scheduledConnectors);
 			while (!executionQueue.isEmpty()) {
 				Connector c = executionQueue.remove();

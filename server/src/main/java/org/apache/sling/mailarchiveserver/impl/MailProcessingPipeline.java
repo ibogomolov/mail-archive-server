@@ -23,7 +23,6 @@ public class MailProcessingPipeline implements Pipeline {
 	
 	@Override
 	public boolean processNewMasseges(Iterator<Message> iter) {
-		// TODO extend to one email sent to several mailing lists
 		while (iter.hasNext()) {
 			try {
 				store.save(iter.next());
