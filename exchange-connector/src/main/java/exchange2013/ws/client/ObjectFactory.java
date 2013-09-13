@@ -1,5 +1,5 @@
 
-package exchange2007.ws.client;
+package exchange2013.ws.client;
 
 import java.util.List;
 import javax.xml.bind.JAXBElement;

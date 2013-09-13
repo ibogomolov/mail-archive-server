@@ -1,5 +1,5 @@
 
-package exchange2007.ws.client;
+package exchange2013.ws.client;
 
 import java.util.HashMap;
 import java.util.Map;

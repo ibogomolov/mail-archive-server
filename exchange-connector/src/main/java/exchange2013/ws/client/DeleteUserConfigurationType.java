@@ -1,5 +1,5 @@
 
-package exchange2007.ws.client;
+package exchange2013.ws.client;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
