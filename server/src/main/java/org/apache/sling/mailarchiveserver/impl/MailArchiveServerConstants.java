@@ -4,6 +4,7 @@ public class MailArchiveServerConstants {
 	
 	static final String ARCHIVE_PATH = "/content/mailarchiveserver/archive/";
 	static final String TEXT_ATTRIBUTE = "jcr:text";
+	static final String PROJECT_ATTRIBUTE = "hasProject";
 
 	//RT = ResourceType
 	static final String RT_KEY = "sling:resourceType";

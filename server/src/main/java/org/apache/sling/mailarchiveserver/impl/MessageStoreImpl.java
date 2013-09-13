@@ -110,7 +110,7 @@ public class MessageStoreImpl implements MessageStore {
 
 
 			// message JCR path
-			// TODO check if list-id is list.domain.com, not dev.sling.apache.org
+			// TODO path should be archivePath/[project.]domain/list/threadPath/message
 			String listId = hdr.getField("List-Id").getBody();
 			listId = listId.substring(1, listId.length()-1);
 			
@@ -136,6 +136,7 @@ public class MessageStoreImpl implements MessageStore {
 			msgMap.put(MailArchiveServerConstants.TEXT_ATTRIBUTE, msgId);
 			msgId = makeJcrFriendly(msgId);
 
+			// TODO some messages doesn't have subjects
 			String subject = hdr.getField("Subject").getBody();
 			String threadName = removeRe(subject);
 
@@ -195,25 +196,25 @@ public class MessageStoreImpl implements MessageStore {
 		logger.info(mcount+" messages processed.");
 	}
 
-	private List<Map<String, Object>> generateNodesProperties(String domain, String project, String list, String threadName, int threadNodesNumber) {
+	private List<Map<String, Object>> generateNodesProperties(String domainName, String projectName, String listName, String threadName, int threadNodesNumber) {
 		List<Map<String, Object>> nodeProps = new ArrayList<Map<String, Object>>();
 
 		//domain
 		Map<String, Object> props = new HashMap<String, Object>();
 		props.put(resourceTypeKey, MailArchiveServerConstants.RT_DOMAIN);
-		props.put(MailArchiveServerConstants.TEXT_ATTRIBUTE, domain);
+		props.put(MailArchiveServerConstants.TEXT_ATTRIBUTE, domainName);
 		nodeProps.add(props);
 
 		//project
 		props = new HashMap<String, Object>();
 		props.put(resourceTypeKey, MailArchiveServerConstants.RT_PROJECT);
-		props.put(MailArchiveServerConstants.TEXT_ATTRIBUTE, project);
+		props.put(MailArchiveServerConstants.TEXT_ATTRIBUTE, projectName);
 		nodeProps.add(props);
 
 		//list
 		props = new HashMap<String, Object>();
 		props.put(resourceTypeKey, MailArchiveServerConstants.RT_LIST);
-		props.put(MailArchiveServerConstants.TEXT_ATTRIBUTE, list);
+		props.put(MailArchiveServerConstants.TEXT_ATTRIBUTE, listName);
 		nodeProps.add(props);
 
 		for (int i = 0; i < threadNodesNumber-1; i++) {

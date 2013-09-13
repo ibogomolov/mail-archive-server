@@ -14,11 +14,15 @@ import java.util.Set;
 import javax.xml.bind.JAXBElement;
 import javax.xml.ws.Holder;
 
+import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
+import org.apache.felix.scr.annotations.Service;
 import org.apache.james.mime4j.dom.Header;
 import org.apache.james.mime4j.dom.Message;
 import org.apache.james.mime4j.dom.address.Mailbox;
+import org.apache.james.mime4j.dom.field.FieldName;
 import org.apache.james.mime4j.message.BodyBuilder;
+import org.apache.james.mime4j.message.HeaderImpl;
 import org.apache.james.mime4j.message.MessageImpl;
 import org.apache.james.mime4j.stream.RawField;
 import org.apache.sling.mailarchiveserver.api.Connector;
@@ -26,37 +30,39 @@ import org.apache.sling.mailarchiveserver.api.Pipeline;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import exchange2007.ws.client.ArrayOfRealItemsType;
-import exchange2007.ws.client.ArrayOfResponseMessagesType;
-import exchange2007.ws.client.BaseFolderIdType;
-import exchange2007.ws.client.BaseItemIdType;
-import exchange2007.ws.client.BodyTypeResponseType;
-import exchange2007.ws.client.DefaultShapeNamesType;
-import exchange2007.ws.client.DeleteItemResponseType;
-import exchange2007.ws.client.DeleteItemType;
-import exchange2007.ws.client.DisposalType;
-import exchange2007.ws.client.DistinguishedFolderIdNameType;
-import exchange2007.ws.client.DistinguishedFolderIdType;
-import exchange2007.ws.client.EmailAddressType;
-import exchange2007.ws.client.ExchangeServicePortType;
-import exchange2007.ws.client.ExchangeServices;
-import exchange2007.ws.client.ExchangeVersionType;
-import exchange2007.ws.client.FindItemResponseMessageType;
-import exchange2007.ws.client.FindItemResponseType;
-import exchange2007.ws.client.FindItemType;
-import exchange2007.ws.client.GetItemResponseType;
-import exchange2007.ws.client.GetItemType;
-import exchange2007.ws.client.ItemInfoResponseMessageType;
-import exchange2007.ws.client.ItemQueryTraversalType;
-import exchange2007.ws.client.ItemResponseShapeType;
-import exchange2007.ws.client.ItemType;
-import exchange2007.ws.client.MessageType;
-import exchange2007.ws.client.NonEmptyArrayOfBaseFolderIdsType;
-import exchange2007.ws.client.NonEmptyArrayOfBaseItemIdsType;
-import exchange2007.ws.client.RequestServerVersion;
-import exchange2007.ws.client.ResponseClassType;
-import exchange2007.ws.client.ResponseMessageType;
+import exchange2013.ws.client.ArrayOfRealItemsType;
+import exchange2013.ws.client.ArrayOfResponseMessagesType;
+import exchange2013.ws.client.BaseFolderIdType;
+import exchange2013.ws.client.BaseItemIdType;
+import exchange2013.ws.client.BodyTypeResponseType;
+import exchange2013.ws.client.DefaultShapeNamesType;
+import exchange2013.ws.client.DeleteItemResponseType;
+import exchange2013.ws.client.DeleteItemType;
+import exchange2013.ws.client.DisposalType;
+import exchange2013.ws.client.DistinguishedFolderIdNameType;
+import exchange2013.ws.client.DistinguishedFolderIdType;
+import exchange2013.ws.client.EmailAddressType;
+import exchange2013.ws.client.ExchangeServicePortType;
+import exchange2013.ws.client.ExchangeServices;
+import exchange2013.ws.client.ExchangeVersionType;
+import exchange2013.ws.client.FindItemResponseMessageType;
+import exchange2013.ws.client.FindItemResponseType;
+import exchange2013.ws.client.FindItemType;
+import exchange2013.ws.client.GetItemResponseType;
+import exchange2013.ws.client.GetItemType;
+import exchange2013.ws.client.ItemInfoResponseMessageType;
+import exchange2013.ws.client.ItemQueryTraversalType;
+import exchange2013.ws.client.ItemResponseShapeType;
+import exchange2013.ws.client.ItemType;
+import exchange2013.ws.client.MessageType;
+import exchange2013.ws.client.NonEmptyArrayOfBaseFolderIdsType;
+import exchange2013.ws.client.NonEmptyArrayOfBaseItemIdsType;
+import exchange2013.ws.client.RequestServerVersion;
+import exchange2013.ws.client.ResponseClassType;
+import exchange2013.ws.client.ResponseMessageType;
 
+@Component(immediate=true)  
+@Service(value=Connector.class)
 public class ExchangeConnector implements Connector {
 
 	private byte priority; // PROD not used for now
@@ -71,6 +77,9 @@ public class ExchangeConnector implements Connector {
 	@Reference
 	private Pipeline mailProcessor;
 
+	public ExchangeConnector() {
+		this("config.txt");
+	}
 
 	public ExchangeConnector(String configFilePath) {
 		FileInputStream config = null;
@@ -88,7 +97,7 @@ public class ExchangeConnector implements Connector {
 			for (String list : lists.split(",")) {
 				mailingLists.add(list.trim());
 			}
-			
+
 			// init ExchangeServicePortType
 			URL wsdlURL = new URL(wsdlPath);
 			ExchangeServices service = new ExchangeServices(wsdlURL);
@@ -110,8 +119,8 @@ public class ExchangeConnector implements Connector {
 	@Override
 	public int checkNewMessages(int limit) { 
 
-		List<BaseItemIdType> messageIds = null;
-		boolean deletion = false; // FIXME set to true
+		List<BaseItemIdType> messageIds = new ArrayList<BaseItemIdType>();
+		boolean deletion = false;
 
 		try {
 
@@ -138,8 +147,6 @@ public class ExchangeConnector implements Connector {
 
 			port.findItem(findRequest, requestVersion, findItemResult);
 
-			messageIds = new ArrayList<BaseItemIdType>();
-
 			FindItemResponseType findItemResponse = findItemResult.value;
 			ArrayOfResponseMessagesType arrayOfResponseMessages = findItemResponse.getResponseMessages();
 			List<JAXBElement<? extends ResponseMessageType>> responseMessageTypeList = arrayOfResponseMessages.getCreateItemResponseMessageOrDeleteItemResponseMessageOrGetItemResponseMessage();
@@ -152,6 +159,8 @@ public class ExchangeConnector implements Connector {
 					if (limit-- > 0) {
 						MessageType message = (MessageType) item;
 						messageIds.add(message.getItemId());
+					} else {
+						break;
 					}
 				}
 			}
@@ -177,6 +186,7 @@ public class ExchangeConnector implements Connector {
 			ArrayOfResponseMessagesType arrayOfResponseMessages2 = getItemResponse.getResponseMessages();
 			List<JAXBElement<? extends ResponseMessageType>> responseMessageTypeList2 = arrayOfResponseMessages2.getCreateItemResponseMessageOrDeleteItemResponseMessageOrGetItemResponseMessage();
 			List<Message> messages = new ArrayList<Message>();
+			System.out.println("size: " + responseMessageTypeList2.size());
 			for (JAXBElement<? extends ResponseMessageType> jaxbElement : responseMessageTypeList2) {
 				ItemInfoResponseMessageType response = (ItemInfoResponseMessageType) jaxbElement.getValue();
 				ArrayOfRealItemsType itemsElement = response.getItems();
@@ -186,12 +196,14 @@ public class ExchangeConnector implements Connector {
 					messages.addAll(convertExchangeMessageToMime4jMessages(message));
 				}
 			}
-			if (!mailProcessor.processNewMasseges(messages.iterator())) {
-				deletion = false;
+			if (mailProcessor.processNewMasseges(messages.iterator())) {
+				deletion = true; // PROD ! MAIL DELETION FLAG
 			}
 
 			return messageIds.size();
-
+		} catch (Exception e){
+			logger.info("Error while retrieving messages. {} : {} ", e.toString(), e.getMessage());
+			return 0;
 		} finally {
 
 			if (deletion) {
@@ -220,11 +232,10 @@ public class ExchangeConnector implements Connector {
 					ResponseMessageType responseMessage = jaxbElement.getValue();
 					ResponseClassType responseMessageClass = responseMessage.getResponseClass();
 					if (responseMessageClass != ResponseClassType.SUCCESS) {
-						logger.info(String.format("Error while deleting messages from Exchange server. \nCode %s : %s\n", responseMessage.getResponseCode(), responseMessage.getMessageText()));
+						logger.info("Error while deleting messages from Exchange server. \nCode {} : {}\n", responseMessage.getResponseCode(), responseMessage.getMessageText());
 					}
 				}
 			}
-
 		}
 	}
 
@@ -235,11 +246,20 @@ public class ExchangeConnector implements Connector {
 		Message sample = new MessageImpl();
 		Set<String> recepients = new HashSet<String>();
 
+		System.out.println("id: "+in.getInternetMessageId());
+		System.out.println("subj: "+in.getSubject());
+		
+		Header header = new HeaderImpl();
 		// Message-Id
-		sample.createMessageId(in.getInternetMessageId());
-
-		// From (sender)
-		sample.setSender(convertMailAddressTypeToMailbox(in.getSender().getMailbox()));
+		header.addField(new RawField(FieldName.MESSAGE_ID, in.getInternetMessageId()));
+		// In-Reply-To (opt)
+		if (in.getInReplyTo() != null) {
+			header.addField(new RawField(AdditionalFieldName.IN_REPLY_TO, in.getInReplyTo()));
+		}
+		sample.setHeader(header);
+		
+		// From
+		sample.setFrom(convertMailAddressTypeToMailbox(in.getFrom().getMailbox()));
 
 		// To
 		final List<Mailbox> toList = convertMailAddressTypeListToMailboxList(in.getToRecipients().getMailbox());
@@ -248,12 +268,14 @@ public class ExchangeConnector implements Connector {
 		}
 		sample.setTo(toList);
 
-		// Cc
-		final List<Mailbox> ccList = convertMailAddressTypeListToMailboxList(in.getCcRecipients().getMailbox());
-		for (Mailbox mailbox : ccList) {
-			recepients.add(mailbox.getAddress().trim());
+		// Cc (opt)
+		if (in.getCcRecipients() != null) {
+			final List<Mailbox> ccList = convertMailAddressTypeListToMailboxList(in.getCcRecipients().getMailbox());
+			for (Mailbox mailbox : ccList) {
+				recepients.add(mailbox.getAddress().trim());
+			}
+			sample.setCc(ccList);
 		}
-		sample.setCc(ccList);
 
 		// Subject
 		sample.setSubject(in.getSubject());
@@ -264,54 +286,19 @@ public class ExchangeConnector implements Connector {
 		// Body
 		BodyBuilder bb = BodyBuilder.create();
 		bb.setText(in.getBody().getValue());
-		sample.setBody(bb.build());
+		sample.setBody(bb.buildText());
 
 		for (String address : recepients) {
 			if (mailingLists.contains(address)) {
 				Message out = new MessageImpl();
 				out.setBody(sample.getBody());
 				Header h = sample.getHeader();
-				// In-Reply-To
-				h.addField(new RawField(AdditionalFieldName.IN_REPLY_TO, in.getInReplyTo()));
 				// List-Id
-				h.addField(new RawField(AdditionalFieldName.LIST_ID, address.replace("@", ".")));
+				h.addField(new RawField(AdditionalFieldName.LIST_ID, "<" + address.replace("@", ".") + ">"));
 				out.setHeader(h);
 				result.add(out);
 			}
 		}
-
-		// TODO remove
-		System.out.println("*** begin ***");
-		//		String title = in.getItemId().getId() +"  "+ in.getItemId().getChangeKey();
-		//		System.out.println(title + ":");
-		//		System.out.println("\t getOriginalDisplayName: "+in.getSender().getMailbox().getOriginalDisplayName());
-		//		System.out.println("\t getSender().getMailbox().getName: "+in.getSender().getMailbox().getName());
-		//		System.out.println("\t getSender().getMailbox().getEmailAddress: "+in.getSender().getMailbox().getEmailAddress());
-		//		System.out.println("\t getRoutingType: "+in.getSender().getMailbox().getRoutingType());
-		//		System.out.println("\t getMailboxType().name: "+in.getSender().getMailbox().getMailboxType().name());
-		//		System.out.println("\t getItemId().getId: "+in.getSender().getMailbox().getItemId().getId()); // NPE
-		//		System.out.println("\tDate: "+in.getDateTimeSent());
-		//		System.out.println("\tBody: "+in.getBody().getValue());
-		//		System.out.println("\t getCulture: "+in.getCulture()); // en-US
-		//		System.out.println("\tSubj: "+in.getSubject());
-		//		System.out.println("\t getConversationTopic: "+in.getConversationTopic());
-		//		System.out.println("\t getToRecipients: "+in.getToRecipients().getMailbox().get(0).getEmailAddress());
-		//		System.out.println("\t getCcRecipients: "+in.getCcRecipients().getMailbox().get(0).getEmailAddress());
-		//		System.out.println("\t getBccRecipients: "+in.getBccRecipients().getMailbox().get(0).getEmailAddress()); NPE
-		//		System.out.println("\t getDisplayTo: "+in.getDisplayTo());
-		//		System.out.println("\t getFrom().getMailbox().getName: "+in.getFrom().getMailbox().getName());
-		//		System.out.println("\t getFrom().getMailbox().getEmailAddress: "+in.getFrom().getMailbox().getEmailAddress());
-		//		System.out.println("\t getUniqueBody().getValue: "+in.getUniqueBody().getValue()); // NPE
-		//		System.out.println("\t getInReplyTo:  "+in.getInReplyTo()); // this =
-		//		System.out.println("\t getReferences: "+in.getReferences()); // = that
-		//		System.out.println("\t getInternetMessageId: "+in.getInternetMessageId()); // this is Message-Id
-		//		System.out.println("\t getReceivedBy().getMailbox().getName: "+in.getReceivedBy().getMailbox().getName());
-		//		System.out.println("\t getReceivedBy().getMailbox().getEmailAddress: "+in.getReceivedBy().getMailbox().getEmailAddress());
-		//		System.out.println("\t getCulture: "+in.get);
-		//		System.out.println("\t getCulture: "+in.get);
-		//		System.out.println("\t getCulture: "+in.get);
-		//		System.out.println("\t getCulture: "+in.get);
-		System.out.println("*** EOM ***\n");
 
 		return result;
 	}
