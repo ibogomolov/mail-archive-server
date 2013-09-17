@@ -50,6 +50,7 @@ public class MessageStoreImpl implements MessageStore {
 
 	private static final Logger logger = LoggerFactory.getLogger(MessageStoreImpl.class);
 
+	// TODO make this a constructor
 	private void resolverInit() throws LoginException {
 		if (resolver == null) {
 			resolver = resourceResolverFactory.getAdministrativeResourceResolver(null);
