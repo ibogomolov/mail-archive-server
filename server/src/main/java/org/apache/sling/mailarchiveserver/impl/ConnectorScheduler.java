@@ -32,7 +32,7 @@ public class ConnectorScheduler implements Runnable {
 	// TODO change?
 	@Activate
 	public void activate() throws InterruptedException {
-		new Thread(this).start();
+//		new Thread(this).start(); // PROD uncomment
 	}
 
 	@Override
