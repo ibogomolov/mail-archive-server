@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.ReferenceCardinality;
 import org.apache.felix.scr.annotations.ReferencePolicy;
@@ -21,27 +22,40 @@ public class ConnectorScheduler implements Runnable {
 
 	private static final int RETREIVE_MESSAGES_LIMIT = 10;
 	private static final Logger logger = LoggerFactory.getLogger(ConnectorScheduler.class);
+	private static final int WAITING_TIME_LIMIT_BEFORE_TERMINATION = 5000; 
+
+	private boolean running = true;
+	private Thread executionThread = null;
 
 	@Reference(
 			cardinality=ReferenceCardinality.OPTIONAL_MULTIPLE, 
 			policy=ReferencePolicy.DYNAMIC,
 			referenceInterface=Connector.class)
-	private List<Connector> scheduledConnectors = new ArrayList<>();
+	private List<Connector> scheduledConnectors = new ArrayList<Connector>();
 	private Deque<Connector> executionQueue;
 
-	// TODO change?
 	@Activate
-	public void activate() throws InterruptedException {
-//		new Thread(this).start(); // PROD uncomment
+	public void activate() {
+		executionThread = new Thread(this, "ConnectorScheduler execution thread");
+		executionThread.setDaemon(true);
+		executionThread.start(); 
+	}
+
+	@Deactivate
+	public void deactivate() throws InterruptedException {
+		if (executionThread != null) {
+			running = false;
+			executionThread.join(WAITING_TIME_LIMIT_BEFORE_TERMINATION);
+		}
 	}
 
 	@Override
 	public void run() {
-		while (true) {
+		while (running) {
 			logger.info("Checking new mail.");
-			Collections.sort(scheduledConnectors, null); // PROD comparator, introduce class abstract PriorityConnector implements Connector
-			executionQueue = new ArrayDeque<>(scheduledConnectors);
-			while (!executionQueue.isEmpty()) {
+			Collections.sort(scheduledConnectors, null); // TODO comparator, introduce class abstract PriorityConnector implements Connector
+			executionQueue = new ArrayDeque<Connector>(scheduledConnectors);
+			while (!executionQueue.isEmpty() && running) {
 				Connector c = executionQueue.remove();
 				int retreived = c.checkNewMessages(RETREIVE_MESSAGES_LIMIT);
 				logger.info("Retrieved {} messages.", retreived);
@@ -49,11 +63,13 @@ public class ConnectorScheduler implements Runnable {
 			try {
 				TimeUnit.SECONDS.sleep(20);
 			} catch (InterruptedException e) {
+				running = false;
 			}
 		}
 	}
 
 	public synchronized void bindConnector(Connector c) {
+		// TODO add if port != null
 		scheduledConnectors.add(c);
 	}
 
