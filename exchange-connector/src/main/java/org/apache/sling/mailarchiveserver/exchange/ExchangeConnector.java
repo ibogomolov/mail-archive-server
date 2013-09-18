@@ -62,15 +62,15 @@ import exchange2013.ws.client.ResponseClassType;
 import exchange2013.ws.client.ResponseMessageType;
 
 @Component(immediate=true)  
-@Service(value=Connector.class)
+@Service(Connector.class)
 public class ExchangeConnector implements Connector {
 
-	private byte priority; // PROD not used for now
+	private byte priority; // TODO use
 	private Set<String> mailingLists;
 	private String username;
 	private String password;
 	private String wsdlPath;
-	private ExchangeServicePortType port;
+	private ExchangeServicePortType port = null;
 	private static final ExchangeVersionType EXCHANGE_VERSION = ExchangeVersionType.EXCHANGE_2013;
 
 	private static final Logger logger = LoggerFactory.getLogger(ExchangeConnector.class);
@@ -78,6 +78,7 @@ public class ExchangeConnector implements Connector {
 	private Pipeline mailProcessor;
 
 	public ExchangeConnector() {
+		// TODO if config.txt is there
 		this("config.txt");
 	}
 
@@ -309,7 +310,7 @@ public class ExchangeConnector implements Connector {
 	}
 
 	private static List<Mailbox> convertMailAddressTypeListToMailboxList(List<EmailAddressType> inList) {
-		List<Mailbox> outList = new ArrayList<>();
+		List<Mailbox> outList = new ArrayList<Mailbox>();
 		for (EmailAddressType el : inList) {
 			outList.add(convertMailAddressTypeToMailbox(el));
 		}

@@ -31,29 +31,45 @@ public class SearchSandbox {
 		Resource testRoot;
 
 		final Resource root = resolver.getResource("/");
-		final String path = getClass().getSimpleName();// + "_" + System.currentTimeMillis();
-		testRoot = resolver.create(root, path, null);
-		resolver.commit();
-
-		final Props props = new Props("title", "hello", "jcr:text", "world");
-		final String fullPath = resolver.create(testRoot, "child_" + System.currentTimeMillis(), props).getPath();
-		resolver.commit();
+		final String path = getClass().getSimpleName();
+		testRoot = resolver.getResource(root, path);
+		if (testRoot == null) {
+			testRoot = resolver.create(root, path, null);
+			resolver.commit();
+		}
+		
+		for (int i = 0; i < 3; i++) {
+			final Props props = new Props("title", "hello", "jcr:text", "world");
+			resolver.create(testRoot, "child_" + System.currentTimeMillis(), props).getPath();
+			resolver.commit();
+		}
 
 		Scanner sc = new Scanner(System.in);
 		String query = "";
 		System.out.println("Type \"quit\" to continue loading MAS.");
 		while (!query.equalsIgnoreCase("quit")) {
 			try {
-				
+
 				System.out.print("*** New query: >");
 				query = sc.nextLine();
-				Iterator<Resource> res = resolver.findResources(query, "xpath");;
-				while (res.hasNext()) {
-					Resource resource = (Resource) res.next();
+
+				System.out.println("*** sql");
+				Iterator<Resource> resSQL = resolver.findResources(query, "sql");
+				while (resSQL.hasNext()) {
+					Resource resource = (Resource) resSQL.next();
 					System.out.println(resource.toString());
 				}
 				
-			} catch (Exception e) {}
+//				System.out.println("*** xpath");
+//				Iterator<Resource> resXPath = resolver.findResources(query, "xpath");
+//				while (resXPath.hasNext()) {
+//					Resource resource = (Resource) resXPath.next();
+//					System.out.println(resource.toString());
+//				}
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
