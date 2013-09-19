@@ -38,9 +38,9 @@ import javax.xml.bind.annotation.XmlType;
 public class NonEmptyArrayOfItemChangeDescriptionsType {
 
     @XmlElements({
-        @XmlElement(name = "AppendToItemField", type = AppendToItemFieldType.class),
         @XmlElement(name = "SetItemField", type = SetItemFieldType.class),
-        @XmlElement(name = "DeleteItemField", type = DeleteItemFieldType.class)
+        @XmlElement(name = "DeleteItemField", type = DeleteItemFieldType.class),
+        @XmlElement(name = "AppendToItemField", type = AppendToItemFieldType.class)
     })
     protected List<ItemChangeDescriptionType> appendToItemFieldOrSetItemFieldOrDeleteItemField;
 
@@ -62,9 +62,9 @@ public class NonEmptyArrayOfItemChangeDescriptionsType {
      * 
      * <p>
      * Objects of the following type(s) are allowed in the list
-     * {@link AppendToItemFieldType }
      * {@link SetItemFieldType }
      * {@link DeleteItemFieldType }
+     * {@link AppendToItemFieldType }
      * 
      * 
      */

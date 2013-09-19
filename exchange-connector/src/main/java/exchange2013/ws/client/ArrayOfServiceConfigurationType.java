@@ -35,7 +35,7 @@ import javax.xml.bind.annotation.XmlType;
 })
 public class ArrayOfServiceConfigurationType {
 
-    @XmlElementRef(name = "ConfigurationName", namespace = "http://schemas.microsoft.com/exchange/services/2006/messages", type = JAXBElement.class, required = false)
+    @XmlElementRef(name = "ConfigurationName", namespace = "http://schemas.microsoft.com/exchange/services/2006/messages", type = JAXBElement.class)
     protected List<JAXBElement<List<String>>> configurationName;
 
     /**

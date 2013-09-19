@@ -48,17 +48,17 @@ import javax.xml.bind.annotation.XmlType;
 public class ArrayOfRealItemsType {
 
     @XmlElements({
-        @XmlElement(name = "Item"),
-        @XmlElement(name = "Message", type = MessageType.class),
-        @XmlElement(name = "CalendarItem", type = CalendarItemType.class),
-        @XmlElement(name = "Contact", type = ContactItemType.class),
-        @XmlElement(name = "DistributionList", type = DistributionListType.class),
-        @XmlElement(name = "MeetingMessage", type = MeetingMessageType.class),
+        @XmlElement(name = "PostItem", type = PostItemType.class),
         @XmlElement(name = "MeetingRequest", type = MeetingRequestMessageType.class),
         @XmlElement(name = "MeetingResponse", type = MeetingResponseMessageType.class),
-        @XmlElement(name = "MeetingCancellation", type = MeetingCancellationMessageType.class),
+        @XmlElement(name = "CalendarItem", type = CalendarItemType.class),
+        @XmlElement(name = "Contact", type = ContactItemType.class),
         @XmlElement(name = "Task", type = TaskType.class),
-        @XmlElement(name = "PostItem", type = PostItemType.class)
+        @XmlElement(name = "DistributionList", type = DistributionListType.class),
+        @XmlElement(name = "Item"),
+        @XmlElement(name = "MeetingCancellation", type = MeetingCancellationMessageType.class),
+        @XmlElement(name = "MeetingMessage", type = MeetingMessageType.class),
+        @XmlElement(name = "Message", type = MessageType.class)
     })
     protected List<ItemType> itemOrMessageOrCalendarItem;
 
@@ -80,17 +80,17 @@ public class ArrayOfRealItemsType {
      * 
      * <p>
      * Objects of the following type(s) are allowed in the list
-     * {@link ItemType }
-     * {@link MessageType }
-     * {@link CalendarItemType }
-     * {@link ContactItemType }
-     * {@link DistributionListType }
-     * {@link MeetingMessageType }
+     * {@link PostItemType }
      * {@link MeetingRequestMessageType }
      * {@link MeetingResponseMessageType }
-     * {@link MeetingCancellationMessageType }
+     * {@link CalendarItemType }
+     * {@link ContactItemType }
      * {@link TaskType }
-     * {@link PostItemType }
+     * {@link DistributionListType }
+     * {@link ItemType }
+     * {@link MeetingCancellationMessageType }
+     * {@link MeetingMessageType }
+     * {@link MessageType }
      * 
      * 
      */

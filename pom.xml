@@ -29,6 +29,10 @@
         <url>https://github.com/ibogomolov/mail-archive-server</url>
     </scm>
 
+    <properties>
+    	<sling.java.version>6</sling.java.version>
+    </properties>
+
 	<build>
 		<plugins>
 			<plugin>
@@ -36,8 +40,8 @@
 		        <artifactId>maven-compiler-plugin</artifactId>
 		        <version>3.1</version>
 		        <configuration>
-		           <source>1.7</source>
-		           <target>1.7</target>
+		           <source>1.${sling.java.version}</source>
+		           <target>1.${sling.java.version}</target>
 		        </configuration>
 			</plugin>
             <plugin>

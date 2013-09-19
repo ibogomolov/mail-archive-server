@@ -1089,7 +1089,7 @@ public class ContactItemType
      *     byte[]
      */
     public void setPhoto(byte[] value) {
-        this.photo = value;
+        this.photo = ((byte[]) value);
     }
 
     /**

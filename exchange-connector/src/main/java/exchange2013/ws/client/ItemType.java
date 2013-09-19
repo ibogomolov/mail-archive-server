@@ -1259,7 +1259,7 @@ public class ItemType {
      *     byte[]
      */
     public void setStoreEntryId(byte[] value) {
-        this.storeEntryId = value;
+        this.storeEntryId = ((byte[]) value);
     }
 
     /**
@@ -1281,7 +1281,7 @@ public class ItemType {
      *     byte[]
      */
     public void setInstanceKey(byte[] value) {
-        this.instanceKey = value;
+        this.instanceKey = ((byte[]) value);
     }
 
     /**

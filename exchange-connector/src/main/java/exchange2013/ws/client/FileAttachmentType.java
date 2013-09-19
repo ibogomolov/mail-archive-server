@@ -84,7 +84,7 @@ public class FileAttachmentType
      *     byte[]
      */
     public void setContent(byte[] value) {
-        this.content = value;
+        this.content = ((byte[]) value);
     }
 
 }

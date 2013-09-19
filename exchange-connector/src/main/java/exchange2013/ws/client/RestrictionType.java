@@ -41,19 +41,19 @@ public class RestrictionType {
      * 
      * @return
      *     possible object is
-     *     {@link JAXBElement }{@code <}{@link IsGreaterThanOrEqualToType }{@code >}
-     *     {@link JAXBElement }{@code <}{@link IsLessThanType }{@code >}
-     *     {@link JAXBElement }{@code <}{@link AndType }{@code >}
-     *     {@link JAXBElement }{@code <}{@link OrType }{@code >}
-     *     {@link JAXBElement }{@code <}{@link NotType }{@code >}
-     *     {@link JAXBElement }{@code <}{@link IsNotEqualToType }{@code >}
-     *     {@link JAXBElement }{@code <}{@link IsLessThanOrEqualToType }{@code >}
-     *     {@link JAXBElement }{@code <}{@link ExistsType }{@code >}
      *     {@link JAXBElement }{@code <}{@link IsEqualToType }{@code >}
+     *     {@link JAXBElement }{@code <}{@link IsLessThanOrEqualToType }{@code >}
+     *     {@link JAXBElement }{@code <}{@link NotType }{@code >}
+     *     {@link JAXBElement }{@code <}{@link IsLessThanType }{@code >}
      *     {@link JAXBElement }{@code <}{@link ContainsExpressionType }{@code >}
+     *     {@link JAXBElement }{@code <}{@link OrType }{@code >}
+     *     {@link JAXBElement }{@code <}{@link AndType }{@code >}
+     *     {@link JAXBElement }{@code <}{@link IsGreaterThanOrEqualToType }{@code >}
      *     {@link JAXBElement }{@code <}{@link SearchExpressionType }{@code >}
+     *     {@link JAXBElement }{@code <}{@link ExistsType }{@code >}
      *     {@link JAXBElement }{@code <}{@link ExcludesType }{@code >}
      *     {@link JAXBElement }{@code <}{@link IsGreaterThanType }{@code >}
+     *     {@link JAXBElement }{@code <}{@link IsNotEqualToType }{@code >}
      *     
      */
     public JAXBElement<? extends SearchExpressionType> getSearchExpression() {
@@ -65,23 +65,23 @@ public class RestrictionType {
      * 
      * @param value
      *     allowed object is
-     *     {@link JAXBElement }{@code <}{@link IsGreaterThanOrEqualToType }{@code >}
-     *     {@link JAXBElement }{@code <}{@link IsLessThanType }{@code >}
-     *     {@link JAXBElement }{@code <}{@link AndType }{@code >}
-     *     {@link JAXBElement }{@code <}{@link OrType }{@code >}
-     *     {@link JAXBElement }{@code <}{@link NotType }{@code >}
-     *     {@link JAXBElement }{@code <}{@link IsNotEqualToType }{@code >}
-     *     {@link JAXBElement }{@code <}{@link IsLessThanOrEqualToType }{@code >}
-     *     {@link JAXBElement }{@code <}{@link ExistsType }{@code >}
      *     {@link JAXBElement }{@code <}{@link IsEqualToType }{@code >}
+     *     {@link JAXBElement }{@code <}{@link IsLessThanOrEqualToType }{@code >}
+     *     {@link JAXBElement }{@code <}{@link NotType }{@code >}
+     *     {@link JAXBElement }{@code <}{@link IsLessThanType }{@code >}
      *     {@link JAXBElement }{@code <}{@link ContainsExpressionType }{@code >}
+     *     {@link JAXBElement }{@code <}{@link OrType }{@code >}
+     *     {@link JAXBElement }{@code <}{@link AndType }{@code >}
+     *     {@link JAXBElement }{@code <}{@link IsGreaterThanOrEqualToType }{@code >}
      *     {@link JAXBElement }{@code <}{@link SearchExpressionType }{@code >}
+     *     {@link JAXBElement }{@code <}{@link ExistsType }{@code >}
      *     {@link JAXBElement }{@code <}{@link ExcludesType }{@code >}
      *     {@link JAXBElement }{@code <}{@link IsGreaterThanType }{@code >}
+     *     {@link JAXBElement }{@code <}{@link IsNotEqualToType }{@code >}
      *     
      */
     public void setSearchExpression(JAXBElement<? extends SearchExpressionType> value) {
-        this.searchExpression = value;
+        this.searchExpression = ((JAXBElement<? extends SearchExpressionType> ) value);
     }
 
 }

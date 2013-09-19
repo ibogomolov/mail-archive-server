@@ -36,7 +36,7 @@ import javax.xml.bind.annotation.XmlType;
 })
 public class FieldURIOrConstantType {
 
-    @XmlElementRef(name = "Path", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class, required = false)
+    @XmlElementRef(name = "Path", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class)
     protected JAXBElement<? extends BasePathToElementType> path;
     @XmlElement(name = "Constant")
     protected ConstantValueType constant;
@@ -46,9 +46,9 @@ public class FieldURIOrConstantType {
      * 
      * @return
      *     possible object is
+     *     {@link JAXBElement }{@code <}{@link PathToExtendedFieldType }{@code >}
      *     {@link JAXBElement }{@code <}{@link PathToUnindexedFieldType }{@code >}
      *     {@link JAXBElement }{@code <}{@link BasePathToElementType }{@code >}
-     *     {@link JAXBElement }{@code <}{@link PathToExtendedFieldType }{@code >}
      *     {@link JAXBElement }{@code <}{@link PathToIndexedFieldType }{@code >}
      *     
      */
@@ -61,14 +61,14 @@ public class FieldURIOrConstantType {
      * 
      * @param value
      *     allowed object is
+     *     {@link JAXBElement }{@code <}{@link PathToExtendedFieldType }{@code >}
      *     {@link JAXBElement }{@code <}{@link PathToUnindexedFieldType }{@code >}
      *     {@link JAXBElement }{@code <}{@link BasePathToElementType }{@code >}
-     *     {@link JAXBElement }{@code <}{@link PathToExtendedFieldType }{@code >}
      *     {@link JAXBElement }{@code <}{@link PathToIndexedFieldType }{@code >}
      *     
      */
     public void setPath(JAXBElement<? extends BasePathToElementType> value) {
-        this.path = value;
+        this.path = ((JAXBElement<? extends BasePathToElementType> ) value);
     }
 
     /**

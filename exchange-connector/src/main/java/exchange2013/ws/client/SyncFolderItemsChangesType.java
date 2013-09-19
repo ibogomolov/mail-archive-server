@@ -42,10 +42,10 @@ import javax.xml.bind.annotation.XmlType;
 public class SyncFolderItemsChangesType {
 
     @XmlElementRefs({
-        @XmlElementRef(name = "Delete", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class, required = false),
-        @XmlElementRef(name = "Update", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class, required = false),
-        @XmlElementRef(name = "Create", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class, required = false),
-        @XmlElementRef(name = "ReadFlagChange", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class, required = false)
+        @XmlElementRef(name = "Create", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class),
+        @XmlElementRef(name = "Update", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class),
+        @XmlElementRef(name = "ReadFlagChange", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class),
+        @XmlElementRef(name = "Delete", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class)
     })
     protected List<JAXBElement<?>> createOrUpdateOrDelete;
 
@@ -67,10 +67,10 @@ public class SyncFolderItemsChangesType {
      * 
      * <p>
      * Objects of the following type(s) are allowed in the list
+     * {@link JAXBElement }{@code <}{@link SyncFolderItemsCreateOrUpdateType }{@code >}
+     * {@link JAXBElement }{@code <}{@link SyncFolderItemsCreateOrUpdateType }{@code >}
      * {@link JAXBElement }{@code <}{@link SyncFolderItemsDeleteType }{@code >}
      * {@link JAXBElement }{@code <}{@link SyncFolderItemsReadFlagType }{@code >}
-     * {@link JAXBElement }{@code <}{@link SyncFolderItemsCreateOrUpdateType }{@code >}
-     * {@link JAXBElement }{@code <}{@link SyncFolderItemsCreateOrUpdateType }{@code >}
      * 
      * 
      */

@@ -56,7 +56,7 @@ public class InstallAppType
      *     byte[]
      */
     public void setManifest(byte[] value) {
-        this.manifest = value;
+        this.manifest = ((byte[]) value);
     }
 
 }

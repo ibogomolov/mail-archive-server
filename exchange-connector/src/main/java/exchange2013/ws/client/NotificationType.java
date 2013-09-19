@@ -59,14 +59,14 @@ public class NotificationType {
     @XmlElement(name = "MoreEvents")
     protected Boolean moreEvents;
     @XmlElementRefs({
-        @XmlElementRef(name = "DeletedEvent", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class, required = false),
-        @XmlElementRef(name = "FreeBusyChangedEvent", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class, required = false),
-        @XmlElementRef(name = "CreatedEvent", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class, required = false),
-        @XmlElementRef(name = "CopiedEvent", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class, required = false),
-        @XmlElementRef(name = "NewMailEvent", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class, required = false),
-        @XmlElementRef(name = "MovedEvent", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class, required = false),
-        @XmlElementRef(name = "StatusEvent", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class, required = false),
-        @XmlElementRef(name = "ModifiedEvent", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class, required = false)
+        @XmlElementRef(name = "NewMailEvent", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class),
+        @XmlElementRef(name = "FreeBusyChangedEvent", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class),
+        @XmlElementRef(name = "CreatedEvent", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class),
+        @XmlElementRef(name = "CopiedEvent", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class),
+        @XmlElementRef(name = "MovedEvent", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class),
+        @XmlElementRef(name = "DeletedEvent", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class),
+        @XmlElementRef(name = "StatusEvent", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class),
+        @XmlElementRef(name = "ModifiedEvent", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class)
     })
     protected List<JAXBElement<? extends BaseNotificationEventType>> copiedEventOrCreatedEventOrDeletedEvent;
 
@@ -164,10 +164,10 @@ public class NotificationType {
      * {@link JAXBElement }{@code <}{@link BaseObjectChangedEventType }{@code >}
      * {@link JAXBElement }{@code <}{@link BaseObjectChangedEventType }{@code >}
      * {@link JAXBElement }{@code <}{@link MovedCopiedEventType }{@code >}
-     * {@link JAXBElement }{@code <}{@link BaseObjectChangedEventType }{@code >}
      * {@link JAXBElement }{@code <}{@link MovedCopiedEventType }{@code >}
-     * {@link JAXBElement }{@code <}{@link ModifiedEventType }{@code >}
+     * {@link JAXBElement }{@code <}{@link BaseObjectChangedEventType }{@code >}
      * {@link JAXBElement }{@code <}{@link BaseNotificationEventType }{@code >}
+     * {@link JAXBElement }{@code <}{@link ModifiedEventType }{@code >}
      * 
      * 
      */

@@ -60,10 +60,10 @@ public class ArrayOfTransitionsType {
      * 
      * <p>
      * Objects of the following type(s) are allowed in the list
-     * {@link JAXBElement }{@code <}{@link RecurringDayTransitionType }{@code >}
      * {@link JAXBElement }{@code <}{@link RecurringDateTransitionType }{@code >}
-     * {@link JAXBElement }{@code <}{@link TransitionType }{@code >}
+     * {@link JAXBElement }{@code <}{@link RecurringDayTransitionType }{@code >}
      * {@link JAXBElement }{@code <}{@link AbsoluteDateTransitionType }{@code >}
+     * {@link JAXBElement }{@code <}{@link TransitionType }{@code >}
      * 
      * 
      */
