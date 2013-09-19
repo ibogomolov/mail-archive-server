@@ -142,7 +142,7 @@ public class UserConfigurationType {
      *     byte[]
      */
     public void setXmlData(byte[] value) {
-        this.xmlData = value;
+        this.xmlData = ((byte[]) value);
     }
 
     /**
@@ -164,7 +164,7 @@ public class UserConfigurationType {
      *     byte[]
      */
     public void setBinaryData(byte[] value) {
-        this.binaryData = value;
+        this.binaryData = ((byte[]) value);
     }
 
 }

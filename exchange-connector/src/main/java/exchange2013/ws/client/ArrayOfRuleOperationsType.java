@@ -41,8 +41,8 @@ public class ArrayOfRuleOperationsType {
 
     @XmlElements({
         @XmlElement(name = "CreateRuleOperation", type = CreateRuleOperationType.class),
-        @XmlElement(name = "SetRuleOperation", type = SetRuleOperationType.class),
-        @XmlElement(name = "DeleteRuleOperation", type = DeleteRuleOperationType.class)
+        @XmlElement(name = "DeleteRuleOperation", type = DeleteRuleOperationType.class),
+        @XmlElement(name = "SetRuleOperation", type = SetRuleOperationType.class)
     })
     protected List<RuleOperationType> createRuleOperationOrSetRuleOperationOrDeleteRuleOperation;
 
@@ -65,8 +65,8 @@ public class ArrayOfRuleOperationsType {
      * <p>
      * Objects of the following type(s) are allowed in the list
      * {@link CreateRuleOperationType }
-     * {@link SetRuleOperationType }
      * {@link DeleteRuleOperationType }
+     * {@link SetRuleOperationType }
      * 
      * 
      */

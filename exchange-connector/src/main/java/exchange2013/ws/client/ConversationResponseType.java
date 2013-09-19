@@ -86,7 +86,7 @@ public class ConversationResponseType {
      *     byte[]
      */
     public void setSyncState(byte[] value) {
-        this.syncState = value;
+        this.syncState = ((byte[]) value);
     }
 
     /**

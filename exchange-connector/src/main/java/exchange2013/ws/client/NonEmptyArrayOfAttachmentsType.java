@@ -37,8 +37,8 @@ import javax.xml.bind.annotation.XmlType;
 public class NonEmptyArrayOfAttachmentsType {
 
     @XmlElements({
-        @XmlElement(name = "ItemAttachment", type = ItemAttachmentType.class),
-        @XmlElement(name = "FileAttachment", type = FileAttachmentType.class)
+        @XmlElement(name = "FileAttachment", type = FileAttachmentType.class),
+        @XmlElement(name = "ItemAttachment", type = ItemAttachmentType.class)
     })
     protected List<AttachmentType> itemAttachmentOrFileAttachment;
 
@@ -60,8 +60,8 @@ public class NonEmptyArrayOfAttachmentsType {
      * 
      * <p>
      * Objects of the following type(s) are allowed in the list
-     * {@link ItemAttachmentType }
      * {@link FileAttachmentType }
+     * {@link ItemAttachmentType }
      * 
      * 
      */

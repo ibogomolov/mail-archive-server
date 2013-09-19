@@ -107,7 +107,7 @@ public class ClientExtensionType {
      *     byte[]
      */
     public void setManifest(byte[] value) {
-        this.manifest = value;
+        this.manifest = ((byte[]) value);
     }
 
     /**

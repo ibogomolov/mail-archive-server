@@ -132,7 +132,7 @@ public class GetUMSubscriberCallAnsweringDataResponseMessageType
      *     byte[]
      */
     public void setGreeting(byte[] value) {
-        this.greeting = value;
+        this.greeting = ((byte[]) value);
     }
 
     /**

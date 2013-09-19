@@ -39,10 +39,10 @@ import javax.xml.bind.annotation.XmlType;
 public class ArrayOfAttendeeConflictData {
 
     @XmlElements({
-        @XmlElement(name = "UnknownAttendeeConflictData", type = UnknownAttendeeConflictData.class, nillable = true),
-        @XmlElement(name = "IndividualAttendeeConflictData", type = IndividualAttendeeConflictData.class, nillable = true),
         @XmlElement(name = "TooBigGroupAttendeeConflictData", type = TooBigGroupAttendeeConflictData.class, nillable = true),
-        @XmlElement(name = "GroupAttendeeConflictData", type = GroupAttendeeConflictData.class, nillable = true)
+        @XmlElement(name = "UnknownAttendeeConflictData", type = UnknownAttendeeConflictData.class, nillable = true),
+        @XmlElement(name = "GroupAttendeeConflictData", type = GroupAttendeeConflictData.class, nillable = true),
+        @XmlElement(name = "IndividualAttendeeConflictData", type = IndividualAttendeeConflictData.class, nillable = true)
     })
     protected List<AttendeeConflictData> unknownAttendeeConflictDataOrIndividualAttendeeConflictDataOrTooBigGroupAttendeeConflictData;
 
@@ -64,10 +64,10 @@ public class ArrayOfAttendeeConflictData {
      * 
      * <p>
      * Objects of the following type(s) are allowed in the list
-     * {@link UnknownAttendeeConflictData }
-     * {@link IndividualAttendeeConflictData }
      * {@link TooBigGroupAttendeeConflictData }
+     * {@link UnknownAttendeeConflictData }
      * {@link GroupAttendeeConflictData }
+     * {@link IndividualAttendeeConflictData }
      * 
      * 
      */

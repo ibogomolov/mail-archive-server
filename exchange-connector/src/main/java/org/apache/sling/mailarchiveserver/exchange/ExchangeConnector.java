@@ -12,6 +12,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import javax.xml.bind.JAXBElement;
+import javax.xml.namespace.QName;
 import javax.xml.ws.Holder;
 
 import org.apache.felix.scr.annotations.Component;
@@ -101,7 +102,7 @@ public class ExchangeConnector implements Connector {
 
 			// init ExchangeServicePortType
 			URL wsdlURL = new URL(wsdlPath);
-			ExchangeServices service = new ExchangeServices(wsdlURL);
+			ExchangeServices service = new ExchangeServices(wsdlURL, new QName("http://schemas.microsoft.com/exchange/services/2006/messages", "ExchangeServices"));
 			port = service.getExchangeServicePort();
 			NtlmAuthenticator authenticator = new NtlmAuthenticator(username, password);
 			Authenticator.setDefault(authenticator);
@@ -117,7 +118,6 @@ public class ExchangeConnector implements Connector {
 		}
 	}
 
-	@Override
 	public int checkNewMessages(int limit) { 
 
 		List<BaseItemIdType> messageIds = new ArrayList<BaseItemIdType>();

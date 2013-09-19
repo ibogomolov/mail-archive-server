@@ -35,7 +35,7 @@ import javax.xml.bind.annotation.XmlType;
 })
 public class NonEmptyArrayOfPathsToElementType {
 
-    @XmlElementRef(name = "Path", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class, required = false)
+    @XmlElementRef(name = "Path", namespace = "http://schemas.microsoft.com/exchange/services/2006/types", type = JAXBElement.class)
     protected List<JAXBElement<? extends BasePathToElementType>> path;
 
     /**
@@ -56,9 +56,9 @@ public class NonEmptyArrayOfPathsToElementType {
      * 
      * <p>
      * Objects of the following type(s) are allowed in the list
+     * {@link JAXBElement }{@code <}{@link PathToExtendedFieldType }{@code >}
      * {@link JAXBElement }{@code <}{@link PathToUnindexedFieldType }{@code >}
      * {@link JAXBElement }{@code <}{@link BasePathToElementType }{@code >}
-     * {@link JAXBElement }{@code <}{@link PathToExtendedFieldType }{@code >}
      * {@link JAXBElement }{@code <}{@link PathToIndexedFieldType }{@code >}
      * 
      * 

@@ -265,7 +265,7 @@ public class MessageType
      *     byte[]
      */
     public void setConversationIndex(byte[] value) {
-        this.conversationIndex = value;
+        this.conversationIndex = ((byte[]) value);
     }
 
     /**

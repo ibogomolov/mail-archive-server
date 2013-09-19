@@ -76,7 +76,7 @@ public class GetUserPhotoResponseMessageType
      *     byte[]
      */
     public void setPictureData(byte[] value) {
-        this.pictureData = value;
+        this.pictureData = ((byte[]) value);
     }
 
 }

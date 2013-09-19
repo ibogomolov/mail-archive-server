@@ -84,7 +84,7 @@ public class CompleteFindInGALSpeechRecognitionType
      *     byte[]
      */
     public void setAudioData(byte[] value) {
-        this.audioData = value;
+        this.audioData = ((byte[]) value);
     }
 
 }

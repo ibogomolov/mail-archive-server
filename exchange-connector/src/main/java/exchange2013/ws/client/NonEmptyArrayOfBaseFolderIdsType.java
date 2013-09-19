@@ -37,8 +37,8 @@ import javax.xml.bind.annotation.XmlType;
 public class NonEmptyArrayOfBaseFolderIdsType {
 
     @XmlElements({
-        @XmlElement(name = "FolderId", type = FolderIdType.class),
-        @XmlElement(name = "DistinguishedFolderId", type = DistinguishedFolderIdType.class)
+        @XmlElement(name = "DistinguishedFolderId", type = DistinguishedFolderIdType.class),
+        @XmlElement(name = "FolderId", type = FolderIdType.class)
     })
     protected List<BaseFolderIdType> folderIdOrDistinguishedFolderId;
 
@@ -60,8 +60,8 @@ public class NonEmptyArrayOfBaseFolderIdsType {
      * 
      * <p>
      * Objects of the following type(s) are allowed in the list
-     * {@link FolderIdType }
      * {@link DistinguishedFolderIdType }
+     * {@link FolderIdType }
      * 
      * 
      */

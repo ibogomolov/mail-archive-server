@@ -46,17 +46,17 @@ import javax.xml.bind.annotation.XmlType;
 public class NonEmptyArrayOfResponseObjectsType {
 
     @XmlElements({
-        @XmlElement(name = "AcceptItem", type = AcceptItemType.class),
-        @XmlElement(name = "TentativelyAcceptItem", type = TentativelyAcceptItemType.class),
-        @XmlElement(name = "DeclineItem", type = DeclineItemType.class),
-        @XmlElement(name = "ReplyToItem", type = ReplyToItemType.class),
-        @XmlElement(name = "ForwardItem", type = ForwardItemType.class),
-        @XmlElement(name = "ReplyAllToItem", type = ReplyAllToItemType.class),
-        @XmlElement(name = "CancelCalendarItem", type = CancelCalendarItemType.class),
         @XmlElement(name = "RemoveItem", type = RemoveItemType.class),
+        @XmlElement(name = "ForwardItem", type = ForwardItemType.class),
         @XmlElement(name = "SuppressReadReceipt", type = SuppressReadReceiptType.class),
+        @XmlElement(name = "CancelCalendarItem", type = CancelCalendarItemType.class),
+        @XmlElement(name = "DeclineItem", type = DeclineItemType.class),
+        @XmlElement(name = "TentativelyAcceptItem", type = TentativelyAcceptItemType.class),
+        @XmlElement(name = "AcceptSharingInvitation", type = AcceptSharingInvitationType.class),
         @XmlElement(name = "PostReplyItem", type = PostReplyItemType.class),
-        @XmlElement(name = "AcceptSharingInvitation", type = AcceptSharingInvitationType.class)
+        @XmlElement(name = "ReplyAllToItem", type = ReplyAllToItemType.class),
+        @XmlElement(name = "AcceptItem", type = AcceptItemType.class),
+        @XmlElement(name = "ReplyToItem", type = ReplyToItemType.class)
     })
     protected List<ResponseObjectType> acceptItemOrTentativelyAcceptItemOrDeclineItem;
 
@@ -78,17 +78,17 @@ public class NonEmptyArrayOfResponseObjectsType {
      * 
      * <p>
      * Objects of the following type(s) are allowed in the list
-     * {@link AcceptItemType }
-     * {@link TentativelyAcceptItemType }
-     * {@link DeclineItemType }
-     * {@link ReplyToItemType }
-     * {@link ForwardItemType }
-     * {@link ReplyAllToItemType }
-     * {@link CancelCalendarItemType }
      * {@link RemoveItemType }
+     * {@link ForwardItemType }
      * {@link SuppressReadReceiptType }
-     * {@link PostReplyItemType }
+     * {@link CancelCalendarItemType }
+     * {@link DeclineItemType }
+     * {@link TentativelyAcceptItemType }
      * {@link AcceptSharingInvitationType }
+     * {@link PostReplyItemType }
+     * {@link ReplyAllToItemType }
+     * {@link AcceptItemType }
+     * {@link ReplyToItemType }
      * 
      * 
      */

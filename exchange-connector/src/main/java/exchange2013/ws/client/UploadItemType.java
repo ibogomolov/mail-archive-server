@@ -117,7 +117,7 @@ public class UploadItemType {
      *     byte[]
      */
     public void setData(byte[] value) {
-        this.data = value;
+        this.data = ((byte[]) value);
     }
 
     /**

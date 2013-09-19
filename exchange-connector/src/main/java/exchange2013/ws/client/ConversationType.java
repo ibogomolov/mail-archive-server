@@ -899,7 +899,7 @@ public class ConversationType {
      *     byte[]
      */
     public void setInstanceKey(byte[] value) {
-        this.instanceKey = value;
+        this.instanceKey = ((byte[]) value);
     }
 
     /**
