@@ -69,8 +69,9 @@ public class ConnectorScheduler implements Runnable {
 	}
 
 	public synchronized void bindConnector(Connector c) {
-		// TODO add if port != null
-		scheduledConnectors.add(c);
+		if (c.isActive()) {
+			scheduledConnectors.add(c);
+		}
 	}
 
 	public synchronized void unbindConnector(Connector c) {

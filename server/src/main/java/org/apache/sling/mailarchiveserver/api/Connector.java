@@ -4,4 +4,6 @@ public interface Connector {
 
 	int checkNewMessages(int limit);
 	
+	boolean isActive();
+	
 }
