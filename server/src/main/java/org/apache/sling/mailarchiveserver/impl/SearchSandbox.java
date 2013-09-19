@@ -20,8 +20,8 @@ public class SearchSandbox {
 	private	ResourceResolverFactory resourceResolverFactory;
 	ResourceResolver resolver = null;
 
-	@Activate
-	public void activate() throws PersistenceException, LoginException {
+//	@Activate
+	public void test() throws PersistenceException, LoginException {
 		System.out.println("*** Search service sandbox");
 
 		if (resolver == null) {

@@ -1,5 +1,6 @@
 package org.apache.sling.mailarchiveserver.exchange;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.Authenticator;
@@ -62,7 +63,7 @@ import exchange2013.ws.client.RequestServerVersion;
 import exchange2013.ws.client.ResponseClassType;
 import exchange2013.ws.client.ResponseMessageType;
 
-@Component(immediate=true)  
+@Component
 @Service(Connector.class)
 public class ExchangeConnector implements Connector {
 
@@ -71,6 +72,9 @@ public class ExchangeConnector implements Connector {
 	private String username;
 	private String password;
 	private String wsdlPath;
+	private boolean mailboxCleanup;
+	
+	private boolean active = false;
 	private ExchangeServicePortType port = null;
 	private static final ExchangeVersionType EXCHANGE_VERSION = ExchangeVersionType.EXCHANGE_2013;
 
@@ -79,41 +83,51 @@ public class ExchangeConnector implements Connector {
 	private Pipeline mailProcessor;
 
 	public ExchangeConnector() {
-		// TODO if config.txt is there
 		this("config.txt");
+		System.out.println("***** ExchangeConnector()");
 	}
 
 	public ExchangeConnector(String configFilePath) {
-		FileInputStream config = null;
-		try {
-			config = new FileInputStream(configFilePath);
-			Properties props = new Properties();
-			props.load(config);
+		File configFile = new File(configFilePath);
+		if (configFile.exists()) {
+			FileInputStream config = null;
+			try {
+				config = new FileInputStream(configFile);
+				Properties props = new Properties();
+				props.load(config);
 
-			priority = new Byte(props.getProperty("priority"));
-			wsdlPath = props.getProperty("wsdlPath");
-			username = props.getProperty("username");
-			password = props.getProperty("password");
-			mailingLists = new HashSet<String>();
-			String lists = props.getProperty("lists");
-			for (String list : lists.split(",")) {
-				mailingLists.add(list.trim());
-			}
+				priority = new Byte(props.getProperty("priority"));
+				wsdlPath = props.getProperty("wsdlPath");
+				username = props.getProperty("username");
+				password = props.getProperty("password");
+				password = props.getProperty("password");
+				mailboxCleanup = new Boolean(props.getProperty("mailboxCleanup"));
+				mailingLists = new HashSet<String>();
+				String lists = props.getProperty("lists");
+				for (String list : lists.split(",")) {
+					mailingLists.add(list.trim());
+				}
 
-			// init ExchangeServicePortType
-			URL wsdlURL = new URL(wsdlPath);
-			ExchangeServices service = new ExchangeServices(wsdlURL, new QName("http://schemas.microsoft.com/exchange/services/2006/messages", "ExchangeServices"));
-			port = service.getExchangeServicePort();
-			NtlmAuthenticator authenticator = new NtlmAuthenticator(username, password);
-			Authenticator.setDefault(authenticator);
-		} catch (IOException e) {
-			throw new RuntimeException(e.getMessage());
-		} finally {
-			if (config != null) {
-				try {
-					config.close();
-				} catch (IOException e) {}
-				config = null;				
+				// init ExchangeServicePortType
+				URL wsdlURL = new URL(wsdlPath);
+				ExchangeServices service = new ExchangeServices(
+						wsdlURL, 
+						new QName("http://schemas.microsoft.com/exchange/services/2006/messages", "ExchangeServices") 
+				);
+				port = service.getExchangeServicePort();
+				NtlmAuthenticator authenticator = new NtlmAuthenticator(username, password);
+				Authenticator.setDefault(authenticator);
+				
+				active = true;
+			} catch (IOException e) {
+				throw new RuntimeException(e.getMessage());
+			} finally {
+				if (config != null) {
+					try {
+						config.close();
+					} catch (IOException e) {}
+					config = null;				
+				}
 			}
 		}
 	}
@@ -187,7 +201,6 @@ public class ExchangeConnector implements Connector {
 			ArrayOfResponseMessagesType arrayOfResponseMessages2 = getItemResponse.getResponseMessages();
 			List<JAXBElement<? extends ResponseMessageType>> responseMessageTypeList2 = arrayOfResponseMessages2.getCreateItemResponseMessageOrDeleteItemResponseMessageOrGetItemResponseMessage();
 			List<Message> messages = new ArrayList<Message>();
-			System.out.println("size: " + responseMessageTypeList2.size());
 			for (JAXBElement<? extends ResponseMessageType> jaxbElement : responseMessageTypeList2) {
 				ItemInfoResponseMessageType response = (ItemInfoResponseMessageType) jaxbElement.getValue();
 				ArrayOfRealItemsType itemsElement = response.getItems();
@@ -198,7 +211,7 @@ public class ExchangeConnector implements Connector {
 				}
 			}
 			if (mailProcessor.processNewMasseges(messages.iterator())) {
-				deletion = true; // PROD ! MAIL DELETION FLAG
+				deletion = mailboxCleanup; 
 			}
 
 			return messageIds.size();
@@ -247,9 +260,6 @@ public class ExchangeConnector implements Connector {
 		Message sample = new MessageImpl();
 		Set<String> recepients = new HashSet<String>();
 
-		System.out.println("id: "+in.getInternetMessageId());
-		System.out.println("subj: "+in.getSubject());
-		
 		Header header = new HeaderImpl();
 		// Message-Id
 		header.addField(new RawField(FieldName.MESSAGE_ID, in.getInternetMessageId()));
@@ -258,7 +268,7 @@ public class ExchangeConnector implements Connector {
 			header.addField(new RawField(AdditionalFieldName.IN_REPLY_TO, in.getInReplyTo()));
 		}
 		sample.setHeader(header);
-		
+
 		// From
 		sample.setFrom(convertMailAddressTypeToMailbox(in.getFrom().getMailbox()));
 
@@ -302,6 +312,11 @@ public class ExchangeConnector implements Connector {
 		}
 
 		return result;
+	}
+
+	@Override
+	public boolean isActive() {
+		return active;
 	}
 
 	private static Mailbox convertMailAddressTypeToMailbox(EmailAddressType in) {
