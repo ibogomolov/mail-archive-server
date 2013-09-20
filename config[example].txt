@@ -1,12 +1,11 @@
-# Services.wsdl should be accessed without entering credentials.
-# Services.wsdl should contain service definition, i.e. <wsdl:service> tag.
-# valid values: relative or global paths or URL
-wsdlPath=file:Services.wsdl
-
 # <domain>\\<user>
 username=mas\\user
 
 password=Qwer!234
+
+# Services.wsdl should contain service definition, i.e. <wsdl:service> tag.
+# valid values: relative or global path
+wsdlPath=file:Services.wsdl
 
 # valid values: from -128 to 127
 priority=0
