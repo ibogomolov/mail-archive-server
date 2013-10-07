@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Scanner;
 
+import javax.jcr.query.Query;
+
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
@@ -14,13 +16,14 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 
 @Component
+// TODO remove
 public class SearchSandbox {
 
 	@Reference
 	private	ResourceResolverFactory resourceResolverFactory;
 	ResourceResolver resolver = null;
 
-//	@Activate
+	@Activate
 	public void test() throws PersistenceException, LoginException {
 		System.out.println("*** Search service sandbox");
 
@@ -54,14 +57,14 @@ public class SearchSandbox {
 				query = sc.nextLine();
 
 				System.out.println("*** sql");
-				Iterator<Resource> resSQL = resolver.findResources(query, "sql");
+				Iterator<Resource> resSQL = resolver.findResources(query, Query.JCR_SQL2);
 				while (resSQL.hasNext()) {
 					Resource resource = (Resource) resSQL.next();
 					System.out.println(resource.toString());
 				}
 				
 //				System.out.println("*** xpath");
-//				Iterator<Resource> resXPath = resolver.findResources(query, "xpath");
+//				Iterator<Resource> resXPath = resolver.findResources(query, Query.XPATH);
 //				while (resXPath.hasNext()) {
 //					Resource resource = (Resource) resXPath.next();
 //					System.out.println(resource.toString());
