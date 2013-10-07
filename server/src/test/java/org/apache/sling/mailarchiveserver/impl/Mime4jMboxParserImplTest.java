@@ -21,7 +21,7 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class Mime4jMboxParserImplTest {
 
-	private Mime4jMboxParserImpl parser = new Mime4jMboxParserImpl();
+	private static Mime4jMboxParserImpl parser = new Mime4jMboxParserImpl();
 	private String filePath;
 	private int expectedMessagesCount;
 	

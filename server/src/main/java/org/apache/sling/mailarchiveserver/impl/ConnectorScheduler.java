@@ -20,7 +20,9 @@ import org.slf4j.LoggerFactory;
 @Component
 public class ConnectorScheduler implements Runnable {
 
-	private static final int RETREIVE_MESSAGES_LIMIT = 10;
+	private static final int SLEEP_TIME_BETWEEN_NEW_MAIL_CHECKS = 20;
+	private static final int RETREIVE_MESSAGES_LIMIT = 1000;
+	
 	private static final Logger logger = LoggerFactory.getLogger(ConnectorScheduler.class);
 	private static final int WAITING_TIME_LIMIT_BEFORE_TERMINATION = 5000; 
 
@@ -52,7 +54,6 @@ public class ConnectorScheduler implements Runnable {
 	@Override
 	public void run() {
 		while (running) {
-			logger.info("Checking new mail.");
 			Collections.sort(scheduledConnectors, null); // TODO comparator, introduce class abstract PriorityConnector implements Connector
 			executionQueue = new ArrayDeque<Connector>(scheduledConnectors);
 			while (!executionQueue.isEmpty() && running) {
@@ -61,7 +62,7 @@ public class ConnectorScheduler implements Runnable {
 				logger.info("Retrieved {} messages.", retreived);
 			}
 			try {
-				TimeUnit.SECONDS.sleep(20);
+				TimeUnit.SECONDS.sleep(SLEEP_TIME_BETWEEN_NEW_MAIL_CHECKS);
 			} catch (InterruptedException e) {
 				running = false;
 			}
