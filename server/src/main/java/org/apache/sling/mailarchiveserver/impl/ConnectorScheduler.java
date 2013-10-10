@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 public class ConnectorScheduler implements Runnable {
 
 	private static final int SLEEP_TIME_BETWEEN_NEW_MAIL_CHECKS = 20;
-	private static final int RETREIVE_MESSAGES_LIMIT = 1000;
+	private static final int RETREIVE_MESSAGES_LIMIT = 1;
 	
 	private static final Logger logger = LoggerFactory.getLogger(ConnectorScheduler.class);
 	private static final int WAITING_TIME_LIMIT_BEFORE_TERMINATION = 5000; 
