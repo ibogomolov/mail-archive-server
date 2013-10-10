@@ -42,7 +42,7 @@ public class SearchSandbox {
 		}
 		
 		for (int i = 0; i < 3; i++) {
-			final Props props = new Props("title", "hello", "jcr:text", "world");
+			final Props props = new Props("title", "HELLO", "jcr:text", "world");
 			resolver.create(testRoot, "child_" + System.currentTimeMillis(), props).getPath();
 			resolver.commit();
 		}
