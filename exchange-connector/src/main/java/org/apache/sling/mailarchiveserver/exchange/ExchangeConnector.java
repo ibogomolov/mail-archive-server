@@ -28,63 +28,63 @@ import org.apache.james.mime4j.message.HeaderImpl;
 import org.apache.james.mime4j.message.MessageImpl;
 import org.apache.james.mime4j.stream.RawField;
 import org.apache.sling.mailarchiveserver.api.Connector;
-import org.apache.sling.mailarchiveserver.api.Pipeline;
+import org.apache.sling.mailarchiveserver.api.MailProcessingPipeline;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import exchange2013.ws.client.ArrayOfRealItemsType;
-import exchange2013.ws.client.ArrayOfResponseMessagesType;
-import exchange2013.ws.client.BaseFolderIdType;
-import exchange2013.ws.client.BaseItemIdType;
-import exchange2013.ws.client.BodyTypeResponseType;
-import exchange2013.ws.client.DefaultShapeNamesType;
-import exchange2013.ws.client.DeleteItemResponseType;
-import exchange2013.ws.client.DeleteItemType;
-import exchange2013.ws.client.DisposalType;
-import exchange2013.ws.client.DistinguishedFolderIdNameType;
-import exchange2013.ws.client.DistinguishedFolderIdType;
-import exchange2013.ws.client.EmailAddressType;
-import exchange2013.ws.client.ExchangeServicePortType;
-import exchange2013.ws.client.ExchangeServices;
-import exchange2013.ws.client.ExchangeVersionType;
-import exchange2013.ws.client.FindItemResponseMessageType;
-import exchange2013.ws.client.FindItemResponseType;
-import exchange2013.ws.client.FindItemType;
-import exchange2013.ws.client.GetItemResponseType;
-import exchange2013.ws.client.GetItemType;
-import exchange2013.ws.client.ItemInfoResponseMessageType;
-import exchange2013.ws.client.ItemQueryTraversalType;
-import exchange2013.ws.client.ItemResponseShapeType;
-import exchange2013.ws.client.ItemType;
-import exchange2013.ws.client.MessageType;
-import exchange2013.ws.client.NonEmptyArrayOfBaseFolderIdsType;
-import exchange2013.ws.client.NonEmptyArrayOfBaseItemIdsType;
-import exchange2013.ws.client.RequestServerVersion;
-import exchange2013.ws.client.ResponseClassType;
-import exchange2013.ws.client.ResponseMessageType;
+import exchange.v2007sp3.ws.client.ArrayOfRealItemsType;
+import exchange.v2007sp3.ws.client.ArrayOfResponseMessagesType;
+import exchange.v2007sp3.ws.client.BaseFolderIdType;
+import exchange.v2007sp3.ws.client.BaseItemIdType;
+import exchange.v2007sp3.ws.client.BodyTypeResponseType;
+import exchange.v2007sp3.ws.client.DefaultShapeNamesType;
+import exchange.v2007sp3.ws.client.DeleteItemResponseType;
+import exchange.v2007sp3.ws.client.DeleteItemType;
+import exchange.v2007sp3.ws.client.DisposalType;
+import exchange.v2007sp3.ws.client.DistinguishedFolderIdNameType;
+import exchange.v2007sp3.ws.client.DistinguishedFolderIdType;
+import exchange.v2007sp3.ws.client.EmailAddressType;
+import exchange.v2007sp3.ws.client.ExchangeServicePortType;
+import exchange.v2007sp3.ws.client.ExchangeServices;
+import exchange.v2007sp3.ws.client.ExchangeVersionType;
+import exchange.v2007sp3.ws.client.FindItemResponseMessageType;
+import exchange.v2007sp3.ws.client.FindItemResponseType;
+import exchange.v2007sp3.ws.client.FindItemType;
+import exchange.v2007sp3.ws.client.GetItemResponseType;
+import exchange.v2007sp3.ws.client.GetItemType;
+import exchange.v2007sp3.ws.client.ItemInfoResponseMessageType;
+import exchange.v2007sp3.ws.client.ItemQueryTraversalType;
+import exchange.v2007sp3.ws.client.ItemResponseShapeType;
+import exchange.v2007sp3.ws.client.ItemType;
+import exchange.v2007sp3.ws.client.MessageType;
+import exchange.v2007sp3.ws.client.NonEmptyArrayOfBaseFolderIdsType;
+import exchange.v2007sp3.ws.client.NonEmptyArrayOfBaseItemIdsType;
+import exchange.v2007sp3.ws.client.RequestServerVersion;
+import exchange.v2007sp3.ws.client.ResponseClassType;
+import exchange.v2007sp3.ws.client.ResponseMessageType;
 
 @Component
 @Service(Connector.class)
 public class ExchangeConnector implements Connector {
 
-	private byte priority; // TODO use
+//	private byte priority; // TODO use
 	private Set<String> mailingLists;
 	private String username;
 	private String password;
 	private String wsdlPath;
 	private boolean mailboxCleanup;
-	
+
 	private boolean active = false;
 	private ExchangeServicePortType port = null;
-	private static final ExchangeVersionType EXCHANGE_VERSION = ExchangeVersionType.EXCHANGE_2013;
+	private static final ExchangeVersionType EXCHANGE_VERSION = ExchangeVersionType.EXCHANGE_2007_SP_1;
 
 	private static final Logger logger = LoggerFactory.getLogger(ExchangeConnector.class);
 	@Reference
-	private Pipeline mailProcessor;
+	private MailProcessingPipeline mailProcessor;
 
 	public ExchangeConnector() {
 		this("config.txt");
-		System.out.println("***** ExchangeConnector()");
+		SysStreamsLogger.bindSystemStreams(); // PROD remove
 	}
 
 	public ExchangeConnector(String configFilePath) {
@@ -96,7 +96,7 @@ public class ExchangeConnector implements Connector {
 				Properties props = new Properties();
 				props.load(config);
 
-				priority = new Byte(props.getProperty("priority"));
+//				priority = new Byte(props.getProperty("priority")); TODO
 				wsdlPath = props.getProperty("wsdlPath");
 				username = props.getProperty("username");
 				password = props.getProperty("password");
@@ -113,11 +113,11 @@ public class ExchangeConnector implements Connector {
 				ExchangeServices service = new ExchangeServices(
 						wsdlURL, 
 						new QName("http://schemas.microsoft.com/exchange/services/2006/messages", "ExchangeServices") 
-				);
+						);
 				port = service.getExchangeServicePort();
 				NtlmAuthenticator authenticator = new NtlmAuthenticator(username, password);
 				Authenticator.setDefault(authenticator);
-				
+
 				active = true;
 			} catch (IOException e) {
 				throw new RuntimeException(e.getMessage());
@@ -153,7 +153,7 @@ public class ExchangeConnector implements Connector {
 			ids.add(inbox);
 			findRequest.setParentFolderIds(folderIds);
 
-			findRequest.setTraversal(ItemQueryTraversalType.SHALLOW); // SHALLOW
+			findRequest.setTraversal(ItemQueryTraversalType.SHALLOW);
 
 			RequestServerVersion requestVersion = new RequestServerVersion();
 			requestVersion.setVersion(EXCHANGE_VERSION);
@@ -164,7 +164,8 @@ public class ExchangeConnector implements Connector {
 
 			FindItemResponseType findItemResponse = findItemResult.value;
 			ArrayOfResponseMessagesType arrayOfResponseMessages = findItemResponse.getResponseMessages();
-			List<JAXBElement<? extends ResponseMessageType>> responseMessageTypeList = arrayOfResponseMessages.getCreateItemResponseMessageOrDeleteItemResponseMessageOrGetItemResponseMessage();
+			List<JAXBElement<? extends ResponseMessageType>> responseMessageTypeList = 
+					arrayOfResponseMessages.getCreateItemResponseMessageOrDeleteItemResponseMessageOrGetItemResponseMessage();
 			for (JAXBElement<? extends ResponseMessageType> jaxbElement : responseMessageTypeList) {
 				FindItemResponseMessageType response = (FindItemResponseMessageType) jaxbElement.getValue();
 
@@ -179,13 +180,18 @@ public class ExchangeConnector implements Connector {
 					}
 				}
 			}
+			
+			if (messageIds.size() == 0) {
+				logger.info("No new messages.");
+				return 0;
+			}
 
 			// GET MESSAGES
 
 			GetItemType getRequest = new GetItemType();
 			ItemResponseShapeType responseShape2 = new ItemResponseShapeType();
 			responseShape2.setBaseShape(DefaultShapeNamesType.ALL_PROPERTIES);
-			responseShape2.setBodyType(BodyTypeResponseType.TEXT);
+			responseShape2.setBodyType(BodyTypeResponseType.TEXT); // optional
 			getRequest.setItemShape(responseShape2);
 
 			NonEmptyArrayOfBaseItemIdsType itemIds = new NonEmptyArrayOfBaseItemIdsType();
@@ -197,15 +203,19 @@ public class ExchangeConnector implements Connector {
 
 			port.getItem(getRequest, requestVersion, getItemResult);
 
+			List<Message> messages = new ArrayList<Message>();
 			GetItemResponseType getItemResponse = getItemResult.value;
 			ArrayOfResponseMessagesType arrayOfResponseMessages2 = getItemResponse.getResponseMessages();
-			List<JAXBElement<? extends ResponseMessageType>> responseMessageTypeList2 = arrayOfResponseMessages2.getCreateItemResponseMessageOrDeleteItemResponseMessageOrGetItemResponseMessage();
-			List<Message> messages = new ArrayList<Message>();
+			List<JAXBElement<? extends ResponseMessageType>> responseMessageTypeList2 = 
+					arrayOfResponseMessages2.getCreateItemResponseMessageOrDeleteItemResponseMessageOrGetItemResponseMessage();
 			for (JAXBElement<? extends ResponseMessageType> jaxbElement : responseMessageTypeList2) {
 				ItemInfoResponseMessageType response = (ItemInfoResponseMessageType) jaxbElement.getValue();
+				if (response.getResponseClass() != ResponseClassType.SUCCESS) {
+					continue;
+				}
 				ArrayOfRealItemsType itemsElement = response.getItems();
 				List<ItemType> items = itemsElement.getItemOrMessageOrCalendarItem();
-				for( ItemType item : items ) {
+				for( ItemType item : items ) { // usually items.size() == 1
 					MessageType message = (MessageType) item;
 					messages.addAll(convertExchangeMessageToMime4jMessages(message));
 				}
@@ -214,9 +224,11 @@ public class ExchangeConnector implements Connector {
 				deletion = mailboxCleanup; 
 			}
 
-			return messageIds.size();
+			return messages.size();
 		} catch (Exception e){
+			// TODO skip an email that results an exception
 			logger.info("Error while retrieving messages. {} : {} ", e.toString(), e.getMessage());
+			e.printStackTrace();
 			return 0;
 		} finally {
 
@@ -241,12 +253,14 @@ public class ExchangeConnector implements Connector {
 
 				port.deleteItem(request, requestVersion, deleteItemResult);
 
-				List<JAXBElement<? extends ResponseMessageType>> responseList = deleteItemResult.value.getResponseMessages().getCreateItemResponseMessageOrDeleteItemResponseMessageOrGetItemResponseMessage();
+				List<JAXBElement<? extends ResponseMessageType>> responseList = deleteItemResult.value
+						.getResponseMessages().getCreateItemResponseMessageOrDeleteItemResponseMessageOrGetItemResponseMessage();
 				for (JAXBElement<? extends ResponseMessageType> jaxbElement : responseList) {
 					ResponseMessageType responseMessage = jaxbElement.getValue();
 					ResponseClassType responseMessageClass = responseMessage.getResponseClass();
 					if (responseMessageClass != ResponseClassType.SUCCESS) {
-						logger.info("Error while deleting messages from Exchange server. \nCode {} : {}\n", responseMessage.getResponseCode(), responseMessage.getMessageText());
+						logger.info("Error while deleting messages from Exchange server. \nCode {} : {}\n", 
+								responseMessage.getResponseCode(), responseMessage.getMessageText());
 					}
 				}
 			}
@@ -270,7 +284,10 @@ public class ExchangeConnector implements Connector {
 		sample.setHeader(header);
 
 		// From
-		sample.setFrom(convertMailAddressTypeToMailbox(in.getFrom().getMailbox()));
+		final Mailbox from = convertMailAddressTypeToMailbox(in.getFrom().getMailbox());
+		if (from != null) {
+			sample.setFrom(from);
+		}
 
 		// To
 		final List<Mailbox> toList = convertMailAddressTypeListToMailboxList(in.getToRecipients().getMailbox());
@@ -320,14 +337,21 @@ public class ExchangeConnector implements Connector {
 	}
 
 	private static Mailbox convertMailAddressTypeToMailbox(EmailAddressType in) {
-		String[] email = in.getEmailAddress().split("@", 2);
-		return new Mailbox(in.getName(), email[0], email[1]);
+		final String emailAddress = in.getEmailAddress();
+		if (emailAddress.contains("@")) {
+			String[] email = emailAddress.split("@", 2);
+			return new Mailbox(in.getName(), email[0], email[1]);
+		} 
+		return null;
 	}
 
 	private static List<Mailbox> convertMailAddressTypeListToMailboxList(List<EmailAddressType> inList) {
 		List<Mailbox> outList = new ArrayList<Mailbox>();
 		for (EmailAddressType el : inList) {
-			outList.add(convertMailAddressTypeToMailbox(el));
+			final Mailbox mailbox = convertMailAddressTypeToMailbox(el);
+			if (mailbox != null) {
+				outList.add(mailbox);
+			}
 		}
 		return outList;
 	}
