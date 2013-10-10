@@ -32,17 +32,25 @@ public class SearchQueryParserImpl implements SearchQueryParser {
 		for (String lexeme : lexemes) {
 			String[] token = lexeme.split(":");
 			if (token.length == 1) {
-				insertTokenIntoMap(token[0].trim(), SearchParameters.NONE, res);
-			} else {
-				insertTokenIntoMap(token[0].trim(), getSearchParameter(token[0].trim()), res);
+				insertTokenIntoMap(token[0].trim(), SearchParameter.NONE, res);
+			} else if (token.length > 1) {
+				String searchParam = getSearchParameter(token[0]);
+				if (searchParam != null) {
+					insertTokenIntoMap(token[1].trim(), searchParam, res);
+				}
 			}
 		}
 		return res;
 	}
 
-	private static String getSearchParameter(String trim) {
-		// TODO Auto-generated method stub
-		return null;
+	private static String getSearchParameter(String s) {
+		s = s.trim().toLowerCase();
+		if (SEARCH_PARAMETERES.contains(s)) {
+			return s;
+		} else {
+			return null;
+		}
+		//FIXME Auto-generated method stub
 	}
 
 	private static void insertTokenIntoMap(String tokenString, String tokenClass, Map<String, List<String>> map) {
@@ -54,24 +62,43 @@ public class SearchQueryParserImpl implements SearchQueryParser {
 		map.put(tokenClass, ls);
 	}
 
-	public static class SearchParameters {
+	// TODO move to MASconstants 
+	public static final Set<String> SEARCH_PARAMETERES = new HashSet<String>();
+	public static final Set<String> MESSAGE_FIELDS = new HashSet<String>();
+	public static final Map<String, String> SEARCH_PARAMETER_TO_MESSAGE_FIELD_MAP = new HashMap<String, String>();
+
+	static {
+		SEARCH_PARAMETERES.add(SearchParameter.FROM);
+		SEARCH_PARAMETERES.add(SearchParameter.SUBJ);
+		SEARCH_PARAMETERES.add(SearchParameter.LIST);
+
+		MESSAGE_FIELDS.add(SearchableMessageField.FROM);
+		MESSAGE_FIELDS.add(SearchableMessageField.SUBJ);
+		MESSAGE_FIELDS.add(SearchableMessageField.LIST);
+		MESSAGE_FIELDS.add(SearchableMessageField.BODY);
+
+		SEARCH_PARAMETER_TO_MESSAGE_FIELD_MAP.put(SearchParameter.FROM, SearchableMessageField.FROM);
+		SEARCH_PARAMETER_TO_MESSAGE_FIELD_MAP.put(SearchParameter.SUBJ, SearchableMessageField.SUBJ);
+		SEARCH_PARAMETER_TO_MESSAGE_FIELD_MAP.put(SearchParameter.LIST, SearchableMessageField.LIST);
+	}
+
+	public static class SearchParameter {
 		public static final String NONE = "";
-		
 		public static final String FROM = "from";
 		public static final String SUBJ = "subject";
 		public static final String LIST = "list";
-
-		public static final Set<String> SET_OF_SEARCH_PARAMETERES = new HashSet<String>();
-		public static final Map<String, String> SEARCH_PARAMETER_TO_MESSAGE_FIELD_MAP = new HashMap<String, String>();
-
-		static {
-			SET_OF_SEARCH_PARAMETERES.add(FROM);
-			SET_OF_SEARCH_PARAMETERES.add(SUBJ);
-			SET_OF_SEARCH_PARAMETERES.add(LIST);
-			
-			SEARCH_PARAMETER_TO_MESSAGE_FIELD_MAP.put(FROM, "From");
-			SEARCH_PARAMETER_TO_MESSAGE_FIELD_MAP.put(SUBJ, "Subject");
-			SEARCH_PARAMETER_TO_MESSAGE_FIELD_MAP.put(LIST, "List-Id");
-		}
 	}
+
+	public static class SearchableMessageField {
+		public static final String FROM = "From";
+		public static final String SUBJ = "Subject";
+		public static final String LIST = "List-Id";
+		public static final String BODY = "Body";
+		//		public static final String DATE = "";
+		//		public static final String FROM = "";
+		//		public static final String TO = "";
+
+
+	}
+
 }

@@ -1,23 +1,22 @@
 package org.apache.sling.mailarchiveserver.impl;
 
-import static org.apache.sling.mailarchiveserver.impl.SearchQueryParserImpl.SearchParameters.SEARCH_PARAMETER_TO_MESSAGE_FIELD_MAP;
-import static org.apache.sling.mailarchiveserver.impl.SearchQueryParserImpl.SearchParameters.SET_OF_SEARCH_PARAMETERES;
+import static org.apache.sling.mailarchiveserver.impl.SearchQueryParserImpl.MESSAGE_FIELDS;
+import static org.apache.sling.mailarchiveserver.impl.SearchQueryParserImpl.SEARCH_PARAMETER_TO_MESSAGE_FIELD_MAP;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.mailarchiveserver.api.QueryBuilder;
-import org.apache.sling.mailarchiveserver.impl.SearchQueryParserImpl.SearchParameters;
+import org.apache.sling.mailarchiveserver.impl.SearchQueryParserImpl.SearchParameter;
 
 @Component
 @Service(QueryBuilder.class)
 public class QueryBuilderImpl implements QueryBuilder {
 
-	static final String BASE = "SELECT * FROM [nt:unstructured] WHERE ";
+	static final String BASE = "SELECT * FROM [nt:unstructured]";
+	static final String BASE_WHERE = BASE + " WHERE ";
 	private static final String AND = " AND ";
 	private static final String OR = " OR ";
 
@@ -26,23 +25,37 @@ public class QueryBuilderImpl implements QueryBuilder {
 	private String buildSQL2Query(Map<String, List<String>> tokens) {
 		// TODO implement
 		String constraints = "";
-		Set<String> searchParameters = new HashSet<String>(SET_OF_SEARCH_PARAMETERES);
-		
+
 		// tokens constraints
 		for (String tokenClass : tokens.keySet()) {
-			if (tokenClass.equals(SearchParameters.NONE)) {
+			if (tokenClass.equals(SearchParameter.NONE)) {
 				continue;
 			}
-			searchParameters.remove(tokenClass);
 			String fieldConstraint =  buildFieldConstraints(tokenClass, tokens);
 			constraints += "("+ fieldConstraint +")" + AND;
 		}
 
 		// global constraints
-		String fieldConstraint =  buildFieldConstraints(SearchParameters.NONE, tokens);
-		constraints += "("+ fieldConstraint +")" + AND;
-		
-		return BASE + constraints.substring(0, constraints.length()-AND.length());
+		String globalConstraint = "";
+		List<String> ls = tokens.get(SearchParameter.NONE);
+		if (ls != null) {
+			for (String msgField : MESSAGE_FIELDS) {
+				for (String value : ls) {
+					globalConstraint += sqlLikeConstraint(sqlLower(msgField), value) + OR;
+				}
+			}
+			globalConstraint = globalConstraint.substring(0, globalConstraint.length()-OR.length());
+		}
+		if (!globalConstraint.equalsIgnoreCase("")) {
+			constraints += "("+ globalConstraint +")" + AND;
+		}
+
+		if (constraints.equalsIgnoreCase("")) {
+			return BASE;
+		} else {
+
+			return BASE_WHERE + constraints.substring(0, constraints.length()-AND.length());
+		}
 	}
 
 	private static String buildFieldConstraints(String tokenClass, Map<String, List<String>> tokens) {
@@ -50,9 +63,17 @@ public class QueryBuilderImpl implements QueryBuilder {
 		String messageField = SEARCH_PARAMETER_TO_MESSAGE_FIELD_MAP.get(tokenClass);
 		String fieldConstraint = "";
 		for (String value : ls) {
-			fieldConstraint += messageField + " LIKE '%" + value + "%'" + OR;
+			fieldConstraint += sqlLikeConstraint(sqlLower(messageField), value) + OR;
 		}
 		return fieldConstraint.substring(0, fieldConstraint.length()-OR.length());
+	}
+
+	private static String sqlLikeConstraint(String messageField, String value) {
+		return messageField + " LIKE '%" + value + "%'";
+	}
+
+	private static String sqlLower(String messageField) {
+		return "LOWER("+ messageField + ")";
 	}
 
 	@Override
