@@ -4,6 +4,7 @@ import java.util.Iterator;
 
 import javax.jcr.query.Query;
 
+import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
@@ -25,15 +26,17 @@ public class SearchServiceImpl implements SearchService {
 	private SearchQueryParser parser;
 	private QueryBuilderImpl queryBuilder = new QueryBuilderImpl();
 
-	public SearchServiceImpl() throws LoginException {
-		System.out.println("*** Search constructor");
+	@Activate
+	public void activate() throws LoginException {
 		if (resolver == null) {
 			resolver = resourceResolverFactory.getAdministrativeResourceResolver(null);
 		}
+		System.out.println("*** SearchServiceImpl constructor");
 	}
 
 	@Override
 	public Iterator<Resource> find(String phrase) {
+		System.out.println("*** SearchServiceImpl find");
 		String query = queryBuilder.buildQuery(parser.parse(phrase), QueryBuilderImpl.SQL2);
 		Iterator<Resource> res = resolver.findResources(query, Query.JCR_SQL2);
 		return res;

@@ -15,7 +15,7 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 
-@Component
+//@Component
 // TODO remove
 public class SearchSandbox {
 

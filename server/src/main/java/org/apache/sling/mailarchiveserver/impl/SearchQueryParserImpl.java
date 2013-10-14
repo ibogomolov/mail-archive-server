@@ -92,7 +92,7 @@ public class SearchQueryParserImpl implements SearchQueryParser {
 	public static class SearchableMessageField {
 		public static final String FROM = "From";
 		public static final String SUBJ = "Subject";
-		public static final String LIST = "List-Id";
+		public static final String LIST = "'List-Id'";
 		public static final String BODY = "Body";
 		//		public static final String DATE = "";
 		//		public static final String FROM = "";

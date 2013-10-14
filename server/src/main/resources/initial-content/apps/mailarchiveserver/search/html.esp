@@ -1,0 +1,38 @@
+<html>
+
+<head>
+<% load("../head.esp"); %>
+<title>Search mail archive</title>
+</head>
+
+<body>
+	<div class="content">
+<%
+	var phrase = request.getParameter("q")
+	if (!phrase) {
+%>
+	<form method="GET">
+	    <input type="text" name="q" width="90% "/> 
+	    <input type="submit" value="Search" /> <br> 
+	</form>
+<%
+	} else {
+%>
+<%
+		var service = sling.getService(Packages.org.apache.sling.mailarchiveserver.api.SearchService) 
+		// out.print(service + "<br>")
+		var rIter = service.find(phrase)
+		while (rIter.hasNext()) {
+			var resource = rIter.next()
+			var node = resource.adaptTo(Packages.javax.jcr.Node)
+			out.print(node.getName() + " : " + node.getPath() + "<br>")	
+
+			// use message/preview to render node
+		}
+
+	}
+%>
+	</div>
+</body>
+
+</html>
