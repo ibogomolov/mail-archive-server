@@ -8,5 +8,9 @@
 
     "import" : {
         "sling:resourceType": "mailarchiveserver/import"
+    },
+
+    "search" : {
+        "sling:resourceType": "mailarchiveserver/search"
     }
 }
