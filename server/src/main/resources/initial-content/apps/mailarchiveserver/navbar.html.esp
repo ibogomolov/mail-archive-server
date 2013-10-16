@@ -1,40 +1,57 @@
 <div class="navbar">
+	<% load("head.esp"); %>
 
-	<a href="/content/mailarchiveserver.html">home</a> > 
-	<a href="/content/mailarchiveserver/archive.html">archive</a>
+<!-- NAVIGATION BAR -->
 
-	<%
-	var name = [];
-	var href = [];
-	var node = currentNode;
-	var folding = false;
-	var fname = "";
-	var fhref = "";
-	while (node.getName() != "archive") {
-		var rt = node["sling:resourceType"];
-		if (rt == "mailarchiveserver/list") 
-			folding = true;
-		
-		if (rt != undefined) {
-			if (!folding) {
-				name.push(node["jcr:text"]);
-				href.push(node.getPath()+".html");
-			} else {
-				fname += node["jcr:text"]+".";
-				if (fhref == "")
-					fhref = node.getPath()+".html";
+	<a href=<%= homePage %>>home</a> > 
+<%
+	if (currentNode.getName() == "search") {
+%>
+		<a href="/mailarchiveserver/search.html">search</a>
+<%
+	} else {
+%>
+		<a href="/mailarchiveserver/archive.html">archive</a>
+<%		
+		var name = [];
+		var href = [];
+		var node = currentNode;
+		var folding = false;
+		var fname = "";
+		var fhref = "";
+		while (node.getName() != "archive") {
+			var rt = node["sling:resourceType"];
+			if (rt == "mailarchiveserver/list") 
+				folding = true;
+			
+			if (rt != undefined) {
+				if (!folding) {
+					name.push(node["jcr:text"]);
+					href.push(node.getPath()+".html");
+				} else {
+					fname += node["jcr:text"]+".";
+					if (fhref == "")
+						fhref = node.getPath()+".html";
+				}
 			}
+			node = node.getParent();
 		}
-		node = node.getParent();
-	}
-	if (folding) {
-		name.push(fname.substring(0, fname.length-1));
-		href.push(fhref);
-	}
+		if (folding) {
+			name.push(fname.substring(0, fname.length-1));
+			href.push(fhref);
+		}
 
-	while (name.length > 0) {
-		out.print(" > <a href="+href.pop()+">"+name.pop()+"</a>");
+		while (name.length > 0) {
+			out.print(" > <a href="+href.pop()+">"+name.pop()+"</a>");
+		}
 	}
-	%>
+%>
+
+<!-- SAERCH BAR -->
+
+	<form method="GET" action="/mailarchiveserver/search.html" style="width: 40%; margin: 1em auto;">
+	    <input id="phrase" type="text" name="q" style="width: 75%;" /> 
+	    <input type="submit" value="Search" style="width: 23%;" /> <br> 
+	</form>
 
 </div>

@@ -1,11 +1,11 @@
 <html>
 	<head>
-		<link rel="stylesheet" href="/apps/mailarchiveserver/styles.css"/>
+		<% load("../head.esp"); %>
 	</head>
 
 	<body>
 	<div class="navbar">
-	<a href="/content/mailarchiveserver.html">< back</a>
+	<a href=<%= homePage %>>< back</a>
 	</div>
 
 	<div class="content">

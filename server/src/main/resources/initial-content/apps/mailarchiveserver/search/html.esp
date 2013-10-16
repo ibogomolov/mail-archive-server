@@ -6,30 +6,27 @@
 </head>
 
 <body>
+	<% sling.include(currentNode.getPath(), "forceResourceType=mailarchiveserver,replaceSelectors=navbar"); %>
+
+	<script type="text/javascript">
+			var val = getRequestParam('q')
+			document.getElementById("phrase").value = val
+	</script>
+
 	<div class="content">
 <%
 	var phrase = request.getParameter("q")
-	if (!phrase) {
-%>
-	<form method="GET">
-	    <input type="text" name="q" width="90% "/> 
-	    <input type="submit" value="Search" /> <br> 
-	</form>
-<%
-	} else {
-%>
-<%
+	if (phrase) {
 		var service = sling.getService(Packages.org.apache.sling.mailarchiveserver.api.SearchService) 
-		// out.print(service + "<br>")
-		var rIter = service.find(phrase)
-		while (rIter.hasNext()) {
-			var resource = rIter.next()
+		var resIter = service.find(phrase)
+		var renderer = new OrderedRenderer(dateComparator, "forceResourceType=mailarchiveserver/message,replaceSelectors=preview")
+		while (resIter.hasNext()) {
+			var resource = resIter.next()
 			var node = resource.adaptTo(Packages.javax.jcr.Node)
-			out.print(node.getName() + " : " + node.getPath() + "<br>")	
-
-			// use message/preview to render node
+			renderer.addMsg(node)
 		}
-
+		renderer.sort()
+		renderer.render()
 	}
 %>
 	</div>
