@@ -8,44 +8,23 @@
 <% sling.include(currentNode.getPath(), "forceResourceType=mailarchiveserver,replaceSelectors=navbar"); %>
 
 <%
-var email = [];
 
-function iterate(node, lvl) {
+function iterate(renderer, node, lvl) {
 	for (i in node.getChildren()) {
-		var child = node[i];
+		var child = node[i]
 		if (lvl == 0) {
-			layout(child);
+			renderer.addMsg(child)
 		} else {
-			iterate(child, lvl-1);
+			iterate(renderer, child, lvl-1)
 		}
 	}
 }
 
-function layout(message) {
-	var obj = new Object();
-	obj.path = message.getPath();
-	obj.date = new Date(message["Date"]);
-	email.push(obj);
-}
+var renderer = new OrderedRenderer(dateComparator, "replaceSelectors=preview")
+iterate(renderer, currentNode, threadNodesNumber);
+renderer.sort()
+renderer.render()
 
-
-var list = currentNode;
-iterate(list, threadNodesNumber);
-
-email.sort(comparator);
-while (email.length > 0) {
-	 sling.include(email.pop().path, "replaceSelectors=preview"); 
-}
-
-
-function comparator(a, b) {
-	if (a.date > b.date)
-		return 1;
-	else if (a.date < b.date)
-		return -1;
-	else
-		return 0;
-}
 %>
 </body>
 </html>
