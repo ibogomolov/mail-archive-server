@@ -96,7 +96,7 @@ public class ExchangeConnector implements Connector {
 				Properties props = new Properties();
 				props.load(config);
 
-//				priority = new Byte(props.getProperty("priority")); TODO
+//				priority = new Byte(props.getProperty("priority")); TODO 
 				wsdlPath = props.getProperty("wsdlPath");
 				username = props.getProperty("username");
 				password = props.getProperty("password");
@@ -226,7 +226,7 @@ public class ExchangeConnector implements Connector {
 
 			return messages.size();
 		} catch (Exception e){
-			// TODO skip an email that results an exception
+			// TODO skip an email that results an exception ?
 			logger.info("Error while retrieving messages. {} : {} ", e.toString(), e.getMessage());
 			e.printStackTrace();
 			return 0;

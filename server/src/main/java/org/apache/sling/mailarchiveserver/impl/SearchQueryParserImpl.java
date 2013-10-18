@@ -12,8 +12,8 @@ import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.mailarchiveserver.api.SearchQueryParser;
 
 /**
- * TODO describe search lang 
- * 
+ * TODO describe search lang grammar in wiki
+ * FIXME implement "search by phrase" 
  * 
  * @author Igor Bogomolov
  */
@@ -25,8 +25,8 @@ public class SearchQueryParserImpl implements SearchQueryParser {
 	public Map<String, List<String>> parse(String phrase) {
 		Map<String, List<String>> res = new HashMap<String, List<String>>();
 		phrase = phrase.trim();
-		if (phrase == "") { // TODO null
-			return res;
+		if (phrase == "") {
+			return null;
 		}
 		String[] lexemes = phrase.split(" ");
 		for (String lexeme : lexemes) {
@@ -50,7 +50,6 @@ public class SearchQueryParserImpl implements SearchQueryParser {
 		} else {
 			return null;
 		}
-		//FIXME Auto-generated method stub
 	}
 
 	private static void insertTokenIntoMap(String tokenString, String tokenClass, Map<String, List<String>> map) {
@@ -83,7 +82,7 @@ public class SearchQueryParserImpl implements SearchQueryParser {
 	}
 
 	public static class SearchParameter {
-		public static final String NONE = "";
+		public static final String NONE = ""; // not in SEARCH_PARAMETERES !
 		public static final String FROM = "from";
 		public static final String SUBJ = "subject";
 		public static final String LIST = "list";

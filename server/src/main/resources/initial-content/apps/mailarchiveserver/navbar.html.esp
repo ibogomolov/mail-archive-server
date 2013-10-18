@@ -46,12 +46,11 @@
 		}
 	}
 %>
+</div>
 
 <!-- SAERCH BAR -->
 
-	<form method="GET" action="/mailarchiveserver/search.html" style="width: 40%; margin: 1em auto;">
-	    <input id="phrase" type="text" name="q" style="width: 75%;" /> 
-	    <input type="submit" value="Search" style="width: 23%;" /> <br> 
-	</form>
-
-</div>
+<form method="GET" action="/mailarchiveserver/search.html" style="width: 40%; margin: 1em auto;">
+    <input type="text" name="q" style="width: 75%;" value="<%= request.getRequestParameter('q') ? request.getRequestParameter('q') : '' %>" /> 
+    <input type="submit" value="Search" style="width: 23%;" /> <br> 
+</form>

@@ -15,15 +15,20 @@ import org.apache.sling.mailarchiveserver.impl.SearchQueryParserImpl.SearchParam
 @Service(QueryBuilder.class)
 public class QueryBuilderImpl implements QueryBuilder {
 
-	static final String BASE = "SELECT * FROM [nt:unstructured]";
-	static final String BASE_WHERE = BASE + " WHERE ";
+	static final String BASE = "SELECT * FROM [nt:unstructured] WHERE [sling:resourceType] = 'mailarchiveserver/message'";
+	static final String DUMMY = "SELECT * FROM [nt:frozenNode] WHERE [42] = 0";
 	private static final String AND = " AND ";
 	private static final String OR = " OR ";
 
 	public static final String SQL2 = "SQL2";
 
 	private String buildSQL2Query(Map<String, List<String>> tokens) {
-		// TODO implement
+		if (tokens == null) {
+			return BASE; 
+		} else if (tokens.size() == 0) {
+			return DUMMY;
+		}
+
 		String constraints = "";
 
 		// tokens constraints
@@ -41,7 +46,9 @@ public class QueryBuilderImpl implements QueryBuilder {
 		if (ls != null) {
 			for (String msgField : MESSAGE_FIELDS) {
 				for (String value : ls) {
-					globalConstraint += sqlLikeConstraint(sqlLower(msgField), value) + OR;
+					if (!value.trim().equals("")) {
+						globalConstraint += sqlLikeConstraint(sqlLower(msgField), value.toLowerCase()) + OR;
+					}
 				}
 			}
 			globalConstraint = globalConstraint.substring(0, globalConstraint.length()-OR.length());
@@ -53,8 +60,7 @@ public class QueryBuilderImpl implements QueryBuilder {
 		if (constraints.equalsIgnoreCase("")) {
 			return BASE;
 		} else {
-
-			return BASE_WHERE + constraints.substring(0, constraints.length()-AND.length());
+			return BASE + " AND " + constraints.substring(0, constraints.length()-AND.length());
 		}
 	}
 
@@ -63,7 +69,9 @@ public class QueryBuilderImpl implements QueryBuilder {
 		String messageField = SEARCH_PARAMETER_TO_MESSAGE_FIELD_MAP.get(tokenClass);
 		String fieldConstraint = "";
 		for (String value : ls) {
-			fieldConstraint += sqlLikeConstraint(sqlLower(messageField), value) + OR;
+			if (!value.trim().equals("")) {
+				fieldConstraint += sqlLikeConstraint(sqlLower(messageField), value.toLowerCase()) + OR;
+			}
 		}
 		return fieldConstraint.substring(0, fieldConstraint.length()-OR.length());
 	}

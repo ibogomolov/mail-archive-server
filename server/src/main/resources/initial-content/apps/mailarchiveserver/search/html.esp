@@ -8,11 +8,6 @@
 <body>
 	<% sling.include(currentNode.getPath(), "forceResourceType=mailarchiveserver,replaceSelectors=navbar"); %>
 
-	<script type="text/javascript">
-			var val = getRequestParam('q')
-			document.getElementById("phrase").value = val
-	</script>
-
 	<div class="content">
 <%
 	var phrase = request.getParameter("q")
@@ -25,6 +20,7 @@
 			var node = resource.adaptTo(Packages.javax.jcr.Node)
 			renderer.addMsg(node)
 		}
+		out.print("Found " + renderer.list.length + " messages <br>")
 		renderer.sort()
 		renderer.render()
 	}
