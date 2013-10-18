@@ -1,4 +1,4 @@
-package org.apache.sling.mailarchiveserver.impl;
+package org.apache.sling.mailarchiveserver.util;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -15,8 +15,13 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 
-//@Component
-// TODO remove
+/**
+ * Helper REPL for querying JCR with SQL2 or XPath
+ * 
+ * @author bogomolo
+ */
+
+@Component
 public class SearchSandbox {
 
 	@Reference
@@ -48,14 +53,11 @@ public class SearchSandbox {
 		}
 
 		Scanner sc = new Scanner(System.in);
-		String query = "";
 		System.out.println("Type \"quit\" to continue loading MAS.");
+		System.out.print("*** New query: >");
+		String query = sc.nextLine();
 		while (!query.equalsIgnoreCase("quit")) {
 			try {
-
-				System.out.print("*** New query: >");
-				query = sc.nextLine();
-
 				System.out.println("*** sql");
 				Iterator<Resource> resSQL = resolver.findResources(query, Query.JCR_SQL2);
 				while (resSQL.hasNext()) {
@@ -73,6 +75,9 @@ public class SearchSandbox {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+			
+			System.out.print("*** New query: >");
+			query = sc.nextLine();
 		}
 	}
 

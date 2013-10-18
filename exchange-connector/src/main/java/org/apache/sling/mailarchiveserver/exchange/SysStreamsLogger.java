@@ -1,8 +1,10 @@
 package org.apache.sling.mailarchiveserver.exchange;
 
 /**
- * @author itshorty
+ * Util class to log System.err and System.out streams.
+ * 
  * taken from http://stackoverflow.com/questions/11187461/redirect-system-out-and-system-err-to-slf4j
+ * @author itshorty
  */
 
 import java.io.IOException;
