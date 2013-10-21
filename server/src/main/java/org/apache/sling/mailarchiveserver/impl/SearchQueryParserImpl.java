@@ -21,24 +21,47 @@ import org.apache.sling.mailarchiveserver.api.SearchQueryParser;
 @Service(SearchQueryParser.class)
 public class SearchQueryParserImpl implements SearchQueryParser {
 
+
+	private static final String SPACE_SUBSTITUTION = ".-.";
+
 	@Override
 	public Map<String, List<String>> parse(String phrase) {
 		Map<String, List<String>> res = new HashMap<String, List<String>>();
 		phrase = phrase.trim();
+		System.out.println(">"+phrase+"<");
 		if (phrase == "") {
 			return null;
 		}
+
+		phrase = parseQuotes(phrase);
+
 		String[] lexemes = phrase.split(" ");
 		for (String lexeme : lexemes) {
 			String[] token = lexeme.split(":");
 			if (token.length == 1) {
-				insertTokenIntoMap(token[0].trim(), SearchParameter.NONE, res);
+				insertTokenIntoMap(postprocessQuotedPhrase(token[0].trim()), SearchParameter.NONE, res);
 			} else if (token.length > 1) {
 				String searchParam = getSearchParameter(token[0]);
 				if (searchParam != null) {
-					insertTokenIntoMap(token[1].trim(), searchParam, res);
+					insertTokenIntoMap(postprocessQuotedPhrase(token[1].trim()), searchParam, res);
 				}
 			}
+		}
+		return res;
+	}
+
+	private String postprocessQuotedPhrase(String phrase) {
+		return phrase.replace(SPACE_SUBSTITUTION, " ");
+	}
+
+	private String parseQuotes(String phrase) {
+		String[] quotes = phrase.split("\"");
+		for (int i = 1; i < quotes.length; i += 2) {
+			quotes[i] = quotes[i].replace(" ", SPACE_SUBSTITUTION);
+		}
+		String res = "";
+		for (String s : quotes) {
+			res += s;
 		}
 		return res;
 	}
