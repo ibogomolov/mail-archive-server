@@ -53,11 +53,11 @@ public class QueryBuilderImpl implements QueryBuilder {
 			}
 			globalConstraint = globalConstraint.substring(0, globalConstraint.length()-OR.length());
 		}
-		if (!globalConstraint.equalsIgnoreCase("")) {
+		if (!globalConstraint.equals("")) {
 			constraints += "("+ globalConstraint +")" + AND;
 		}
 
-		if (constraints.equalsIgnoreCase("")) {
+		if (constraints.equals("")) {
 			return BASE;
 		} else {
 			return BASE + " AND " + constraints.substring(0, constraints.length()-AND.length());

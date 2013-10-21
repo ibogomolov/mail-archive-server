@@ -66,7 +66,22 @@ public class SearchServiceQueryPipelineTest {
 				+ "OR LOWER(From) LIKE '%b%')" 
 		} );	
 
-		//        params.add(new Object[] {"", QueryBuilderImpl.BASE} );
+		params.add(new Object[] {"quoted text", "\"hel  wrd\"", QueryBuilderImpl.BASE + " AND "
+				+ "(LOWER(Body) LIKE '%hel  wrd%' "
+				+ "OR LOWER(Subject) LIKE '%hel  wrd%' "
+				+ "OR LOWER('List-Id') LIKE '%hel  wrd%' "
+				+ "OR LOWER(From) LIKE '%hel  wrd%')" 
+		} );	
+		
+		params.add(new Object[] {"quoted field", "from:\"w r d\" hello ", QueryBuilderImpl.BASE + " AND "
+				+ "(LOWER(From) LIKE '%w r d%') "
+				+ "AND (LOWER(Body) LIKE '%hello%' "
+				+ "OR LOWER(Subject) LIKE '%hello%' "
+				+ "OR LOWER('List-Id') LIKE '%hello%' "
+				+ "OR LOWER(From) LIKE '%hello%')" 
+		} );
+
+		//        params.add(new Object[] {"name", "", QueryBuilderImpl.BASE} );
 		return params;
 	}
 
