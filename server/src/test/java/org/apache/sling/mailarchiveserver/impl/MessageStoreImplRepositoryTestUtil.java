@@ -65,7 +65,7 @@ public class MessageStoreImplRepositoryTestUtil {
 			msgId = Integer.toHexString(hdr.getField("Date").hashCode());
 		}
 		msgId = MessageStoreImpl.makeJcrFriendly(msgId);
-		String threadPath = store.threadKeyGen.getThreadKey(msg);
+		String threadPath = store.threadKeyGen.getThreadKey(hdr.getField("Subject").getBody());
 		String path = store.archivePath+domain+"/"+project+"/"+list+"/"+threadPath+"/"+msgId;
 		return path;
 	}

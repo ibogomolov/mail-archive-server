@@ -39,7 +39,7 @@ public class MessageStoreImplRepositoryTest {
 	private static final String TEST_RT_KEY = "sling_resourceType";
 	private static final String TEST_FILE_FIELD_SEPARATOR = " : ";
 
-	private static final String TEST_FILES_FOLDER = "test_files/";
+	private static final String TEST_FOLDER = "test_files/";
 	private static final String SINGLEPART_FILE = "singlepart.txt";
 	private static final String MULTIPART_FILE = "multipart.txt";
 	private static final String MBOX_FILE = "three_messages.txt";
@@ -77,13 +77,13 @@ public class MessageStoreImplRepositoryTest {
 
 	@Test
 	public void testSavePlainMessage() throws FileNotFoundException, MimeException, IOException  {
-		File testFile = new File(TEST_FILES_FOLDER + SINGLEPART_FILE);
+		File testFile = new File(TEST_FOLDER + SINGLEPART_FILE);
 		MessageBuilder builder = new DefaultMessageBuilder();
 		Message msg = builder.parseMessage(new FileInputStream(testFile));
 
 		store.save(msg);
 
-		File bodyFile = new File(TEST_FILES_FOLDER + specialPathFromFilePath(SINGLEPART_FILE, BODY_SUFFIX));
+		File bodyFile = new File(TEST_FOLDER + specialPathFromFilePath(SINGLEPART_FILE, BODY_SUFFIX));
 		String expectedBody = readTextFile(bodyFile);
 
 		final Resource r = resolver.getResource(getResourcePath(msg, store));
@@ -91,7 +91,7 @@ public class MessageStoreImplRepositoryTest {
 		final ModifiableValueMap m = r.adaptTo(ModifiableValueMap.class);
 		assertValueMap(m, "Body", expectedBody);
 
-		File headersFile = new File(TEST_FILES_FOLDER + specialPathFromFilePath(SINGLEPART_FILE, HEADERS_SUFFIX));
+		File headersFile = new File(TEST_FOLDER + specialPathFromFilePath(SINGLEPART_FILE, HEADERS_SUFFIX));
 		assertHeaders(m, headersFile);
 	}
 
@@ -128,13 +128,13 @@ public class MessageStoreImplRepositoryTest {
 
 	@Test
 	public void testSaveMultipartMessage() throws FileNotFoundException, MimeException, IOException {
-		File testFile = new File(TEST_FILES_FOLDER + MULTIPART_FILE);
+		File testFile = new File(TEST_FOLDER + MULTIPART_FILE);
 		MessageBuilder builder = new DefaultMessageBuilder();
 		Message msg = builder.parseMessage(new FileInputStream(testFile));
 
 		store.save(msg);
 
-		File bodyFile = new File(TEST_FILES_FOLDER + specialPathFromFilePath(MULTIPART_FILE, BODY_SUFFIX));
+		File bodyFile = new File(TEST_FOLDER + specialPathFromFilePath(MULTIPART_FILE, BODY_SUFFIX));
 		String expectedBody = readTextFile(bodyFile);
 
 		final Resource r = resolver.getResource(getResourcePath(msg, store));
@@ -146,7 +146,7 @@ public class MessageStoreImplRepositoryTest {
 	@Test
 	public void testSaveAll() throws IOException {
 		MboxParser parser = new Mime4jMboxParserImpl();
-		final File file = new File(TEST_FILES_FOLDER + MBOX_FILE);
+		final File file = new File(TEST_FOLDER + MBOX_FILE);
 		store.saveAll(parser.parse(new FileInputStream(file)));
 		assertStructure();
 	}

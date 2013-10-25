@@ -31,6 +31,18 @@ public class SearchServiceQueryPipelineTest {
 				+ "OR LOWER('List-Id') LIKE '%word%' "
 				+ "OR LOWER(From) LIKE '%word%')" 
 		} );	
+		
+		// FIXME
+//		params.add(new Object[] {"two words", "hello word", QueryBuilderImpl.BASE + " AND " 
+//				+ "((LOWER(Body) LIKE '%hello%' "
+//				+ "OR LOWER(Subject) LIKE '%hello%' "
+//				+ "OR LOWER('List-Id') LIKE '%hello%' "
+//				+ "OR LOWER(From) LIKE '%hello%') " 
+//				+ "AND (LOWER(Body) LIKE '%word%' "
+//				+ "OR LOWER(Subject) LIKE '%word%' "
+//				+ "OR LOWER('List-Id') LIKE '%word%' "
+//				+ "OR LOWER(From) LIKE '%word%'))" 
+//		} );	
 
 		params.add(new Object[] {"field search", "hello from:world", QueryBuilderImpl.BASE + " AND "
 				+ "(LOWER(From) LIKE '%world%') "
