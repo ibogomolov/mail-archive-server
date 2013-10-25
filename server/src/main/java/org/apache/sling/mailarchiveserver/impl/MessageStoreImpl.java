@@ -50,7 +50,7 @@ public class MessageStoreImpl implements MessageStore {
 
 	private static final Logger logger = LoggerFactory.getLogger(MessageStoreImpl.class);
 
-	// TODO make this a constructor
+	// resourceResolverFactory is unavailable in constructor
 	private void resolverInit() throws LoginException {
 		if (resolver == null) {
 			resolver = resourceResolverFactory.getAdministrativeResourceResolver(null);
@@ -60,92 +60,43 @@ public class MessageStoreImpl implements MessageStore {
 	public void save(Message msg) throws IOException {
 		try {
 			resolverInit();
-			Map<String, Object> msgMap = new HashMap<String, Object>();
-			msgMap.put(resourceTypeKey, MailArchiveServerConstants.RT_MESSAGE);
+			Map<String, Object> msgProps = new HashMap<String, Object>();
+			msgProps.put(resourceTypeKey, MailArchiveServerConstants.RT_MESSAGE);
+			msgProps.put(MailArchiveServerConstants.BODY_ATTRIBUTE, getMessageBody(msg));
+			msgProps.putAll(getMessagePropertiesFromHeader(msg.getHeader()));
 
-			// process body
-			String msgBody = "";
-			Body body = msg.getBody();
-			if (body instanceof SingleBody) {
-				if (body instanceof TextBody) {
-					TextBody tbody = (TextBody) body;
-					BufferedReader br = new BufferedReader(tbody.getReader());
-					String line = null;
-					while ((line = br.readLine()) != null) {
-						msgBody += line+"\n";
-					}   
-					msgBody = msgBody.substring(0, msgBody.length()-1);
-				}
-			} else if (body instanceof Multipart) {
-				Multipart mpart = (Multipart) body;
-				Entity bodyPart = mpart.getBodyParts().get(0);
-				body = bodyPart.getBody();
-				if (body instanceof TextBody) {
-					TextBody tbody = (TextBody) bodyPart.getBody();
-					BufferedReader br = new BufferedReader(tbody.getReader());
-					String line = null;
-					while ((line = br.readLine()) != null) {
-						msgBody += line+"\n";
-					}   
-					msgBody = msgBody.substring(0, msgBody.length()-1);
-				}
-			}
-
-			msgMap.put("Body", msgBody);
-
-			// process header
-			Header hdr = msg.getHeader();
-			Set<String> processed = new HashSet<String>();
-			for (Field f : hdr.getFields()) {
-				String name = f.getName();
-				if (!processed.contains(name)) {
-					processed.add(name);
-					String value = "";
-					List<Field> fields = hdr.getFields(name);
-					for (Field fl : fields) {
-						value += fl.getBody()+FIELD_SEPARATOR;
-					}
-					msgMap.put(name, value.substring(0, value.length()-FIELD_SEPARATOR.length()));
-				}
-			}				
-
+			// TODO path should be archivePath/[project.]domain/list/threadPath/message
+			//									   archive/sling.apache.org/dev/...
+			//									   archive/adobe.com/dev/...
 
 			// message JCR path
-			// TODO path should be archivePath/[project.]domain/list/threadPath/message
+
+			// list node name
+			Header hdr = msg.getHeader();
 			String listId = hdr.getField("List-Id").getBody();
-			listId = listId.substring(1, listId.length()-1);
-			
-			String[] testSplit = listId.split("\\.");
-			if (testSplit.length > 4 || testSplit.length < 3) {
-				throw new RuntimeException("List-Id is invalid: too many dots.");
-			}
-			String[] split = listId.split("\\.", testSplit.length - 1);
-			int idx = 0;
-			String list = split[idx++];
-			String project = "default";
-			if (split.length == 3) {
-				project = split[idx++];
-			}
-			String domain = split[idx++];
-			String msgId;
-			if (hdr.getField("Message-ID") != null) {
-				msgId = hdr.getField("Message-ID").getBody();
-				msgId = msgId.substring(1, msgId.length()-1);
+			listId = listId.substring(1, listId.length()-1); // remove < and >
+			String[] split = listId.split("\\.");
+			int splitL = split.length;
+			String list = "";
+			if (splitL >= 4) {
+				for (int i = 0; i < splitL-3; i++) {
+					list += split[i] + ".";
+				}
+				list = list.substring(0, list.length() - 1);
+			} else if (splitL == 3) {
+				list = split[0];
 			} else {
-				msgId = Integer.toHexString(hdr.getField("Date").hashCode());
+				throw new RuntimeException("List-Id is invalid: minimum 2 separatory dots required.");
 			}
-			msgMap.put(MailArchiveServerConstants.TEXT_ATTRIBUTE, msgId);
-			msgId = makeJcrFriendly(msgId);
 
-			// TODO some messages doesn't have subjects
-			String subject = hdr.getField("Subject").getBody();
-			String threadName = removeRe(subject);
+			// domain node name
+			String domain = split[splitL-2] + "." + split[splitL-1];
 
-			String threadPath = threadKeyGen.getThreadKey(msg);
+			String threadPath = threadKeyGen.getThreadKey((String) msgProps.get(MailArchiveServerConstants.SUBJECT_ATTRIBUTE));
 			int threadNodesNumber = threadPath.split("/").length;
 
-			// checking each node of path path
-			String path = archivePath+domain+"/"+project+"/"+list+"/"+threadPath;
+			// checking each node of path
+			String path = archivePath+domain+"/"+list+"/"+threadPath;
 			Resource parent = resolver.getResource(path);
 
 			if (parent == null) {
@@ -158,13 +109,13 @@ public class MessageStoreImpl implements MessageStore {
 
 				List<String> nodePaths = new ArrayList<String>();
 				nodePaths.add(domain);
-				nodePaths.add(project);
 				nodePaths.add(list);
 				for (String node : threadPath.split("/")) {
 					nodePaths.add(node);
 				}
 
-				List<Map<String, Object>> nodeProps = generateNodesProperties(domain, project, list, threadName, threadNodesNumber);
+				String threadName = removeRe((String) msgProps.get(MailArchiveServerConstants.SUBJECT_ATTRIBUTE));
+				List<Map<String, Object>> nodeProps = generateNodesProperties(domain, list, threadName, threadNodesNumber);
 
 				for (int i = nodePaths.size()-cnt; i < nodePaths.size(); i++) {
 					String name = nodePaths.get(i);
@@ -173,9 +124,11 @@ public class MessageStoreImpl implements MessageStore {
 				}
 			} 
 
-			if (parent == null) throw new RuntimeException("Parent resource cannot be null.");
+			//			if (parent == null) throw new RuntimeException("Parent resource cannot be null.");
 
-			assertResource(parent, msgId, msgMap);
+			//			nameAttr + JCRFriendly => path
+			String msgPath = makeJcrFriendly( (String) msgProps.get(MailArchiveServerConstants.NAME_ATTRIBUTE) );
+			assertResource(parent, msgPath, msgProps);
 
 		} catch (LoginException e) {
 			throw new RuntimeException("LoginException");
@@ -197,25 +150,85 @@ public class MessageStoreImpl implements MessageStore {
 		logger.info(mcount+" messages processed.");
 	}
 
-	private List<Map<String, Object>> generateNodesProperties(String domainName, String projectName, String listName, String threadName, int threadNodesNumber) {
+	private static Map<String, String> getMessagePropertiesFromHeader(Header hdr) {
+		Map<String, String> props = new HashMap<String, String>();
+
+		// parse header
+		Set<String> processed = new HashSet<String>();
+		for (Field f : hdr.getFields()) {
+			String name = f.getName();
+			if (!processed.contains(name)) {
+				processed.add(name);
+				String value = "";
+				List<Field> fields = hdr.getFields(name);
+				for (Field fl : fields) {
+					value += fl.getBody()+FIELD_SEPARATOR;
+				}
+				props.put(name, value.substring(0, value.length()-FIELD_SEPARATOR.length()));
+			}
+		}
+
+		// message name
+		String name;
+		if (hdr.getField("Message-ID") != null) {
+			name = hdr.getField("Message-ID").getBody();
+			name = name.substring(1, name.length()-1); // remove < and >
+		} else {
+			name = Integer.toHexString(hdr.getField("Date").hashCode());
+		}
+		props.put(MailArchiveServerConstants.NAME_ATTRIBUTE, name);
+
+		// message subject if null
+		if (hdr.getField("Subject") == null) {
+			props.put(MailArchiveServerConstants.SUBJECT_ATTRIBUTE, "no subject");
+		}
+
+		return props;
+	}
+
+	private static String getMessageBody(Message msg) throws IOException {
+		String msgBody = "";
+		Body body = msg.getBody();
+		if (body instanceof SingleBody) {
+			if (body instanceof TextBody) {
+				TextBody tbody = (TextBody) body;
+				BufferedReader br = new BufferedReader(tbody.getReader());
+				String line = null;
+				while ((line = br.readLine()) != null) {
+					msgBody += line+"\n";
+				}   
+				msgBody = msgBody.substring(0, msgBody.length()-1);
+			}
+		} else if (body instanceof Multipart) {
+			Multipart mpart = (Multipart) body;
+			Entity bodyPart = mpart.getBodyParts().get(0);
+			body = bodyPart.getBody();
+			if (body instanceof TextBody) {
+				TextBody tbody = (TextBody) bodyPart.getBody();
+				BufferedReader br = new BufferedReader(tbody.getReader());
+				String line = null;
+				while ((line = br.readLine()) != null) {
+					msgBody += line+"\n";
+				}   
+				msgBody = msgBody.substring(0, msgBody.length()-1);
+			}
+		}
+		return msgBody;
+	}
+
+	private List<Map<String, Object>> generateNodesProperties(String domainName, String listName, String threadName, int threadNodesNumber) {
 		List<Map<String, Object>> nodeProps = new ArrayList<Map<String, Object>>();
 
 		//domain
 		Map<String, Object> props = new HashMap<String, Object>();
 		props.put(resourceTypeKey, MailArchiveServerConstants.RT_DOMAIN);
-		props.put(MailArchiveServerConstants.TEXT_ATTRIBUTE, domainName);
-		nodeProps.add(props);
-
-		//project
-		props = new HashMap<String, Object>();
-		props.put(resourceTypeKey, MailArchiveServerConstants.RT_PROJECT);
-		props.put(MailArchiveServerConstants.TEXT_ATTRIBUTE, projectName);
+		props.put(MailArchiveServerConstants.NAME_ATTRIBUTE, domainName);
 		nodeProps.add(props);
 
 		//list
 		props = new HashMap<String, Object>();
 		props.put(resourceTypeKey, MailArchiveServerConstants.RT_LIST);
-		props.put(MailArchiveServerConstants.TEXT_ATTRIBUTE, listName);
+		props.put(MailArchiveServerConstants.NAME_ATTRIBUTE, listName);
 		nodeProps.add(props);
 
 		for (int i = 0; i < threadNodesNumber-1; i++) {
@@ -225,7 +238,7 @@ public class MessageStoreImpl implements MessageStore {
 		//thread's last node
 		props = new HashMap<String, Object>();
 		props.put(resourceTypeKey, MailArchiveServerConstants.RT_THREAD);
-		props.put(MailArchiveServerConstants.TEXT_ATTRIBUTE, threadName);
+		props.put(MailArchiveServerConstants.NAME_ATTRIBUTE, threadName);
 		nodeProps.add(props);
 
 		return nodeProps;
@@ -255,6 +268,7 @@ public class MessageStoreImpl implements MessageStore {
 		return s.replaceAll("[\\s\\.-]", "_").replaceAll("\\W", "").replaceAll("\\_", " ").trim().replaceAll(" ", "_");
 	}
 
+	// TODO add for GE and FR
 	static String removeRe(String s) {
 		while (s.toLowerCase().startsWith("re:")) {
 			s = s.substring(3).trim();

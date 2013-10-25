@@ -28,7 +28,6 @@ public class SearchQueryParserImpl implements SearchQueryParser {
 	public Map<String, List<String>> parse(String phrase) {
 		Map<String, List<String>> res = new HashMap<String, List<String>>();
 		phrase = phrase.trim();
-		System.out.println(">"+phrase+"<");
 		if (phrase == "") {
 			return null;
 		}

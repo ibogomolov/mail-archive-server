@@ -1,21 +1,14 @@
 package org.apache.sling.mailarchiveserver.impl;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.james.mime4j.dom.Header;
-import org.apache.james.mime4j.dom.Message;
-import org.apache.james.mime4j.stream.Field;
-import org.apache.sling.mailarchiveserver.impl.ThreadKeyGeneratorImpl;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
-import org.mockito.Matchers;
 
 @RunWith(Parameterized.class)
 public class ThreadKeyGeneratorImplTest {
@@ -48,13 +41,12 @@ public class ThreadKeyGeneratorImplTest {
 
 	@Test
 	public void testGetThreadKey() {
-		final Message m = mock(Message.class);
-		final Header header = mock(Header.class);
-		final Field subject = mock(Field.class);
-
-		when(m.getHeader()).thenReturn(header);
-		when(header.getField(Matchers.same("Subject"))).thenReturn(subject);
-		when(subject.getBody()).thenReturn(input);
-		assertEquals(expected, generator.getThreadKey(m));
+//		final Message m = mock(Message.class);
+//		final Header header = mock(Header.class);
+//		final Field subject = mock(Field.class);
+//		when(m.getHeader()).thenReturn(header);
+//		when(header.getField(Matchers.same("Subject"))).thenReturn(subject);
+//		when(subject.getBody()).thenReturn(input);
+		assertEquals(expected, generator.getThreadKey(input));
 	}
 }

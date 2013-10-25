@@ -8,7 +8,6 @@ import java.util.Random;
 
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Service;
-import org.apache.james.mime4j.dom.Header;
 import org.apache.james.mime4j.dom.Message;
 import org.apache.sling.mailarchiveserver.api.ThreadKeyGenerator;
 
@@ -18,7 +17,7 @@ public class ThreadKeyGeneratorImpl implements ThreadKeyGenerator {
 
 	/**
 	 * These constants are gotten by sampling around 1500 messages 
-	 * from some open source projects using {@link SubjectLettersEntropy} class.
+	 * from some open source projects using SubjectLettersEntropy class.
 	 * 
 	 * Entropy of each letter position of the subject was calculated. And two letter positions 
 	 * with biggest entropy and occurrence in at least 90% of the messages were chosen.
@@ -28,20 +27,19 @@ public class ThreadKeyGeneratorImpl implements ThreadKeyGenerator {
 	private static final int LETTER_POS_WITH_BIGGEST_ENTROPY = 9;
 	private static final int LETTER_POS_WITH_2ND_BIGGEST_ENTROPY = 40;
 
-	public String getThreadKey(Message m) {
-		Header hdr = m.getHeader();
-		String subject = hdr.getField("Subject").getBody();
-		char prefix1 = 'o';
-		char prefix2 = 'k';
+	public String getThreadKey(String subject) {
+		subject = removeRe(subject);
+		char prefix1;
+		char prefix2;
 		try {
 			prefix1 = assignPrefix(subject, LETTER_POS_WITH_BIGGEST_ENTROPY);
 			prefix2 = assignPrefix(subject, LETTER_POS_WITH_2ND_BIGGEST_ENTROPY);
 		} catch (IllegalArgumentException e) {
 			Random rand = new Random();
 			prefix1 = (char) (rand.nextInt(26) + 'A'); 
-			prefix1 = (char) (rand.nextInt(26) + 'a'); 
+			prefix2 = (char) (rand.nextInt(26) + 'a'); 
 		}
-		return ""+prefix1+"/"+prefix1+prefix2+"/"+ makeJcrFriendly(removeRe(subject));
+		return ""+prefix1+"/"+prefix1+prefix2+"/"+ makeJcrFriendly(subject);
 	}
 
 	private static char assignPrefix(String subject, int length) {

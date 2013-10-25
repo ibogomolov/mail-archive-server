@@ -10,8 +10,8 @@ public class MessageStoreImplStaticMethodsTest {
 	
 	@Test
 	public void testMakeJcrFriendly() {
-		assertEquals("Remove each char", "", makeJcrFriendly("±¤!@#$%^&*()+={}[]<>,/?\\;:'\""));
-		assertEquals("Substitute each char with _ char", "a", makeJcrFriendly(".a_")); // trimming 
+		assertEquals("Remove each char", "", makeJcrFriendly("ï¿½ï¿½!@#$%^&*()+={}[]<>,/?\\;:'\""));
+		assertEquals("Substitute each char with _ char, trimming", "a", makeJcrFriendly(".a_")); 
 		assertEquals("Substitute each char with _ char", "b____e", makeJcrFriendly("b_ .-e"));
 	}
 
