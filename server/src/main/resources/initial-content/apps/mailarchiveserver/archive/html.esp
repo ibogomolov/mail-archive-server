@@ -17,45 +17,38 @@
 <col style="width: 33%" />
 <col style="width: 33%" />
 </colgroup>
-	<%
+<%
 	var cnt = 0;
 	var archiveChildren = currentNode.getChildren();
 	for(i in archiveChildren) {
 		var domain = archiveChildren[i];
-		var domainChildren = domain.getChildren();
-		for(j in domainChildren) {
-			var project = domainChildren[j];
-
-			if (cnt % 3 == 0)
-				out.print("<tr>");
-	%>
+%>
 
 	<td>
-	<div class="project">
-		<h4><%= project["jcr:text"] %>.<%= domain["jcr:text"] %>  lists:</h4>
+	<div class="domain">
+		<h4><%= domain["jcr:text"] %>  lists:</h4>
 		<ul>
-		<%
-			var projectChildren = project.getChildren();
-			for(k in projectChildren) {
-				var list = projectChildren[k];
-		%>
+<%
+		var domainChildren = domain.getChildren();
+		for(k in domainChildren) {
+			var list = domainChildren[k];
+%>
 			<li><a href="<%= list.getPath() %>.html">  <%= list["jcr:text"] %></a></li>
-	<% 
-			}
-	%>
+<% 
+		}
+%>
 		</ul>
 	</div>
 	</td>
 
-	<% 
-			if (cnt % 3 == 2)
-				out.print("</tr>");
-			cnt++;
-		}
-	} 
+<% 
+		if (cnt % 3 == 2)
+			out.print("</tr>");
+		cnt++;
+	}
 	if (cnt % 3 != 2)
 		out.print("</tr>");
-	%>
+%>
 
 </table>
 </div>

@@ -1,5 +1,9 @@
 package org.apache.sling.mailarchiveserver.impl;
 
+import static org.apache.sling.mailarchiveserver.impl.MessageStoreImpl.NO_SUBJECT;
+import static org.apache.sling.mailarchiveserver.impl.MessageStoreImpl.getDomainNodeName;
+import static org.apache.sling.mailarchiveserver.impl.MessageStoreImpl.getListNodeName;
+import static org.apache.sling.mailarchiveserver.impl.MessageStoreImpl.makeJcrFriendly;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -9,8 +13,8 @@ import java.util.Scanner;
 
 import org.apache.james.mime4j.dom.Header;
 import org.apache.james.mime4j.dom.Message;
+import org.apache.james.mime4j.stream.Field;
 import org.apache.sling.api.resource.ValueMap;
-import org.apache.sling.mailarchiveserver.impl.MessageStoreImpl;
 
 public class MessageStoreImplRepositoryTestUtil {
 
@@ -50,23 +54,31 @@ public class MessageStoreImplRepositoryTestUtil {
 	}
 
 	static String getResourcePath(Message msg, MessageStoreImpl store) {
-		Header hdr = msg.getHeader();
-		String listId = hdr.getField("List-Id").getBody();
-		listId = listId.substring(1, listId.length()-1);
-		String[] split = listId.split("\\.", 3);
-		String list = split[0];
-		String project = split[1];
-		String domain = split[2];
+		final Header hdr = msg.getHeader();
+		final String listIdRaw = hdr.getField("List-Id").getBody();
+		final String listId = listIdRaw.substring(1, listIdRaw.length()-1); // remove < and >
+
 		String msgId;
-		if (hdr.getField("Message-ID") != null) {
-			msgId = hdr.getField("Message-ID").getBody();
+		final Field msgIdField = hdr.getField("Message-ID");
+		if (msgIdField != null) {
+			msgId = msgIdField.getBody();
 			msgId = msgId.substring(1, msgId.length()-1);
 		} else {
 			msgId = Integer.toHexString(hdr.getField("Date").hashCode());
 		}
-		msgId = MessageStoreImpl.makeJcrFriendly(msgId);
-		String threadPath = store.threadKeyGen.getThreadKey(hdr.getField("Subject").getBody());
-		String path = store.archivePath+domain+"/"+project+"/"+list+"/"+threadPath+"/"+msgId;
+		msgId = makeJcrFriendly(msgId);
+		
+		String subject;
+		final Field subjectField = hdr.getField("Subject");
+		if (subjectField == null) {
+			subject = NO_SUBJECT;
+		} else {
+			subject = subjectField.getBody();
+		}
+		
+		String threadPath = store.threadKeyGen.getThreadKey(subject);
+		String path = store.archivePath + getDomainNodeName(listId) + "/" + getListNodeName(listId) +
+				"/" + threadPath + "/" + msgId;
 		return path;
 	}
 

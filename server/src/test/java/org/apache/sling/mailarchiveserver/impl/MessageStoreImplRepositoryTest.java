@@ -151,10 +151,14 @@ public class MessageStoreImplRepositoryTest {
 		assertStructure();
 	}
 
+	
+	// TODO no subject test
+	
+	
+	
 	private void assertStructure() {
 		List<String> types = new ArrayList<String>();
 		types.add(MailArchiveServerConstants.RT_DOMAIN);
-		types.add(MailArchiveServerConstants.RT_PROJECT);
 		types.add(MailArchiveServerConstants.RT_LIST);
 		types.add(null);
 		types.add(null);
