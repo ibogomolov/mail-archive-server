@@ -32,7 +32,9 @@ public class SearchServiceQueryPipelineTest {
 				+ "OR LOWER(From) LIKE '%word%')" 
 		} );	
 		
-		// FIXME
+		// FIXME ! logically this is true, but I had an idea to AND conditions on "hello" and "word" 
+		// 		 because currently there is too much search results
+		
 //		params.add(new Object[] {"two words", "hello word", QueryBuilderImpl.BASE + " AND " 
 //				+ "((LOWER(Body) LIKE '%hello%' "
 //				+ "OR LOWER(Subject) LIKE '%hello%' "

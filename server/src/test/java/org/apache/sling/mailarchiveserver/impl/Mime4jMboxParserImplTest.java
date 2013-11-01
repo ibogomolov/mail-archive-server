@@ -1,61 +1,51 @@
 package org.apache.sling.mailarchiveserver.impl;
 
+import static org.apache.sling.mailarchiveserver.impl.MessageStoreImplRepositoryTestUtil.readTextFile;
+import static org.apache.sling.mailarchiveserver.impl.MessageStoreImplRepositoryTestUtil.specialPathFromFilePath;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
 
 import org.apache.james.mime4j.dom.Message;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(Parameterized.class)
+/**
+ * In this class there is a test that parses big file. It will take a while to execute.
+ */
 public class Mime4jMboxParserImplTest {
 
-	private static Mime4jMboxParserImpl parser = new Mime4jMboxParserImpl();
-	private String filePath;
-	private int expectedMessagesCount;
-	
-	static final String TEST_FILES_FOLDER = "test_files/";
-	
-	@Parameters(name="{0}")
-    public static Collection<Object[]> data() {
-        List<Object[]> params = new ArrayList<Object[]>();
-        params.add(new Object[] {TEST_FILES_FOLDER+"three_messages.txt", 3} );
-        params.add(new Object[] {TEST_FILES_FOLDER+"mbox/jackrabbit-dev-201201.mbox", 323} );
-        params.add(new Object[] {TEST_FILES_FOLDER+"mbox/hadoop-common-dev-201202.mbox", 296} );
-        params.add(new Object[] {TEST_FILES_FOLDER+"mbox/sling-dev-201203.mbox", 227} );
-        params.add(new Object[] {TEST_FILES_FOLDER+"mbox/tomcat-dev-201204.mbox", 658} );
-        return params;
-    }
-    
-    public Mime4jMboxParserImplTest(String path, int count) {
-    	filePath = path;
-    	expectedMessagesCount = count;
-    }
+	private Mime4jMboxParserImpl parser = new Mime4jMboxParserImpl();
+
+	private static final String TEST_FOLDER = Mime4jMboxParserImplCountTest.TEST_FOLDER;
+	private static final String WRONGBODY_MBOX = "wrongbody.mbox";
 
 	@Test
-	public void testParse() throws IOException {
-		Iterator<Message> iter = parser.parse(new FileInputStream(new File(filePath)));
+	public void testMboxParsing() throws IOException {
+		final String testPath = TEST_FOLDER + WRONGBODY_MBOX;
+		Iterator<Message> iter = parser.parse(new FileInputStream(new File(testPath)));
 		
-		int cnt = 0;
-		Set<Message> set = new HashSet<Message>();
+		boolean fail = true;
+		int i = 1;
 		while (iter.hasNext()) {
-			Message message = (Message) iter.next();
-			cnt++;
-			set.add(message);
+			final Message message = iter.next();
+			File bodyFile = new File(specialPathFromFilePath(testPath, "_bodyOf" + i, "txt"));
+			if (bodyFile.exists()) {
+				final String actual = MessageStoreImpl.getMessageBody(message);
+				final String expected = readTextFile(bodyFile);
+				assertEquals("Body #"+i, expected, actual);
+				fail = false;
+			}
+			i++;
 		}
-		assertEquals("Expecting correct number of messages parsed", expectedMessagesCount, cnt);
-		assertEquals("Expecting all messages unique", expectedMessagesCount, set.size());
-	}
+		
+		if (fail) {
+			fail("No file with expected body.");
+		}
+	}	
 
 }
