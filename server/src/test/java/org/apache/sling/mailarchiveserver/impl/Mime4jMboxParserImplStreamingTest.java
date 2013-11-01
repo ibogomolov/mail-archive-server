@@ -17,7 +17,7 @@ public class Mime4jMboxParserImplStreamingTest {
 
 	private Mime4jMboxParserImpl parser = new Mime4jMboxParserImpl();
 
-	private static final String TEST_FILES_FOLDER = Mime4jMboxParserImplTest.TEST_FILES_FOLDER;
+	private static final String TEST_FOLDER = Mime4jMboxParserImplCountTest.TEST_FOLDER;
 	private static final double TEST_FILE_RATIO = 1.2;
 
 	@Test
@@ -26,7 +26,7 @@ public class Mime4jMboxParserImplStreamingTest {
 		FileInputStream fis = null;
 		FileOutputStream fos = null;
 		try {
-			File fileToSample = new File(TEST_FILES_FOLDER + "mbox/tomcat-dev-201204.mbox");
+			File fileToSample = new File(TEST_FOLDER + "mbox/tomcat-dev-201204.mbox");
 			long maxMem = Runtime.getRuntime().maxMemory();
 			int cnt = (int) (maxMem * TEST_FILE_RATIO / fileToSample.length()) + 1;
 
@@ -63,7 +63,7 @@ public class Mime4jMboxParserImplStreamingTest {
 
 	@Test
 	public void testTempFileIsDeleted() throws IOException {
-		File testFile = new File(TEST_FILES_FOLDER + "mbox/tomcat-dev-201204.mbox");
+		File testFile = new File(TEST_FOLDER + "mbox/tomcat-dev-201204.mbox");
 		Mime4jParserIterator iter = (Mime4jParserIterator) parser.parse(new FileInputStream(testFile));
 		if (new File(iter.tempFileAbsPath).exists())
 			fail("Temp file was not deleted");

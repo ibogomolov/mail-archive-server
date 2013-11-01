@@ -1,6 +1,6 @@
 package org.apache.sling.mailarchiveserver.impl;
 
-import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,13 +13,12 @@ import java.util.Set;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
-import org.apache.james.mime4j.dom.Body;
 import org.apache.james.mime4j.dom.Entity;
 import org.apache.james.mime4j.dom.Header;
 import org.apache.james.mime4j.dom.Message;
 import org.apache.james.mime4j.dom.Multipart;
-import org.apache.james.mime4j.dom.SingleBody;
 import org.apache.james.mime4j.dom.TextBody;
+import org.apache.james.mime4j.message.BodyPart;
 import org.apache.james.mime4j.stream.Field;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.ModifiableValueMap;
@@ -90,10 +89,8 @@ public class MessageStoreImpl implements MessageStore {
 	public void saveAll(Iterator<Message> iterator) throws IOException {
 		int mcount = 0;
 		while (iterator.hasNext()) {
-			Message msg = (Message) iterator.next();
-
+			Message msg = iterator.next();
 			save(msg);
-
 			mcount++;
 			if (mcount % 100 == 0) {
 				logger.debug(mcount+" messages processed.");
@@ -102,34 +99,46 @@ public class MessageStoreImpl implements MessageStore {
 		logger.info(mcount+" messages processed.");
 	}
 
-	private static String getMessageBody(Message msg) throws IOException {
-		String msgBody = "";
-		Body body = msg.getBody();
-		if (body instanceof SingleBody) {
-			if (body instanceof TextBody) {
-				TextBody tbody = (TextBody) body;
-				BufferedReader br = new BufferedReader(tbody.getReader());
-				String line = null;
-				while ((line = br.readLine()) != null) {
-					msgBody += line+"\n";
-				}   
-				msgBody = msgBody.substring(0, msgBody.length()-1);
-			}
-		} else if (body instanceof Multipart) {
-			Multipart mpart = (Multipart) body;
-			Entity bodyPart = mpart.getBodyParts().get(0);
-			body = bodyPart.getBody();
-			if (body instanceof TextBody) {
-				TextBody tbody = (TextBody) bodyPart.getBody();
-				BufferedReader br = new BufferedReader(tbody.getReader());
-				String line = null;
-				while ((line = br.readLine()) != null) {
-					msgBody += line+"\n";
-				}   
-				msgBody = msgBody.substring(0, msgBody.length()-1);
+	/**
+	 *	code taken from http://www.mozgoweb.com/posts/how-to-parse-mime-message-using-mime4j-library/
+	 */
+	static String getMessageBody(Message msg) throws IOException {
+		StringBuffer msgBody = new StringBuffer();
+		if (!msg.isMultipart()) {
+			msgBody.append(getTextPart(msg));
+		} else {
+			Multipart multipart = (Multipart) msg.getBody();
+			for (Entity enitiy : multipart.getBodyParts()) {
+				BodyPart part = (BodyPart) enitiy;
+				if (part.isMimeType("text/plain")) {
+					msgBody.append(getTextPart(part));
+				} else if (part.isMimeType("text/html")) {
+					// TODO html body
+					//					String html = getTxtPart(part);
+					//					htmlBody.append(html);
+				} else if (part.getDispositionType() != null && !part.getDispositionType().equals("")) {
+					// TODO collect attachments
+					//If DispositionType is null or empty, it means that it's multipart, not attached file
+					//					attachments.add(part);
+					// TODO process attachments
+				} else if (part.isMultipart()) {
+					// TODO process recursively
+					//					parseBodyParts((Multipart) part.getBody());
+				}
 			}
 		}
-		return msgBody;
+
+		return msgBody.toString();
+	}
+
+	/**
+	 *	code taken from http://www.mozgoweb.com/posts/how-to-parse-mime-message-using-mime4j-library/
+	 */
+	private static String getTextPart(Entity part) throws IOException {
+		TextBody tb = (TextBody) part.getBody();
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		tb.writeTo(baos);
+		return baos.toString(ImportMboxServlet.ENCODER.charset().name());
 	}
 
 	private static Map<String, String> getMessagePropertiesFromHeader(Header hdr) {
@@ -257,7 +266,7 @@ public class MessageStoreImpl implements MessageStore {
 		resolverInit();
 		String checkPath = parent.getPath()+"/"+name;
 		final Resource checkResource = resolver.getResource(checkPath);
-		// PROD change behavior to create or nothing (not to update)
+		// PROD ??? change behavior to create or nothing (not to update) - IMO no !!!
 		if (checkResource == null) {
 			final Resource newResource = resolver.create(parent, name, newProps);
 			resolver.commit();

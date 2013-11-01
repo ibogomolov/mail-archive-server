@@ -2,6 +2,7 @@ package org.apache.sling.mailarchiveserver.impl;
 
 import static org.apache.sling.mailarchiveserver.impl.ImportMboxServlet.ENCODER;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -54,9 +55,10 @@ public class Mime4jMboxParserImpl implements MboxParser {
 				}
 				fileChannel.close();
 
+
 				createMboxIterator(tempFile);
 			} finally {
-				if (tempFile != null) {
+				if (tempFile.exists()) {
 					tempFile.delete();
 					tempFile = null;
 				}
@@ -83,7 +85,7 @@ public class Mime4jMboxParserImpl implements MboxParser {
 			MessageBuilder builder = new DefaultMessageBuilder();
 			Message message = null;
 			try {
-				message = builder.parseMessage(mboxIterator.next().asInputStream(ENCODER.charset()));
+				message = builder.parseMessage(new ByteArrayInputStream(mboxIterator.next().toString().getBytes(ENCODER.charset().name())));
 			} catch (MimeException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
@@ -95,7 +97,5 @@ public class Mime4jMboxParserImpl implements MboxParser {
 		public void remove() {
 			throw new UnsupportedOperationException();
 		}
-
 	}
-
 }

@@ -20654,7 +20654,7 @@ Content-Transfer-Encoding: 8bit
 On 26.1.12 10:55, Jukka Zitting wrote:
 > Hi,
 >
-> On Wed, Jan 25, 2012 at 6:04 PM, Michael DÃ¼rig<mduerig@apache.org>  wrote:
+> On Wed, Jan 25, 2012 at 6:04 PM, Michael Dürig<mduerig@apache.org>  wrote:
 >> In an earlier discussion (probably offline), we decided to not implement
 >> Item.refresh() since it doesn't go well with the MVCC model jr3 is based on.
 >
@@ -21037,7 +21037,7 @@ Michael
 >>
 >>
 >>
->> On 1/25/12 6:04 PM, "Michael DÃ¼rig"<mduerig@apache.org>  wrote:
+>> On 1/25/12 6:04 PM, "Michael Dürig"<mduerig@apache.org>  wrote:
 >>
 >>>
 >>> Hi,
@@ -21949,7 +21949,7 @@ http://markmail.org/message/e2ipk54t2bhrepab) right?
 Michael
 
 On 26.1.12 14:31, Stefan Guggisberg wrote:
-> On Wed, Jan 25, 2012 at 5:40 PM, Michael DÃ¼rig<michid@gmail.com>  wrote:
+> On Wed, Jan 25, 2012 at 5:40 PM, Michael Dürig<michid@gmail.com>  wrote:
 >>
 >> Hi,
 >>
@@ -27379,7 +27379,7 @@ X-Virus-Checked: Checked by ClamAV on apache.org
 On 31.1.12 13:31, Jukka Zitting wrote:
 > Hi,
 >
-> On Tue, Jan 31, 2012 at 2:22 PM, Michael DÃ¼rig<mduerig@apache.org>  wrote:
+> On Tue, Jan 31, 2012 at 2:22 PM, Michael Dürig<mduerig@apache.org>  wrote:
 >> I'd rather go for a modern language instead of taping things together ;-)
 >
 > Indeed, that's another point I've been thinking about....
@@ -27533,7 +27533,7 @@ Content-Type: text/plain; charset="ISO-8859-1"; format=flowed
 Content-Transfer-Encoding: 8bit
 
 
->> On Tue, Jan 31, 2012 at 2:22 PM, Michael DÃ¼rig<mduerig@apache.org>  wrote:
+>> On Tue, Jan 31, 2012 at 2:22 PM, Michael Dürig<mduerig@apache.org>  wrote:
 >>> I'd rather go for a modern language instead of taping things together ;-)
 >
 > Michael is certainly thinking of Scala which has its own can of issues ... Syntax not being the least of it ;)
@@ -27977,7 +27977,7 @@ Content-Transfer-Encoding: 8bit
 On 31.1.12 16:11, Felix Meschberger wrote:
 > Hi,
 >
-> Am 31.01.2012 um 15:47 schrieb Michael DÃ¼rig:
+> Am 31.01.2012 um 15:47 schrieb Michael Dürig:
 >
 >> OTOH, sticking with Java might leave us lagging behind, entrapped in
 >> never ending concurrency night mares and memory contention issues.
@@ -28585,7 +28585,7 @@ X-Virus-Checked: Checked by ClamAV on apache.org
 On 31.1.12 16:55, Jukka Zitting wrote:
 > Hi,
 >
-> On Tue, Jan 31, 2012 at 2:50 PM, Michael DÃ¼rig<mduerig@apache.org>  wrote:
+> On Tue, Jan 31, 2012 at 2:50 PM, Michael Dürig<mduerig@apache.org>  wrote:
 >> testCloseSessionWhileRunningGc(org.apache.jackrabbit.core.data.GarbageCollectorTest)
 >
 > That's JCR-3097 [1]. I added 2.2.11 to the "Affects Versions" field of
@@ -28730,14 +28730,14 @@ Content-Transfer-Encoding: 8bit
 On 31.1.12 16:29, Felix Meschberger wrote:
 > Hi,
 >
-> Am 31.01.2012 um 17:25 schrieb Michael DÃ¼rig:
+> Am 31.01.2012 um 17:25 schrieb Michael Dürig:
 >
 >>
 >>
 >> On 31.1.12 16:11, Felix Meschberger wrote:
 >>> Hi,
 >>>
->>> Am 31.01.2012 um 15:47 schrieb Michael DÃ¼rig:
+>>> Am 31.01.2012 um 15:47 schrieb Michael Dürig:
 >>>
 >>>> OTOH, sticking with Java might leave us lagging behind, entrapped in
 >>>> never ending concurrency night mares and memory contention issues.

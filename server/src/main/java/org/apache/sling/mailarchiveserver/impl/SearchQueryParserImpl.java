@@ -13,7 +13,6 @@ import org.apache.sling.mailarchiveserver.api.SearchQueryParser;
 
 /**
  * TODO describe search lang grammar in wiki
- * FIXME implement "search by phrase" 
  * 
  * @author Igor Bogomolov
  */
