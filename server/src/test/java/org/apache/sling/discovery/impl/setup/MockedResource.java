@@ -40,228 +40,239 @@ import org.apache.sling.api.wrappers.ValueMapDecorator;
 
 public class MockedResource extends SyntheticResource {
 
-    private final MockedResourceResolver mockedResourceResolver;
-    private Session session;
+	private final MockedResourceResolver mockedResourceResolver;
+	private Session session;
 
-    public MockedResource(MockedResourceResolver resourceResolver, String path,
-            String resourceType) {
-        super(resourceResolver, path, resourceType);
-        mockedResourceResolver = resourceResolver;
+	public MockedResource(MockedResourceResolver resourceResolver, String path,
+			String resourceType) {
+		super(resourceResolver, path, resourceType);
+		mockedResourceResolver = resourceResolver;
 
-        resourceResolver.register(this);
-    }
+		resourceResolver.register(this);
+	}
 
-    private Session getSession() {
-        synchronized (this) {
-            if (session == null) {
-                try {
-                    session = mockedResourceResolver.getSession();
-                } catch (RepositoryException e) {
-                    throw new RuntimeException("RepositoryException: " + e, e);
-                }
-            }
-            return session;
-        }
-    }
+	private Session getSession() {
+		synchronized (this) {
+			if (session == null) {
+				try {
+					session = mockedResourceResolver.getSession();
+				} catch (RepositoryException e) {
+					throw new RuntimeException("RepositoryException: " + e, e);
+				}
+			}
+			return session;
+		}
+	}
 
-    @Override
-    protected void finalize() throws Throwable {
-        close();
-        super.finalize();
-    }
+	@Override
+	protected void finalize() throws Throwable {
+		close();
+		super.finalize();
+	}
 
-    public void close() {
-        synchronized (this) {
-            if (session != null) {
-                if (session.isLive()) {
-                    session.logout();
-                }
-                session = null;
-            }
-        }
-    }
+	public void close() {
+		synchronized (this) {
+			if (session != null) {
+				if (session.isLive()) {
+					session.logout();
+				}
+				session = null;
+			}
+		}
+	}
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public <AdapterType> AdapterType adaptTo(Class<AdapterType> type) {
-        if (type.equals(Node.class)) {
-            try {
-                return (AdapterType) getSession().getNode(getPath());
-            } catch (Exception e) {
-                throw new RuntimeException("Exception occurred: " + e, e);
-            }
-        } else if (type.equals(ValueMap.class)) {
-            try {
-                Session session = getSession();
-                Node node = session.getNode(getPath());
-                HashMap<String, Object> map = new HashMap<String, Object>();
+	@SuppressWarnings("unchecked")
+	@Override
+	public <AdapterType> AdapterType adaptTo(Class<AdapterType> type) {
+		if (type.equals(Node.class)) {
+			try {
+				return (AdapterType) getSession().getNode(getPath());
+			} catch (Exception e) {
+				throw new RuntimeException("Exception occurred: " + e, e);
+			}
+		} else if (type.equals(ValueMap.class)) {
+			try {
+				Session session = getSession();
+				Node node = session.getNode(getPath());
+				HashMap<String, Object> map = new HashMap<String, Object>();
 
-                PropertyIterator properties = node.getProperties();
-                while (properties.hasNext()) {
-                    Property p = properties.nextProperty();
-                    if (p.getType() == PropertyType.BOOLEAN) {
-                        map.put(p.getName(), p.getBoolean());
-                    } else if (p.getType() == PropertyType.STRING) {
-                        map.put(p.getName(), p.getString());
-                    } else if (p.getType() == PropertyType.DATE) {
-                        map.put(p.getName(), p.getDate().getTime());
-                    } else if (p.getType() == PropertyType.NAME) {
-                        map.put(p.getName(), p.getName());
-                    } else {
-                        throw new RuntimeException(
-                                "Unsupported property type: " + p.getType());
-                    }
-                }
-                ValueMap valueMap = new ValueMapDecorator(map);
-                return (AdapterType) valueMap;
-            } catch (Exception e) {
-                e.printStackTrace();
-                return null;
-            }
-        } else if (type.equals(ModifiableValueMap.class)) {
-            return (AdapterType) new ModifiableValueMap() {
-                
-                public Collection<Object> values() {
-                    throw new UnsupportedOperationException();
-                }
-                
-                public int size() {
-                    throw new UnsupportedOperationException();
-                }
-                
-                public Object remove(Object arg0) {
-                    Session session = getSession();
-                    try{
-                        final Node node = session.getNode(getPath());
-                        final Property p = node.getProperty(String.valueOf(arg0));
-                        if (p!=null) {
-                        	p.remove();
-                        }
-                        // this is not according to the spec - but OK for tests since
-                        // the return value is never used
-                        return null;
-                    } catch(PathNotFoundException pnfe) {
-                    	// perfectly fine
-                    	return null;
-                    } catch(RepositoryException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-                
-                public void putAll(Map<? extends String, ? extends Object> arg0) {
-                    throw new UnsupportedOperationException();
-                }
-                
-                public Object put(String arg0, Object arg1) {
-                    Session session = getSession();
-                    try{
-                        final Node node = session.getNode(getPath());
-                        Object result = null;
-                        if (node.hasProperty(arg0)) {
-                            final Property previous = node.getProperty(arg0);
-                            if (previous==null) {
-                                // null
-                            } else if (previous.getType() == PropertyType.STRING) {
-                                result = previous.getString();
-                            } else if (previous.getType() == PropertyType.DATE) {
-                                result = previous.getDate();
-                            } else if (previous.getType() == PropertyType.BOOLEAN) {
-                                result = previous.getBoolean();
-                            } else {
-                                throw new UnsupportedOperationException();
-                            }
-                        }
-                        if (arg1 instanceof String) {
-                            node.setProperty(arg0, (String)arg1);
-                        } else if (arg1 instanceof Calendar) {
-                            node.setProperty(arg0, (Calendar)arg1);
-                        } else if (arg1 instanceof Boolean) {
-                            node.setProperty(arg0, (Boolean)arg1);
-                        } else {
-                            throw new UnsupportedOperationException();
-                        }
-                        return result;
-                    } catch(RepositoryException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-                
-                public Set<String> keySet() {
-                    Session session = getSession();
-                    try {
-                        final Node node = session.getNode(getPath());
-                        final PropertyIterator pi = node.getProperties();
-                        final Set<String> result = new HashSet<String>();
-                        while(pi.hasNext()) {
-                            final Property p = pi.nextProperty();
-                            result.add(p.getName());
-                        }
-                        return result;
-                    } catch (RepositoryException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-                
-                public boolean isEmpty() {
-                    throw new UnsupportedOperationException();
-                }
-                
-                public Object get(Object arg0) {
-                	throw new UnsupportedOperationException();
-                }
-                
-                public Set<Entry<String, Object>> entrySet() {
-                    throw new UnsupportedOperationException();
-                }
-                
-                public boolean containsValue(Object arg0) {
-                    throw new UnsupportedOperationException();
-                }
-                
-                public boolean containsKey(Object arg0) {
-                    Session session = getSession();
-                    try{
-                        final Node node = session.getNode(getPath());
-                        return node.hasProperty(String.valueOf(arg0));
-                    } catch(RepositoryException re) {
-                        throw new RuntimeException(re);
-                    }
-                }
-                
-                public void clear() {
-                    throw new UnsupportedOperationException();
-                }
-                
-                public <T> T get(String name, T defaultValue) {
-                    throw new UnsupportedOperationException();
-                }
-                
-                public <T> T get(String name, Class<T> type) {
-                    Session session = getSession();
-                    try{
-                        final Node node = session.getNode(getPath());
-                        if (node==null) {
-                        	return null;
-                        }
-                        Property p = node.getProperty(name);
-                        if (p==null) {
-                        	return null;
-                        }
-                        if (type.equals(Calendar.class)) {
-                        	return (T) p.getDate();
-                        } else if (type.equals(String.class)) {
-                        	return (T) p.getString();
-                        } else {
-                            throw new UnsupportedOperationException();
-                        }
-                    } catch(RepositoryException e) {
-                    	throw new RuntimeException(e);
-                    }
-                }
-            };
-        } else {
-            return super.adaptTo(type);
-        }
-    }
+				PropertyIterator properties = node.getProperties();
+				while (properties.hasNext()) {
+					Property p = properties.nextProperty();
+					if (p.getType() == PropertyType.BOOLEAN) {
+						map.put(p.getName(), p.getBoolean());
+					} else if (p.getType() == PropertyType.STRING) {
+						map.put(p.getName(), p.getString());
+					} else if (p.getType() == PropertyType.DATE) {
+						map.put(p.getName(), p.getDate().getTime());
+					} else if (p.getType() == PropertyType.NAME) {
+						map.put(p.getName(), p.getName());
+					} else {
+						throw new RuntimeException(
+								"Unsupported property type: " + p.getType());
+					}
+				}
+				ValueMap valueMap = new ValueMapDecorator(map);
+				return (AdapterType) valueMap;
+			} catch (Exception e) {
+				e.printStackTrace();
+				return null;
+			}
+		} else if (type.equals(ModifiableValueMap.class)) {
+			return (AdapterType) new ModifiableValueMap() {
+
+				public Collection<Object> values() {
+					throw new UnsupportedOperationException();
+				}
+
+				public int size() {
+					throw new UnsupportedOperationException();
+				}
+
+				public Object remove(Object arg0) {
+					Session session = getSession();
+					try{
+						final Node node = session.getNode(getPath());
+						final Property p = node.getProperty(String.valueOf(arg0));
+						if (p!=null) {
+							p.remove();
+						}
+						// this is not according to the spec - but OK for tests since
+						// the return value is never used
+								return null;
+					} catch(PathNotFoundException pnfe) {
+						// perfectly fine
+						return null;
+					} catch(RepositoryException e) {
+						throw new RuntimeException(e);
+					}
+				}
+
+				public void putAll(Map<? extends String, ? extends Object> arg0) {
+					throw new UnsupportedOperationException();
+				}
+
+				public Object put(String arg0, Object arg1) {
+					Session session = getSession();
+					try{
+						final Node node = session.getNode(getPath());
+						Object result = null;
+						if (node.hasProperty(arg0)) {
+							final Property previous = node.getProperty(arg0);
+							if (previous==null) {
+								// null
+							} else if (previous.getType() == PropertyType.STRING) {
+								result = previous.getString();
+							} else if (previous.getType() == PropertyType.DATE) {
+								result = previous.getDate();
+							} else if (previous.getType() == PropertyType.BOOLEAN) {
+								result = previous.getBoolean();
+							} else {
+								throw new UnsupportedOperationException();
+							}
+						}
+						if (arg1 instanceof String) {
+							node.setProperty(arg0, (String)arg1);
+						} else if (arg1 instanceof Long) {
+							node.setProperty(arg0, (Long)arg1);
+						} else if (arg1 instanceof Calendar) {
+							node.setProperty(arg0, (Calendar)arg1);
+						} else if (arg1 instanceof Boolean) {
+							node.setProperty(arg0, (Boolean)arg1);
+						} else {
+							throw new UnsupportedOperationException();
+						}
+						return result;
+					} catch(RepositoryException e) {
+						throw new RuntimeException(e);
+					}
+				}
+
+				public Set<String> keySet() {
+					Session session = getSession();
+					try {
+						final Node node = session.getNode(getPath());
+						final PropertyIterator pi = node.getProperties();
+						final Set<String> result = new HashSet<String>();
+						while(pi.hasNext()) {
+							final Property p = pi.nextProperty();
+							result.add(p.getName());
+						}
+						return result;
+					} catch (RepositoryException e) {
+						throw new RuntimeException(e);
+					}
+				}
+
+				public boolean isEmpty() {
+					throw new UnsupportedOperationException();
+				}
+
+				public Object get(Object arg0) {
+					try {
+						Node node = session.getNode(getPath());
+						return node.getProperty(String.valueOf(arg0));
+					} catch (PathNotFoundException e) {
+						return null;
+					} catch (RepositoryException e) {
+						e.printStackTrace();
+						throw new RuntimeException();
+					}
+					// throw new UnsupportedOperationException();
+				}
+
+				public Set<Entry<String, Object>> entrySet() {
+					throw new UnsupportedOperationException();
+				}
+
+				public boolean containsValue(Object arg0) {
+					throw new UnsupportedOperationException();
+				}
+
+				public boolean containsKey(Object arg0) {
+					Session session = getSession();
+					try{
+						final Node node = session.getNode(getPath());
+						return node.hasProperty(String.valueOf(arg0));
+					} catch(RepositoryException re) {
+						throw new RuntimeException(re);
+					}
+				}
+
+				public void clear() {
+					throw new UnsupportedOperationException();
+				}
+
+				public <T> T get(String name, T defaultValue) {
+					throw new UnsupportedOperationException();
+				}
+
+				public <T> T get(String name, Class<T> type) {
+					Session session = getSession();
+					try{
+						final Node node = session.getNode(getPath());
+						if (node==null) {
+							return null;
+						}
+						Property p = node.getProperty(name);
+						if (p==null) {
+							return null;
+						}
+						if (type.equals(Calendar.class)) {
+							return (T) p.getDate();
+						} else if (type.equals(String.class)) {
+							return (T) p.getString();
+						} else {
+							throw new UnsupportedOperationException();
+						}
+					} catch(RepositoryException e) {
+						throw new RuntimeException(e);
+					}
+				}
+			};
+		} else {
+			return super.adaptTo(type);
+		}
+	}
 
 }
