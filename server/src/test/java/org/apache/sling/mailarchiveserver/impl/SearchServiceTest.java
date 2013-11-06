@@ -12,7 +12,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
-public class SearchServiceQueryPipelineTest {
+public class SearchServiceTest {
 
 	private static SearchQueryParserImpl parser = new SearchQueryParserImpl();
 	private static QueryBuilderImpl builder = new QueryBuilderImpl();
@@ -32,19 +32,24 @@ public class SearchServiceQueryPipelineTest {
 				+ "OR LOWER(From) LIKE '%word%')" 
 		} );	
 		
-		// FIXME ! logically this is true, but I had an idea to AND conditions on "hello" and "word" 
-		// 		 because currently there is too much search results
-		
-//		params.add(new Object[] {"two words", "hello word", QueryBuilderImpl.BASE + " AND " 
-//				+ "((LOWER(Body) LIKE '%hello%' "
-//				+ "OR LOWER(Subject) LIKE '%hello%' "
-//				+ "OR LOWER('List-Id') LIKE '%hello%' "
-//				+ "OR LOWER(From) LIKE '%hello%') " 
-//				+ "AND (LOWER(Body) LIKE '%word%' "
-//				+ "OR LOWER(Subject) LIKE '%word%' "
-//				+ "OR LOWER('List-Id') LIKE '%word%' "
-//				+ "OR LOWER(From) LIKE '%word%'))" 
-//		} );	
+		/**
+		 * FIXME !
+		 * logically this is true, but I had an idea to AND conditions on "hello" and "word"
+		 * because currently there is too much search results
+		 * 
+		 * or better order by score because "logically this is true"
+		 * ask for an opinion 
+		 */
+		params.add(new Object[] {"two words", "hello word", QueryBuilderImpl.BASE + " AND " 
+				+ "(LOWER(Body) LIKE '%hello%' "
+				+ "OR LOWER(Body) LIKE '%word%' "
+				+ "OR LOWER(Subject) LIKE '%hello%' "
+				+ "OR LOWER(Subject) LIKE '%word%' "
+				+ "OR LOWER('List-Id') LIKE '%hello%' "
+				+ "OR LOWER('List-Id') LIKE '%word%' "
+				+ "OR LOWER(From) LIKE '%hello%' " 
+				+ "OR LOWER(From) LIKE '%word%')" 
+		} );	
 
 		params.add(new Object[] {"field search", "hello from:world", QueryBuilderImpl.BASE + " AND "
 				+ "(LOWER(From) LIKE '%world%') "
@@ -99,7 +104,7 @@ public class SearchServiceQueryPipelineTest {
 		return params;
 	}
 
-	public SearchServiceQueryPipelineTest(String description, String one, String two) {
+	public SearchServiceTest(String description, String one, String two) {
 		searchPhrase = one;
 		expectedQuery = two;
 	}

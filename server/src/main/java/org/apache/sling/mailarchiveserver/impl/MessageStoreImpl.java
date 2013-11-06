@@ -2,13 +2,22 @@ package org.apache.sling.mailarchiveserver.impl;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.text.ParsePosition;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.RepositoryException;
+import javax.jcr.ValueFormatException;
 
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
@@ -28,6 +37,7 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.mailarchiveserver.api.MessageStore;
 import org.apache.sling.mailarchiveserver.api.ThreadKeyGenerator;
+import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,6 +91,7 @@ public class MessageStoreImpl implements MessageStore {
 
 			String msgNode = makeJcrFriendly((String) msgProps.get(MailArchiveServerConstants.NAME_ATTRIBUTE));
 			assertResource(parentResource, msgNode, msgProps);
+			updateThread(parentResource, msgProps);
 		} catch (LoginException e) {
 			throw new RuntimeException("LoginException");
 		}
@@ -281,6 +292,22 @@ public class MessageStoreImpl implements MessageStore {
 			resolver.commit();
 			logger.debug(String.format("Resource updated at %s with resource type %s.", checkResource.getPath(), props.get(resourceTypeKey).toString()));
 		}
+	}
+
+	private void updateThread(Resource thread, Map<String, Object> msgProps) throws PersistenceException {
+		final ModifiableValueMap thrdProps = thread.adaptTo(ModifiableValueMap.class);
+		Long prop = (Long) thrdProps.get(MailArchiveServerConstants.UPDATED_ATTRIBUTE);
+		Date updatedDate = null; 
+		if (prop != null) {
+			updatedDate = new Date(prop);
+		}
+		final String msgProp = (String) msgProps.get(MailArchiveServerConstants.DATE_ATTRIBUTE);
+		SimpleDateFormat sdf = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z");
+		final Date msgDate = sdf.parse(msgProp, new ParsePosition(0));
+		if (updatedDate == null || msgDate.after(updatedDate)) {
+			thrdProps.put(MailArchiveServerConstants.UPDATED_ATTRIBUTE, msgDate.getTime());
+			resolver.commit();
+		} 
 	}
 
 	static String makeJcrFriendly(String s) {
