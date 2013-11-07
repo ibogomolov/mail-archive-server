@@ -531,6 +531,11 @@
         </bundle>
         <bundle>
             <groupId>org.apache.sling</groupId>
+            <artifactId>mailarchiveserver-ui</artifactId> 
+            <version>${project.version}</version>
+        </bundle>
+        <bundle>
+            <groupId>org.apache.sling</groupId>
             <artifactId>mailarchiveserver-exchange</artifactId>
             <version>${project.version}</version>
         </bundle>
