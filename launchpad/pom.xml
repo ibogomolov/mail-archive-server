@@ -13,6 +13,11 @@
     <packaging>jar</packaging>
     <name>Mail Archive Server Launchpad</name>
     <description>Project to create a Mail Archive Server runnable jar that includes Sling and other required bundles.</description>
+
+    <properties>
+        <!-- trick maven-launchpad-plugin into not copying any configs -->
+        <empty.config.directory>${project.build.directory}/NOCONFIGS</empty.config.directory>
+    </properties>
     
     <build>
         <plugins>
@@ -34,6 +39,7 @@
                                 <artifactId>org.apache.felix.http.jetty</artifactId>
                                 <version>2.2.0</version>
                             </jarWebSupport>
+                            <configDirectory>${empty.config.directory}</configDirectory>
                         </configuration>  
                     </execution>
                 </executions>
@@ -50,6 +56,23 @@
                         </manifest>
                     </archive>
                 </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>generate-sources</id>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <tasks>
+                                <mkdir dir="${empty.config.directory}"/>
+                            </tasks>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
