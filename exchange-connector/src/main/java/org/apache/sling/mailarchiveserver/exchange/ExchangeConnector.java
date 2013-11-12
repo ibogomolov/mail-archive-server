@@ -1,22 +1,24 @@
 package org.apache.sling.mailarchiveserver.exchange;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.net.Authenticator;
+import java.net.MalformedURLException;
 import java.net.PasswordAuthentication;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Dictionary;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 import javax.xml.ws.Holder;
 
+import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.ConfigurationPolicy;
+import org.apache.felix.scr.annotations.Deactivate;
+import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.james.mime4j.dom.Header;
@@ -29,6 +31,7 @@ import org.apache.james.mime4j.message.MessageImpl;
 import org.apache.james.mime4j.stream.RawField;
 import org.apache.sling.mailarchiveserver.api.Connector;
 import org.apache.sling.mailarchiveserver.api.MailProcessingPipeline;
+import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,79 +66,95 @@ import exchange.v2007sp3.ws.client.RequestServerVersion;
 import exchange.v2007sp3.ws.client.ResponseClassType;
 import exchange.v2007sp3.ws.client.ResponseMessageType;
 
-@Component
+@Component(
+		name=ExchangeConnector.SERVICE_PID,
+		metatype=true,
+		configurationFactory = true, 
+		policy = ConfigurationPolicy.REQUIRE
+		)
 @Service(Connector.class)
 public class ExchangeConnector implements Connector {
 
-//	private byte priority; // TODO use
-	private Set<String> mailingLists;
-	private String username;
-	private String password;
-	private String wsdlPath;
+	static final String SERVICE_PID = "org.apache.sling.mailarchiveserver.exchange.ExchangeConnector";
+
+	@Property
+	private static final String NAME_PROP = "name";
+	private String name;
+
+	@Property
+	private static final String USERNAME_PROP = "username";
+	private String username = null;
+
+	@Property
+	private static final String PASSWORD_PROP = "password";
+	private String password = null;
+
+	@Property(value="file:Services.wsdl")
+	private static final String WSDLPATH_PROP = "wsdlPath";
+	private String wsdlPath = null;
+
+	@Property(boolValue=false)
+	private static final String MAILBOXCLEANUP_PROP = "mailboxCleanup";
 	private boolean mailboxCleanup;
 
-	private boolean active = false;
+	@Property
+	private static final String MAILINGLISTS_PROP = "mailingLists";
+	private Set<String> mailingLists;
+
+	@Property(intValue=100)
+	private static final String RETREIVE_MESSAGES_LIMIT = "retreiveMessagesLimit";
+	private int retreiveMessagesLimit;
+
 	private ExchangeServicePortType port = null;
 	private static final ExchangeVersionType EXCHANGE_VERSION = ExchangeVersionType.EXCHANGE_2007_SP_1;
-
 	private static final Logger logger = LoggerFactory.getLogger(ExchangeConnector.class);
 	@Reference
 	private MailProcessingPipeline mailProcessor;
 
 	public ExchangeConnector() {
-		this("config.txt");
-		SysStreamsLogger.bindSystemStreams(); // PROD remove
+//		SysStreamsLogger.bindSystemStreams(); // PROD remove
 	}
 
-	public ExchangeConnector(String configFilePath) {
-		File configFile = new File(configFilePath);
-		if (configFile.exists()) {
-			FileInputStream config = null;
-			try {
-				config = new FileInputStream(configFile);
-				Properties props = new Properties();
-				props.load(config);
-
-//				priority = new Byte(props.getProperty("priority")); TODO 
-				wsdlPath = props.getProperty("wsdlPath");
-				username = props.getProperty("username");
-				password = props.getProperty("password");
-				password = props.getProperty("password");
-				mailboxCleanup = new Boolean(props.getProperty("mailboxCleanup"));
-				mailingLists = new HashSet<String>();
-				String lists = props.getProperty("lists");
-				for (String list : lists.split(",")) {
-					mailingLists.add(list.trim());
-				}
-
-				// init ExchangeServicePortType
-				URL wsdlURL = new URL(wsdlPath);
-				ExchangeServices service = new ExchangeServices(
-						wsdlURL, 
-						new QName("http://schemas.microsoft.com/exchange/services/2006/messages", "ExchangeServices") 
-						);
-				port = service.getExchangeServicePort();
-				NtlmAuthenticator authenticator = new NtlmAuthenticator(username, password);
-				Authenticator.setDefault(authenticator);
-
-				active = true;
-			} catch (IOException e) {
-				throw new RuntimeException(e.getMessage());
-			} finally {
-				if (config != null) {
-					try {
-						config.close();
-					} catch (IOException e) {}
-					config = null;				
-				}
-			}
+	@Activate
+	public void activate(ComponentContext context) throws MalformedURLException {
+		final Dictionary props = context.getProperties();
+		name = (String) props.get(NAME_PROP);  
+		username = (String) props.get(USERNAME_PROP);  
+		password = (String) props.get(PASSWORD_PROP); 
+		wsdlPath = (String) props.get(WSDLPATH_PROP); 
+		mailboxCleanup = (Boolean) props.get(MAILBOXCLEANUP_PROP); 
+		String listsValue = (String) props.get(MAILINGLISTS_PROP); 
+		mailingLists = new HashSet<String>();
+		for (String l : listsValue.split(",")) {
+			mailingLists.add(l.trim());
 		}
+		retreiveMessagesLimit = (Integer) props.get(RETREIVE_MESSAGES_LIMIT);
+
+
+		// init ExchangeServicePortType
+		URL wsdlURL = new URL(wsdlPath);
+		ExchangeServices service = new ExchangeServices(
+				wsdlURL, 
+				new QName("http://schemas.microsoft.com/exchange/services/2006/messages", "ExchangeServices") 
+				);
+		port = service.getExchangeServicePort();
+		NtlmAuthenticator authenticator = new NtlmAuthenticator(username, password);
+		Authenticator.setDefault(authenticator);
+
+
+		logger.info(String.format("ExchangeConnector %s is activated.\n%s", name, toString()));
 	}
 
-	public int checkNewMessages(int limit) { 
+	@Deactivate
+	public void deactivate() {
+		logger.info(String.format("ExchangeConnector %s is deactivated.", name));
+	}
+
+	public int checkNewMessages() { 
 
 		List<BaseItemIdType> messageIds = new ArrayList<BaseItemIdType>();
 		boolean deletion = false;
+		int limit = retreiveMessagesLimit;
 
 		try {
 
@@ -180,7 +199,7 @@ public class ExchangeConnector implements Connector {
 					}
 				}
 			}
-			
+
 			if (messageIds.size() == 0) {
 				logger.info("No new messages.");
 				return 0;
@@ -191,7 +210,7 @@ public class ExchangeConnector implements Connector {
 			GetItemType getRequest = new GetItemType();
 			ItemResponseShapeType responseShape2 = new ItemResponseShapeType();
 			responseShape2.setBaseShape(DefaultShapeNamesType.ALL_PROPERTIES);
-			responseShape2.setBodyType(BodyTypeResponseType.TEXT); // optional
+			responseShape2.setBodyType(BodyTypeResponseType.TEXT); // optional TODO accept html as well
 			getRequest.setItemShape(responseShape2);
 
 			NonEmptyArrayOfBaseItemIdsType itemIds = new NonEmptyArrayOfBaseItemIdsType();
@@ -224,10 +243,11 @@ public class ExchangeConnector implements Connector {
 				deletion = mailboxCleanup; 
 			}
 
-			return messages.size();
+			return messageIds.size(); // # of messages retrieved for Exchange server
+			// # of messages imported to JCR is greater or equals because of messages sent to several lists
 		} catch (Exception e){
-			// TODO skip an email that results an exception ?
-			logger.info("Error while retrieving messages. {} : {} ", e.toString(), e.getMessage());
+			// TODO skip an email that results in an exception ?
+			logger.info("Error while retrieving messages. {} ", e.getMessage());
 			e.printStackTrace();
 			return 0;
 		} finally {
@@ -331,11 +351,6 @@ public class ExchangeConnector implements Connector {
 		return result;
 	}
 
-	@Override
-	public boolean isActive() {
-		return active;
-	}
-
 	private static Mailbox convertMailAddressTypeToMailbox(EmailAddressType in) {
 		final String emailAddress = in.getEmailAddress();
 		if (emailAddress.contains("@")) {
@@ -356,6 +371,29 @@ public class ExchangeConnector implements Connector {
 		return outList;
 	}
 
+	@Override
+	public String toString() {
+		return name;
+	}
+	
+	public String getConfiguration() {
+		String str = "";
+		str += String.format("Configuration:\n");
+		str += String.format("%s : %s\n", NAME_PROP, name);
+		str += String.format("%s : %s\n", USERNAME_PROP, username);
+		str += String.format("%s : %s\n", PASSWORD_PROP, password);
+		str += String.format("%s : %s\n", WSDLPATH_PROP, wsdlPath);
+		str += String.format("%s : %s\n", MAILBOXCLEANUP_PROP, mailboxCleanup);
+		String listsValue = ""; 
+		for (String l : mailingLists) {
+			listsValue += l + ", ";
+		}
+		listsValue = listsValue.substring(0, listsValue.length()-2);
+		str += String.format("%s : %s\n", MAILINGLISTS_PROP, listsValue);
+		str += String.format("%s : %s\n", RETREIVE_MESSAGES_LIMIT, retreiveMessagesLimit);
+		return str;
+	}
+	
 	private static class NtlmAuthenticator extends Authenticator {
 
 		private final String username;

@@ -2,8 +2,6 @@ package org.apache.sling.mailarchiveserver.api;
 
 public interface Connector {
 
-	int checkNewMessages(int limit);
-	
-	boolean isActive();
+	int checkNewMessages();
 	
 }

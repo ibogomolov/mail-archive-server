@@ -21,8 +21,7 @@ import org.slf4j.LoggerFactory;
 public class ConnectorScheduler implements Runnable {
 
 	private static final int SLEEP_TIME_BETWEEN_NEW_MAIL_CHECKS = 20;
-	private static final int RETREIVE_MESSAGES_LIMIT = 1;
-	
+
 	private static final Logger logger = LoggerFactory.getLogger(ConnectorScheduler.class);
 	private static final int WAITING_TIME_LIMIT_BEFORE_TERMINATION = 5000; 
 
@@ -54,12 +53,11 @@ public class ConnectorScheduler implements Runnable {
 	@Override
 	public void run() {
 		while (running) {
-			Collections.sort(scheduledConnectors, null); // TODO comparator, introduce class abstract PriorityConnector implements Connector
 			executionQueue = new ArrayDeque<Connector>(scheduledConnectors);
 			while (!executionQueue.isEmpty() && running) {
 				Connector c = executionQueue.remove();
-				int retreived = c.checkNewMessages(RETREIVE_MESSAGES_LIMIT);
-				logger.info("Retrieved {} messages.", retreived);
+				int retreived = c.checkNewMessages();
+				logger.info("Retrieved {} messages from Exchange server.", retreived);
 			}
 			try {
 				TimeUnit.SECONDS.sleep(SLEEP_TIME_BETWEEN_NEW_MAIL_CHECKS);
@@ -70,12 +68,12 @@ public class ConnectorScheduler implements Runnable {
 	}
 
 	public synchronized void bindConnector(Connector c) {
-		if (c.isActive()) {
-			scheduledConnectors.add(c);
-		}
+		System.out.println("Connector " + c.toString() + " added to pool."); // TODO
+		scheduledConnectors.add(c);
 	}
 
 	public synchronized void unbindConnector(Connector c) {
+		System.out.println("Connector " + c.toString() + " removed from pool."); // TODO
 		scheduledConnectors.remove(c);
 	}
 
