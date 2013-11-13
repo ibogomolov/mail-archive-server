@@ -2,7 +2,6 @@ package org.apache.sling.mailarchiveserver.impl;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -68,12 +67,12 @@ public class ConnectorScheduler implements Runnable {
 	}
 
 	public synchronized void bindConnector(Connector c) {
-		System.out.println("Connector " + c.toString() + " added to pool."); // TODO
+		logger.info("Connector " + c.toString() + " added to pool.");
 		scheduledConnectors.add(c);
 	}
 
 	public synchronized void unbindConnector(Connector c) {
-		System.out.println("Connector " + c.toString() + " removed from pool."); // TODO
+		logger.info("Connector " + c.toString() + " removed from pool.");
 		scheduledConnectors.remove(c);
 	}
 
