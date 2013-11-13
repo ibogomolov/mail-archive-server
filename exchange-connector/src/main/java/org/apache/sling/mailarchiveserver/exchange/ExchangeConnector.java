@@ -142,7 +142,7 @@ public class ExchangeConnector implements Connector {
 		Authenticator.setDefault(authenticator);
 
 
-		logger.info(String.format("ExchangeConnector %s is activated.\n%s", name, toString()));
+		logger.info(String.format("ExchangeConnector %s is activated.", name));
 	}
 
 	@Deactivate
@@ -247,8 +247,8 @@ public class ExchangeConnector implements Connector {
 			// # of messages imported to JCR is greater or equals because of messages sent to several lists
 		} catch (Exception e){
 			// TODO skip an email that results in an exception ?
-			logger.info("Error while retrieving messages. {} ", e.getMessage());
-			e.printStackTrace();
+			logger.info("Error while retrieving messages. " + e.getMessage());
+			e.printStackTrace(); // PROD remove
 			return 0;
 		} finally {
 
@@ -374,24 +374,6 @@ public class ExchangeConnector implements Connector {
 	@Override
 	public String toString() {
 		return name;
-	}
-	
-	public String getConfiguration() {
-		String str = "";
-		str += String.format("Configuration:\n");
-		str += String.format("%s : %s\n", NAME_PROP, name);
-		str += String.format("%s : %s\n", USERNAME_PROP, username);
-		str += String.format("%s : %s\n", PASSWORD_PROP, password);
-		str += String.format("%s : %s\n", WSDLPATH_PROP, wsdlPath);
-		str += String.format("%s : %s\n", MAILBOXCLEANUP_PROP, mailboxCleanup);
-		String listsValue = ""; 
-		for (String l : mailingLists) {
-			listsValue += l + ", ";
-		}
-		listsValue = listsValue.substring(0, listsValue.length()-2);
-		str += String.format("%s : %s\n", MAILINGLISTS_PROP, listsValue);
-		str += String.format("%s : %s\n", RETREIVE_MESSAGES_LIMIT, retreiveMessagesLimit);
-		return str;
 	}
 	
 	private static class NtlmAuthenticator extends Authenticator {
