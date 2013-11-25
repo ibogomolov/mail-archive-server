@@ -1,5 +1,5 @@
 
-package exchange.v2007sp3.ws.client;
+package exchange.v2007sp3.ws.client.impl;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -23,13 +23,13 @@ public class ExchangeServices
 {
 
     private final static URL EXCHANGESERVICES_WSDL_LOCATION;
-    private final static Logger logger = Logger.getLogger(exchange.v2007sp3.ws.client.ExchangeServices.class.getName());
+    private final static Logger logger = Logger.getLogger(exchange.v2007sp3.ws.client.impl.ExchangeServices.class.getName());
 
     static {
         URL url = null;
         try {
             URL baseUrl;
-            baseUrl = exchange.v2007sp3.ws.client.ExchangeServices.class.getResource(".");
+            baseUrl = exchange.v2007sp3.ws.client.impl.ExchangeServices.class.getResource(".");
             url = new URL(baseUrl, "file:Services.wsdl");
         } catch (MalformedURLException e) {
             logger.warning("Failed to create URL for the wsdl Location: 'file:Services.wsdl', retrying as a local file");

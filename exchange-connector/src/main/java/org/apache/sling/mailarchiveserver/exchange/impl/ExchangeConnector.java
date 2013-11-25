@@ -1,4 +1,4 @@
-package org.apache.sling.mailarchiveserver.exchange;
+package org.apache.sling.mailarchiveserver.exchange.impl;
 
 import java.net.Authenticator;
 import java.net.MalformedURLException;
@@ -12,6 +12,7 @@ import java.util.Set;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
+import javax.xml.ws.BindingProvider;
 import javax.xml.ws.Holder;
 
 import org.apache.felix.scr.annotations.Activate;
@@ -35,36 +36,35 @@ import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import exchange.v2007sp3.ws.client.ArrayOfRealItemsType;
-import exchange.v2007sp3.ws.client.ArrayOfResponseMessagesType;
-import exchange.v2007sp3.ws.client.BaseFolderIdType;
-import exchange.v2007sp3.ws.client.BaseItemIdType;
-import exchange.v2007sp3.ws.client.BodyTypeResponseType;
-import exchange.v2007sp3.ws.client.DefaultShapeNamesType;
-import exchange.v2007sp3.ws.client.DeleteItemResponseType;
-import exchange.v2007sp3.ws.client.DeleteItemType;
-import exchange.v2007sp3.ws.client.DisposalType;
-import exchange.v2007sp3.ws.client.DistinguishedFolderIdNameType;
-import exchange.v2007sp3.ws.client.DistinguishedFolderIdType;
-import exchange.v2007sp3.ws.client.EmailAddressType;
-import exchange.v2007sp3.ws.client.ExchangeServicePortType;
-import exchange.v2007sp3.ws.client.ExchangeServices;
-import exchange.v2007sp3.ws.client.ExchangeVersionType;
-import exchange.v2007sp3.ws.client.FindItemResponseMessageType;
-import exchange.v2007sp3.ws.client.FindItemResponseType;
-import exchange.v2007sp3.ws.client.FindItemType;
-import exchange.v2007sp3.ws.client.GetItemResponseType;
-import exchange.v2007sp3.ws.client.GetItemType;
-import exchange.v2007sp3.ws.client.ItemInfoResponseMessageType;
-import exchange.v2007sp3.ws.client.ItemQueryTraversalType;
-import exchange.v2007sp3.ws.client.ItemResponseShapeType;
-import exchange.v2007sp3.ws.client.ItemType;
-import exchange.v2007sp3.ws.client.MessageType;
-import exchange.v2007sp3.ws.client.NonEmptyArrayOfBaseFolderIdsType;
-import exchange.v2007sp3.ws.client.NonEmptyArrayOfBaseItemIdsType;
-import exchange.v2007sp3.ws.client.RequestServerVersion;
-import exchange.v2007sp3.ws.client.ResponseClassType;
-import exchange.v2007sp3.ws.client.ResponseMessageType;
+import exchange.v2007sp3.ws.client.impl.ArrayOfRealItemsType;
+import exchange.v2007sp3.ws.client.impl.ArrayOfResponseMessagesType;
+import exchange.v2007sp3.ws.client.impl.BaseFolderIdType;
+import exchange.v2007sp3.ws.client.impl.BaseItemIdType;
+import exchange.v2007sp3.ws.client.impl.DefaultShapeNamesType;
+import exchange.v2007sp3.ws.client.impl.DeleteItemResponseType;
+import exchange.v2007sp3.ws.client.impl.DeleteItemType;
+import exchange.v2007sp3.ws.client.impl.DisposalType;
+import exchange.v2007sp3.ws.client.impl.DistinguishedFolderIdNameType;
+import exchange.v2007sp3.ws.client.impl.DistinguishedFolderIdType;
+import exchange.v2007sp3.ws.client.impl.EmailAddressType;
+import exchange.v2007sp3.ws.client.impl.ExchangeServicePortType;
+import exchange.v2007sp3.ws.client.impl.ExchangeServices;
+import exchange.v2007sp3.ws.client.impl.ExchangeVersionType;
+import exchange.v2007sp3.ws.client.impl.FindItemResponseMessageType;
+import exchange.v2007sp3.ws.client.impl.FindItemResponseType;
+import exchange.v2007sp3.ws.client.impl.FindItemType;
+import exchange.v2007sp3.ws.client.impl.GetItemResponseType;
+import exchange.v2007sp3.ws.client.impl.GetItemType;
+import exchange.v2007sp3.ws.client.impl.ItemInfoResponseMessageType;
+import exchange.v2007sp3.ws.client.impl.ItemQueryTraversalType;
+import exchange.v2007sp3.ws.client.impl.ItemResponseShapeType;
+import exchange.v2007sp3.ws.client.impl.ItemType;
+import exchange.v2007sp3.ws.client.impl.MessageType;
+import exchange.v2007sp3.ws.client.impl.NonEmptyArrayOfBaseFolderIdsType;
+import exchange.v2007sp3.ws.client.impl.NonEmptyArrayOfBaseItemIdsType;
+import exchange.v2007sp3.ws.client.impl.RequestServerVersion;
+import exchange.v2007sp3.ws.client.impl.ResponseClassType;
+import exchange.v2007sp3.ws.client.impl.ResponseMessageType;
 
 @Component(
 		name=ExchangeConnector.SERVICE_PID,
@@ -112,11 +112,11 @@ public class ExchangeConnector implements Connector {
 	private MailProcessingPipeline mailProcessor;
 
 	public ExchangeConnector() {
-//		SysStreamsLogger.bindSystemStreams(); // PROD remove
+		//		SysStreamsLogger.bindSystemStreams(); // PROD remove
 	}
 
 	@Activate
-	public void activate(ComponentContext context) throws MalformedURLException {
+	protected void activate(ComponentContext context) throws MalformedURLException {
 		final Dictionary props = context.getProperties();
 		name = (String) props.get(NAME_PROP);  
 		username = (String) props.get(USERNAME_PROP);  
@@ -130,17 +130,7 @@ public class ExchangeConnector implements Connector {
 		}
 		retreiveMessagesLimit = (Integer) props.get(RETREIVE_MESSAGES_LIMIT);
 
-
-		// init ExchangeServicePortType
-		URL wsdlURL = new URL(wsdlPath);
-		ExchangeServices service = new ExchangeServices(
-				wsdlURL, 
-				new QName("http://schemas.microsoft.com/exchange/services/2006/messages", "ExchangeServices") 
-				);
-		port = service.getExchangeServicePort();
-		NtlmAuthenticator authenticator = new NtlmAuthenticator(username, password);
-		Authenticator.setDefault(authenticator);
-
+		loginAndOpenPort();
 
 		logger.info(String.format("ExchangeConnector %s is activated.", name));
 	}
@@ -150,7 +140,36 @@ public class ExchangeConnector implements Connector {
 		logger.info(String.format("ExchangeConnector %s is deactivated.", name));
 	}
 
+	private void loginAndOpenPort() throws MalformedURLException {
+		// init ExchangeServicePortType
+		URL wsdlURL = new URL(wsdlPath);
+		ExchangeServices service = new ExchangeServices(
+				wsdlURL, 
+				new QName("http://schemas.microsoft.com/exchange/services/2006/messages", "ExchangeServices") 
+				);
+		port = service.getExchangeServicePort();
+
+		System.out.println("***** ***** *****");
+		System.out.println("port: "+ port);
+		System.out.println("port.getClass: "+ port.getClass());
+		// this is not working
+		//		((BindingProvider) port).getRequestContext().put(BindingProvider.SESSION_MAINTAIN_PROPERTY, false);
+		//		((BindingProvider) port).getRequestContext().put(BindingProvider.USERNAME_PROPERTY, username);
+		//      ((BindingProvider) port).getRequestContext().put(BindingProvider.PASSWORD_PROPERTY, password);
+		//		System.out.println("BindingProvider.USERNAME_PROPERTY = "+BindingProvider.USERNAME_PROPERTY);
+		//		System.out.println("BindingProvider.PASSWORD_PROPERTY = "+BindingProvider.PASSWORD_PROPERTY);
+
+
+		NtlmAuthenticator authenticator = new NtlmAuthenticator(username, password);
+		Authenticator.setDefault(authenticator);
+	}
+
 	public int checkNewMessages() { 
+		try {
+			loginAndOpenPort();
+		} catch (MalformedURLException e1) {
+			e1.printStackTrace();
+		}
 
 		List<BaseItemIdType> messageIds = new ArrayList<BaseItemIdType>();
 		boolean deletion = false;
@@ -201,7 +220,7 @@ public class ExchangeConnector implements Connector {
 			}
 
 			if (messageIds.size() == 0) {
-				logger.info("No new messages.");
+				logger.info(name + ": No new messages.");
 				return 0;
 			}
 
@@ -210,7 +229,7 @@ public class ExchangeConnector implements Connector {
 			GetItemType getRequest = new GetItemType();
 			ItemResponseShapeType responseShape2 = new ItemResponseShapeType();
 			responseShape2.setBaseShape(DefaultShapeNamesType.ALL_PROPERTIES);
-			responseShape2.setBodyType(BodyTypeResponseType.TEXT); // optional TODO accept html as well
+			//			responseShape2.setBodyType(BodyTypeResponseType.TEXT); // optional, choose plain or html content
 			getRequest.setItemShape(responseShape2);
 
 			NonEmptyArrayOfBaseItemIdsType itemIds = new NonEmptyArrayOfBaseItemIdsType();
@@ -247,8 +266,12 @@ public class ExchangeConnector implements Connector {
 			// # of messages imported to JCR is greater or equals because of messages sent to several lists
 		} catch (Exception e){
 			// TODO skip an email that results in an exception ?
-			logger.info("Error while retrieving messages. " + e.getMessage());
+			logger.info(name + ": Error while retrieving messages. " + e.getMessage());
 			e.printStackTrace(); // PROD remove
+
+			System.out.println(((BindingProvider) port).getRequestContext().get(BindingProvider.USERNAME_PROPERTY));
+			System.out.println(((BindingProvider) port).getRequestContext().get(BindingProvider.PASSWORD_PROPERTY));
+
 			return 0;
 		} finally {
 
@@ -279,11 +302,12 @@ public class ExchangeConnector implements Connector {
 					ResponseMessageType responseMessage = jaxbElement.getValue();
 					ResponseClassType responseMessageClass = responseMessage.getResponseClass();
 					if (responseMessageClass != ResponseClassType.SUCCESS) {
-						logger.info("Error while deleting messages from Exchange server. \nCode {} : {}\n", 
+						logger.info(name + ": Error while deleting messages from Exchange server. \nCode {} : {}\n", 
 								responseMessage.getResponseCode(), responseMessage.getMessageText());
 					}
 				}
 			}
+			port = null;
 		}
 	}
 
@@ -292,16 +316,19 @@ public class ExchangeConnector implements Connector {
 
 		List<Message> result = new ArrayList<Message>();
 		Message sample = new MessageImpl();
+		sample.setHeader(new HeaderImpl());
 		Set<String> recepients = new HashSet<String>();
 
-		Header header = new HeaderImpl();
+		final Header tmpHeader = sample.getHeader();
 		// Message-Id
-		header.addField(new RawField(FieldName.MESSAGE_ID, in.getInternetMessageId()));
+		tmpHeader.addField(new RawField(FieldName.MESSAGE_ID, in.getInternetMessageId()));
 		// In-Reply-To (opt)
 		if (in.getInReplyTo() != null) {
-			header.addField(new RawField(AdditionalFieldName.IN_REPLY_TO, in.getInReplyTo()));
+			tmpHeader.addField(new RawField(AdditionalFieldName.IN_REPLY_TO, in.getInReplyTo()));
 		}
-		sample.setHeader(header);
+		// Content-Type TODO
+		//		tmpHeader.addField(new RawField(FieldName.CONTENT_TYPE, stringToContentType(in.getBody().getBodyType().value())));
+		sample.setHeader(tmpHeader);
 
 		// From
 		final Mailbox from = convertMailAddressTypeToMailbox(in.getFrom().getMailbox());
@@ -351,6 +378,13 @@ public class ExchangeConnector implements Connector {
 		return result;
 	}
 
+	private String stringToContentType(String s) {
+		if (s.toLowerCase().contains("html"))
+			return AdditionalFieldName.HTML_CONTENT_TYPE;
+		else 
+			return AdditionalFieldName.PLAIN_CONTENT_TYPE;
+	}
+
 	private static Mailbox convertMailAddressTypeToMailbox(EmailAddressType in) {
 		final String emailAddress = in.getEmailAddress();
 		if (emailAddress.contains("@")) {
@@ -375,8 +409,8 @@ public class ExchangeConnector implements Connector {
 	public String toString() {
 		return name;
 	}
-	
-	private static class NtlmAuthenticator extends Authenticator {
+
+	private class NtlmAuthenticator extends Authenticator {
 
 		private final String username;
 		private final String password;
@@ -385,10 +419,20 @@ public class ExchangeConnector implements Connector {
 			super();
 			this.username = username;
 			this.password = password; 
+
 		}
 
 		@Override
 		public PasswordAuthentication getPasswordAuthentication() {
+			System.out.println("*** getPasswordAuthentication ***");
+			System.out.println("host: "+getRequestingHost());
+			System.out.println("port: "+getRequestingPort());
+			System.out.println("prompt: "+getRequestingPrompt());
+			System.out.println("protocol: "+getRequestingProtocol());
+			System.out.println("scheme: "+getRequestingScheme());
+			System.out.println("site: "+getRequestingSite());
+			System.out.println("url: "+getRequestingURL()); 
+			System.out.println("***----------------------------***");
 			return (new PasswordAuthentication (username, password.toCharArray()));
 		}
 	}
