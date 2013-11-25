@@ -1,5 +1,5 @@
 
-package exchange.v2007sp3.ws.client;
+package exchange.v2007sp3.ws.client.impl;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.annotation.XmlElementDecl;
