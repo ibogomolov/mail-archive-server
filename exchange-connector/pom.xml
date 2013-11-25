@@ -5,13 +5,15 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-        <groupId>org.apache.sling</groupId>
-        <artifactId>mailarchiveserver-parent</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
+        <groupId>org.apache.sling.mailarchiveserver</groupId>
+        <artifactId>mailarchiveserver</artifactId>
+        <version>1</version>
     </parent>
 
-	<artifactId>mailarchiveserver-exchange</artifactId>
+	<artifactId>exchange</artifactId>
+	<version>0.1.0-SNAPSHOT</version>
 	<packaging>bundle</packaging>
+
 	<name>Exchange Server Connector</name>
 	 <description>Component that grabs new email from an Exchange server and saves it into content repository.</description>
 
@@ -31,9 +33,9 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>org.apache.sling</groupId>
-			<artifactId>mailarchiveserver</artifactId>
-			<version>${project.version}</version>
+			<groupId>org.apache.sling.mailarchiveserver</groupId>
+			<artifactId>server</artifactId>
+			<version>0.1.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.felix</groupId>

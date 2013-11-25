@@ -5,13 +5,15 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>org.apache.sling</groupId>
-		<artifactId>mailarchiveserver-parent</artifactId>
-		<version>0.1.0-SNAPSHOT</version>
+		<groupId>org.apache.sling.mailarchiveserver</groupId>
+        <artifactId>mailarchiveserver</artifactId>
+        <version>1</version>
 	</parent>
 
-	<artifactId>mailarchiveserver</artifactId>
+	<artifactId>server</artifactId>
+	<version>0.1.0-SNAPSHOT</version>
 	<packaging>bundle</packaging>
+
 	<name>Mail Archive Server</name>
 	<description>Server is designed to archive messages of mailing lists and allows convenient search and navigation through them.</description>
 
@@ -57,12 +59,12 @@
 						<configuration>
 							<check>
 								start with low values
-								<classRatio>0</classRatio>
-								<instructionRatio>0</instructionRatio>
-								<methodRatio>0</methodRatio>
-								<branchRatio>0</branchRatio>
-								<complexityRatio>0</complexityRatio>
-								<lineRatio>0</lineRatio>
+								<classRatio>50</classRatio>
+								<instructionRatio>50</instructionRatio>
+								<methodRatio>50</methodRatio>
+								<branchRatio>50</branchRatio>
+								<complexityRatio>50</complexityRatio>
+								<lineRatio>50</lineRatio>
 							</check>
 						</configuration>
 					</execution>

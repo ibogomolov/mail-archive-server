@@ -4,22 +4,20 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.apache.sling</groupId>
-        <artifactId>mailarchiveserver-parent</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
+        <groupId>org.apache.sling.mailarchiveserver</groupId>
+        <artifactId>mailarchiveserver</artifactId>
+        <version>1</version>
     </parent>
     
-    <artifactId>mailarchiveserver-launchpad</artifactId>
+    <artifactId>launchpad</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
+
     <name>Mail Archive Server Launchpad</name>
     <description>Project to create a Mail Archive Server runnable jar that includes Sling and other required bundles.</description>
 
-    <properties>
-        <!-- trick maven-launchpad-plugin into not copying any configs -->
-        <empty.config.directory>${project.build.directory}/NOCONFIGS</empty.config.directory>
-    </properties>
-    
     <build>
+        <finalName>${project.groupId}-${project.version}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.sling</groupId>
@@ -39,7 +37,6 @@
                                 <artifactId>org.apache.felix.http.jetty</artifactId>
                                 <version>2.2.0</version>
                             </jarWebSupport>
-                            <configDirectory>${empty.config.directory}</configDirectory>
                         </configuration>  
                     </execution>
                 </executions>
@@ -57,23 +54,6 @@
                     </archive>
                 </configuration>
             </plugin>
-            <plugin>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>generate-sources</id>
-                        <phase>generate-sources</phase>
-                        <configuration>
-                            <tasks>
-                                <mkdir dir="${empty.config.directory}"/>
-                            </tasks>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
 
@@ -86,19 +66,19 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>mailarchiveserver</artifactId>
-            <version>${project.version}</version>
+            <groupId>org.apache.sling.mailarchiveserver</groupId>
+            <artifactId>server</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
         </dependency>  
         <dependency>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>mailarchiveserver-ui</artifactId> 
-            <version>${project.version}</version>
+            <groupId>org.apache.sling.mailarchiveserver</groupId>
+            <artifactId>ui</artifactId> 
+            <version>0.1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>mailarchiveserver-exchange</artifactId>
-            <version>${project.version}</version>
+            <groupId>org.apache.sling.mailarchiveserver</groupId>
+            <artifactId>exchange</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
