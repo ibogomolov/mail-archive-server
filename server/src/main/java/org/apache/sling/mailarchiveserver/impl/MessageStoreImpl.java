@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,11 +12,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
-import javax.jcr.RepositoryException;
-import javax.jcr.ValueFormatException;
 
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
@@ -37,7 +31,6 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.mailarchiveserver.api.MessageStore;
 import org.apache.sling.mailarchiveserver.api.ThreadKeyGenerator;
-import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,7 +66,7 @@ public class MessageStoreImpl implements MessageStore {
 		try {
 			resolverInit();
 			final Map<String, Object> msgProps = new HashMap<String, Object>();
-			msgProps.put(resourceTypeKey, MailArchiveServerConstants.RT_MESSAGE);
+			msgProps.put(resourceTypeKey, MailArchiveServerConstants.MESSAGE_RT);
 			msgProps.put(MailArchiveServerConstants.BODY_ATTRIBUTE, getMessageBody(msg));
 			msgProps.putAll(getMessagePropertiesFromHeader(msg.getHeader()));
 
@@ -149,7 +142,7 @@ public class MessageStoreImpl implements MessageStore {
 		TextBody tb = (TextBody) part.getBody();
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		tb.writeTo(baos);
-		return baos.toString(ImportMboxServlet.ENCODER.charset().name());
+		return baos.toString(MailArchiveServerConstants.ENCODER.charset().name());
 	}
 
 	private static Map<String, String> getMessagePropertiesFromHeader(Header hdr) {
@@ -241,12 +234,12 @@ public class MessageStoreImpl implements MessageStore {
 
 			// bind props
 			List<Map<String, Object>> nodeProps = new ArrayList<Map<String, Object>>();
-			nodeProps.add(setProperties(MailArchiveServerConstants.RT_DOMAIN, domain));
-			nodeProps.add(setProperties(MailArchiveServerConstants.RT_LIST, list));
+			nodeProps.add(setProperties(MailArchiveServerConstants.DOMAIN_RT, domain));
+			nodeProps.add(setProperties(MailArchiveServerConstants.LIST_RT, list));
 			for (int i = 0; i < threadNodesNumber-1; i++) {
 				nodeProps.add(null);
 			}
-			nodeProps.add(setProperties(MailArchiveServerConstants.RT_THREAD, threadName));
+			nodeProps.add(setProperties(MailArchiveServerConstants.THREAD_RT, threadName));
 
 			// checking
 			for (int i = nodePaths.size()-cnt; i < nodePaths.size(); i++) {
@@ -277,7 +270,6 @@ public class MessageStoreImpl implements MessageStore {
 		resolverInit();
 		String checkPath = parent.getPath()+"/"+name;
 		final Resource checkResource = resolver.getResource(checkPath);
-		// PROD ??? change behavior to create or nothing (not to update) - IMO no !!!
 		if (checkResource == null) {
 			final Resource newResource = resolver.create(parent, name, newProps);
 			resolver.commit();
@@ -286,11 +278,8 @@ public class MessageStoreImpl implements MessageStore {
 			} else {
 				logger.debug(String.format("Resource created at %s with resource type %s.", newResource.getPath(), newProps.get(resourceTypeKey).toString()));
 			}
-		} else if (newProps != null && !newProps.isEmpty()) {
-			final ModifiableValueMap props = checkResource.adaptTo(ModifiableValueMap.class);
-			props.putAll(newProps);
-			resolver.commit();
-			logger.debug(String.format("Resource updated at %s with resource type %s.", checkResource.getPath(), props.get(resourceTypeKey).toString()));
+		} else {
+			logger.debug(String.format("Resource at %s already exists.", checkResource.getPath()));
 		}
 	}
 

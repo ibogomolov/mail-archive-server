@@ -2,8 +2,6 @@ package org.apache.sling.mailarchiveserver.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetEncoder;
 
 import javax.servlet.ServletException;
 
@@ -24,7 +22,6 @@ import org.slf4j.LoggerFactory;
 		methods = {"POST", "PUT"})
 public class ImportMboxServlet extends SlingAllMethodsServlet {
 
-	static final CharsetEncoder ENCODER = Charset.forName("UTF-8").newEncoder();
 	private static final Logger logger = LoggerFactory.getLogger(ImportMboxServlet.class);
 
 	private static final String IMPORT_FILE_ATTRIB_NAME = "mboxfile";

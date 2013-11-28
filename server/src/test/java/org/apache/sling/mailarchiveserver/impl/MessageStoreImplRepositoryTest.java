@@ -114,12 +114,12 @@ public class MessageStoreImplRepositoryTest {
 
 	private void assertStructure() {
 		List<String> types = new ArrayList<String>();
-		types.add(MailArchiveServerConstants.RT_DOMAIN);
-		types.add(MailArchiveServerConstants.RT_LIST);
+		types.add(MailArchiveServerConstants.DOMAIN_RT);
+		types.add(MailArchiveServerConstants.LIST_RT);
 		types.add(null);
 		types.add(null);
-		types.add(MailArchiveServerConstants.RT_THREAD);
-		types.add(MailArchiveServerConstants.RT_MESSAGE);
+		types.add(MailArchiveServerConstants.THREAD_RT);
+		types.add(MailArchiveServerConstants.MESSAGE_RT);
 
 		MessageStoreImplRepositoryTestUtil.assertLayer(testRoot, types, 0);
 	}
