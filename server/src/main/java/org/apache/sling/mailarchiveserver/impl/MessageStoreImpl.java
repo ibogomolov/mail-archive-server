@@ -41,7 +41,7 @@ public class MessageStoreImpl implements MessageStore {
 
 	@Reference
 	private	ResourceResolverFactory resourceResolverFactory;
-	ResourceResolver resolver = null;
+	
 	@Reference
 	ThreadKeyGenerator threadKeyGen;
 
@@ -55,54 +55,68 @@ public class MessageStoreImpl implements MessageStore {
 
 	private static final Logger logger = LoggerFactory.getLogger(MessageStoreImpl.class);
 
-	// resourceResolverFactory is unavailable in constructor
-	// TODO but should be in activator, move there
-	private void resolverInit() throws LoginException {
-		if (resolver == null) {
-			resolver = resourceResolverFactory.getAdministrativeResourceResolver(null);
-		}
+	protected ResourceResolver getResourceResolver() throws LoginException {
+	    return resourceResolverFactory.getAdministrativeResourceResolver(null);
 	}
 
-	public void save(Message msg) throws IOException {
+    public void save(Message msg) throws IOException {
+        ResourceResolver resolver = null;
+        try {
+            resolver = getResourceResolver();
+            save(resolver, msg);
+        } catch (LoginException e) {
+            throw new RuntimeException("LoginException", e);
+        } finally {
+            resolver.close();
+        }
+        
+    }
+    
+	private void save(ResourceResolver resolver, Message msg) throws IOException, LoginException {
 		// into path: archive/[project.]domain/list/thread/message
-		try {
-			resolverInit();
-			final Map<String, Object> msgProps = new HashMap<String, Object>();
-			msgProps.put(resourceTypeKey, MailArchiveServerConstants.MESSAGE_RT);
-			msgProps.put(MailArchiveServerConstants.BODY_ATTRIBUTE, getMessageBody(msg));
-			msgProps.putAll(getMessagePropertiesFromHeader(msg.getHeader()));
+		final Map<String, Object> msgProps = new HashMap<String, Object>();
+		msgProps.put(resourceTypeKey, MailArchiveServerConstants.MESSAGE_RT);
+		msgProps.put(MailArchiveServerConstants.BODY_ATTRIBUTE, getMessageBody(msg));
+		msgProps.putAll(getMessagePropertiesFromHeader(msg.getHeader()));
 
-			final Header hdr = msg.getHeader();
-			final String listIdRaw = hdr.getField("List-Id").getBody();
-			final String listId = listIdRaw.substring(1, listIdRaw.length()-1); // remove < and >
+		final Header hdr = msg.getHeader();
+		final String listIdRaw = hdr.getField("List-Id").getBody();
+		final String listId = listIdRaw.substring(1, listIdRaw.length()-1); // remove < and >
 
-			final String list = getListNodeName(listId);
-			final String domain = getDomainNodeName(listId);
-			final String subject = (String) msgProps.get(MailArchiveServerConstants.SUBJECT_ATTRIBUTE);
-			final String threadPath = threadKeyGen.getThreadKey(subject);
-			final String threadName = removeRe(subject);
+		final String list = getListNodeName(listId);
+		final String domain = getDomainNodeName(listId);
+		final String subject = (String) msgProps.get(MailArchiveServerConstants.SUBJECT_ATTRIBUTE);
+		final String threadPath = threadKeyGen.getThreadKey(subject);
+		final String threadName = removeRe(subject);
 
-			Resource parentResource = assertEachNode(archivePath,domain,list,threadPath,threadName);
+		Resource parentResource = assertEachNode(resolver, archivePath,domain,list,threadPath,threadName);
 
-			String msgNode = makeJcrFriendly((String) msgProps.get(MailArchiveServerConstants.NAME_ATTRIBUTE));
-			assertResource(parentResource, msgNode, msgProps);
-			updateThread(parentResource, msgProps);
-		} catch (LoginException e) {
-			throw new RuntimeException("LoginException");
-		}
+		String msgNode = makeJcrFriendly((String) msgProps.get(MailArchiveServerConstants.NAME_ATTRIBUTE));
+		assertResource(resolver, parentResource, msgNode, msgProps);
+		updateThread(resolver, parentResource, msgProps);
 	}
 
 	public void saveAll(Iterator<Message> iterator) throws IOException {
-		int mcount = 0;
-		while (iterator.hasNext()) {
-			Message msg = iterator.next();
-			save(msg);
-			mcount++;
-			if (mcount % 100 == 0) {
-				logger.debug(mcount+" messages processed.");
-			}
+        ResourceResolver resolver = null;
+		try {
+		    resolver = getResourceResolver();
+	        int mcount = 0;
+	        while (iterator.hasNext()) {
+	            Message msg = iterator.next();
+	            save(msg);
+	            mcount++;
+	            if (mcount % 100 == 0) {
+	                logger.debug(mcount+" messages processed.");
+	            }
+	        }
+	        logger.info(mcount+" messages processed.");
+		} catch(LoginException e) {
+		    throw new RuntimeException("LoginException", e);
+		} finally {
+		    if(resolver != null) {
+	            resolver.close();
+		    }
 		}
-		logger.info(mcount+" messages processed.");
 	}
 
 	/**
@@ -210,7 +224,7 @@ public class MessageStoreImpl implements MessageStore {
 		}
 	}
 
-	private Resource assertEachNode(String archive, String domain, String list, String threadPath, String threadName) throws PersistenceException, LoginException {
+	private Resource assertEachNode(ResourceResolver resolver, String archive, String domain, String list, String threadPath, String threadName) throws PersistenceException, LoginException {
 		final String pathToMessage = archive+domain+"/"+list+"/"+threadPath;
 
 		String path = pathToMessage;
@@ -246,7 +260,7 @@ public class MessageStoreImpl implements MessageStore {
 			// checking
 			for (int i = nodePaths.size()-cnt; i < nodePaths.size(); i++) {
 				String name = nodePaths.get(i);
-				assertResource(resource, name, nodeProps.get(i));
+				assertResource(resolver, resource, name, nodeProps.get(i));
 				resource = resolver.getResource(resource.getPath()+"/"+name);
 			}
 		}
@@ -268,8 +282,7 @@ public class MessageStoreImpl implements MessageStore {
 
 	}
 
-	private void assertResource(Resource parent, String name, Map<String, Object> newProps) throws LoginException, PersistenceException {
-		resolverInit();
+	private void assertResource(ResourceResolver resolver, Resource parent, String name, Map<String, Object> newProps) throws LoginException, PersistenceException {
 		String checkPath = parent.getPath()+"/"+name;
 		final Resource checkResource = resolver.getResource(checkPath);
 		if (checkResource == null) {
@@ -285,7 +298,7 @@ public class MessageStoreImpl implements MessageStore {
 		}
 	}
 
-	private void updateThread(Resource thread, Map<String, Object> msgProps) throws PersistenceException {
+	private void updateThread(ResourceResolver resolver, Resource thread, Map<String, Object> msgProps) throws PersistenceException {
 		final ModifiableValueMap thrdProps = thread.adaptTo(ModifiableValueMap.class);
 		Long prop = (Long) thrdProps.get(MailArchiveServerConstants.UPDATED_ATTRIBUTE);
 		Date updatedDate = null; 

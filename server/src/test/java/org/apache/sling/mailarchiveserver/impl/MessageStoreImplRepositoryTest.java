@@ -56,8 +56,11 @@ public class MessageStoreImplRepositoryTest {
 		testRoot = resolver.create(root, path, null);
 		resolver.commit();
 
-		store = new MessageStoreImpl();
-		store.resolver = this.resolver;
+		store = new MessageStoreImpl() {
+		    protected ResourceResolver getResourceResolver() {
+		        return resolver;
+		    }
+		};
 		store.threadKeyGen = new ThreadKeyGeneratorImpl();
 		store.archivePath = testRoot.getPath() + "/";
 		store.resourceTypeKey = TEST_RT_KEY;
