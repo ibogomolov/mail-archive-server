@@ -22,6 +22,7 @@ import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.discovery.impl.setup.MockedResourceResolver;
+import org.apache.sling.mailarchiveserver.api.MailArchiveServerConstants;
 import org.apache.sling.mailarchiveserver.api.MboxParser;
 import org.junit.After;
 import org.junit.Before;

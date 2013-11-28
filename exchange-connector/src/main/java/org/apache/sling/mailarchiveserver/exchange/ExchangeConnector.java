@@ -33,7 +33,7 @@ import org.apache.james.mime4j.message.MessageImpl;
 import org.apache.james.mime4j.stream.RawField;
 import org.apache.sling.mailarchiveserver.api.Connector;
 import org.apache.sling.mailarchiveserver.api.MailProcessingPipeline;
-import org.apache.sling.mailarchiveserver.impl.MessageFieldName;
+import org.apache.sling.mailarchiveserver.api.MessageFieldName;
 import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
