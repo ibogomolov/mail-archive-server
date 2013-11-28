@@ -31,12 +31,10 @@ public class SearchServiceImpl implements SearchService {
 		if (resolver == null) {
 			resolver = resourceResolverFactory.getAdministrativeResourceResolver(null);
 		}
-		System.out.println("*** SearchServiceImpl constructor");
 	}
 
 	@Override
 	public Iterator<Resource> find(String phrase) {
-		System.out.println("*** SearchServiceImpl find");
 		String query = queryBuilder.buildQuery(parser.parse(phrase), QueryBuilderImpl.SQL2);
 		Iterator<Resource> res = resolver.findResources(query, Query.JCR_SQL2);
 		return res;

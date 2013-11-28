@@ -36,7 +36,7 @@ public class ConnectorScheduler implements Runnable {
 
 	@Activate
 	public void activate() {
-		executionThread = new Thread(this, "ConnectorScheduler execution thread");
+		executionThread = new Thread(this, "Connector Scheduler's execution thread");
 		executionThread.setDaemon(true);
 		executionThread.start(); 
 	}
@@ -56,7 +56,7 @@ public class ConnectorScheduler implements Runnable {
 			while (!executionQueue.isEmpty() && running) {
 				Connector c = executionQueue.remove();
 				int retreived = c.checkNewMessages();
-				logger.info("Retrieved {} messages from Exchange server.", retreived);
+				logger.info("Retrieved {} messages using {} connector.", retreived, c.toString());
 			}
 			try {
 				TimeUnit.SECONDS.sleep(SLEEP_TIME_BETWEEN_NEW_MAIL_CHECKS);

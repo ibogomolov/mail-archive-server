@@ -1,7 +1,5 @@
 package org.apache.sling.mailarchiveserver.impl;
 
-import static org.apache.sling.mailarchiveserver.impl.ImportMboxServlet.ENCODER;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -50,7 +48,7 @@ public class Mime4jMboxParserImpl implements MboxParser {
 				byte[] buffer = new byte[BUFFER_SIZE];
 				int read = 0;
 				while ((read = is.read(buffer)) != -1) {
-					ByteBuffer buf2 = ENCODER.encode(CharBuffer.wrap(new String(buffer, 0, read)));
+					ByteBuffer buf2 = MailArchiveServerConstants.ENCODER.encode(CharBuffer.wrap(new String(buffer, 0, read)));
 					fileChannel.write(buf2);
 				}
 				fileChannel.close();
@@ -74,7 +72,7 @@ public class Mime4jMboxParserImpl implements MboxParser {
 		}
 
 		private void createMboxIterator(File f) throws FileNotFoundException, IOException {
-			mboxIterator = MboxIterator.fromFile(f).charset(ENCODER.charset()).build().iterator();
+			mboxIterator = MboxIterator.fromFile(f).charset(MailArchiveServerConstants.ENCODER.charset()).build().iterator();
 		}
 
 		public boolean hasNext() {
@@ -85,7 +83,7 @@ public class Mime4jMboxParserImpl implements MboxParser {
 			MessageBuilder builder = new DefaultMessageBuilder();
 			Message message = null;
 			try {
-				message = builder.parseMessage(new ByteArrayInputStream(mboxIterator.next().toString().getBytes(ENCODER.charset().name())));
+				message = builder.parseMessage(new ByteArrayInputStream(mboxIterator.next().toString().getBytes(MailArchiveServerConstants.ENCODER.charset().name())));
 			} catch (MimeException e) {
 				e.printStackTrace();
 			} catch (IOException e) {

@@ -539,6 +539,8 @@
             <artifactId>exchange</artifactId>
             <version>0.1.0-SNAPSHOT</version>
         </bundle>
+
+        
         <bundle>
             <groupId>org.apache.james</groupId>
             <artifactId>apache-mime4j-core</artifactId>

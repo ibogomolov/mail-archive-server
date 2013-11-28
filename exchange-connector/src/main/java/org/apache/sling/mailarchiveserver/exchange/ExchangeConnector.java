@@ -1,4 +1,4 @@
-package org.apache.sling.mailarchiveserver.exchange.impl;
+package org.apache.sling.mailarchiveserver.exchange;
 
 import java.net.Authenticator;
 import java.net.MalformedURLException;
@@ -12,7 +12,6 @@ import java.util.Set;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
-import javax.xml.ws.BindingProvider;
 import javax.xml.ws.Holder;
 
 import org.apache.felix.scr.annotations.Activate;
@@ -26,12 +25,15 @@ import org.apache.james.mime4j.dom.Header;
 import org.apache.james.mime4j.dom.Message;
 import org.apache.james.mime4j.dom.address.Mailbox;
 import org.apache.james.mime4j.dom.field.FieldName;
+import org.apache.james.mime4j.field.address.AddressBuilder;
+import org.apache.james.mime4j.field.address.ParseException;
 import org.apache.james.mime4j.message.BodyBuilder;
 import org.apache.james.mime4j.message.HeaderImpl;
 import org.apache.james.mime4j.message.MessageImpl;
 import org.apache.james.mime4j.stream.RawField;
 import org.apache.sling.mailarchiveserver.api.Connector;
 import org.apache.sling.mailarchiveserver.api.MailProcessingPipeline;
+import org.apache.sling.mailarchiveserver.impl.MessageFieldName;
 import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,6 +113,9 @@ public class ExchangeConnector implements Connector {
 	@Reference
 	private MailProcessingPipeline mailProcessor;
 
+	public static final String PLAIN_CONTENT_TYPE = "text/plain";
+	public static final String HTML_CONTENT_TYPE = "text/html";
+
 	public ExchangeConnector() {
 		//		SysStreamsLogger.bindSystemStreams(); // PROD remove
 	}
@@ -141,7 +146,6 @@ public class ExchangeConnector implements Connector {
 	}
 
 	private void loginAndOpenPort() throws MalformedURLException {
-		// init ExchangeServicePortType
 		URL wsdlURL = new URL(wsdlPath);
 		ExchangeServices service = new ExchangeServices(
 				wsdlURL, 
@@ -149,28 +153,11 @@ public class ExchangeConnector implements Connector {
 				);
 		port = service.getExchangeServicePort();
 
-		System.out.println("***** ***** *****");
-		System.out.println("port: "+ port);
-		System.out.println("port.getClass: "+ port.getClass());
-		// this is not working
-		//		((BindingProvider) port).getRequestContext().put(BindingProvider.SESSION_MAINTAIN_PROPERTY, false);
-		//		((BindingProvider) port).getRequestContext().put(BindingProvider.USERNAME_PROPERTY, username);
-		//      ((BindingProvider) port).getRequestContext().put(BindingProvider.PASSWORD_PROPERTY, password);
-		//		System.out.println("BindingProvider.USERNAME_PROPERTY = "+BindingProvider.USERNAME_PROPERTY);
-		//		System.out.println("BindingProvider.PASSWORD_PROPERTY = "+BindingProvider.PASSWORD_PROPERTY);
-
-
 		NtlmAuthenticator authenticator = new NtlmAuthenticator(username, password);
 		Authenticator.setDefault(authenticator);
 	}
 
 	public int checkNewMessages() { 
-		try {
-			loginAndOpenPort();
-		} catch (MalformedURLException e1) {
-			e1.printStackTrace();
-		}
-
 		List<BaseItemIdType> messageIds = new ArrayList<BaseItemIdType>();
 		boolean deletion = false;
 		int limit = retreiveMessagesLimit;
@@ -264,15 +251,14 @@ public class ExchangeConnector implements Connector {
 
 			return messageIds.size(); // # of messages retrieved for Exchange server
 			// # of messages imported to JCR is greater or equals because of messages sent to several lists
+
 		} catch (Exception e){
+
 			// TODO skip an email that results in an exception ?
 			logger.info(name + ": Error while retrieving messages. " + e.getMessage());
 			e.printStackTrace(); // PROD remove
-
-			System.out.println(((BindingProvider) port).getRequestContext().get(BindingProvider.USERNAME_PROPERTY));
-			System.out.println(((BindingProvider) port).getRequestContext().get(BindingProvider.PASSWORD_PROPERTY));
-
 			return 0;
+
 		} finally {
 
 			if (deletion) {
@@ -307,7 +293,6 @@ public class ExchangeConnector implements Connector {
 					}
 				}
 			}
-			port = null;
 		}
 	}
 
@@ -315,43 +300,52 @@ public class ExchangeConnector implements Connector {
 	public List<Message> convertExchangeMessageToMime4jMessages(MessageType in) {
 
 		List<Message> result = new ArrayList<Message>();
-		Message sample = new MessageImpl();
+		MessageImpl sample = new MessageImpl();
 		sample.setHeader(new HeaderImpl());
 		Set<String> recepients = new HashSet<String>();
 
-		final Header tmpHeader = sample.getHeader();
+		final Header header = sample.getHeader();
 		// Message-Id
-		tmpHeader.addField(new RawField(FieldName.MESSAGE_ID, in.getInternetMessageId()));
+		header.addField(new RawField(FieldName.MESSAGE_ID, in.getInternetMessageId()));
 		// In-Reply-To (opt)
 		if (in.getInReplyTo() != null) {
-			tmpHeader.addField(new RawField(AdditionalFieldName.IN_REPLY_TO, in.getInReplyTo()));
+			header.addField(new RawField(MessageFieldName.IN_REPLY_TO, in.getInReplyTo()));
 		}
 		// Content-Type TODO
 		//		tmpHeader.addField(new RawField(FieldName.CONTENT_TYPE, stringToContentType(in.getBody().getBodyType().value())));
-		sample.setHeader(tmpHeader);
 
 		// From
-		final Mailbox from = convertMailAddressTypeToMailbox(in.getFrom().getMailbox());
-		if (from != null) {
-			sample.setFrom(from);
+		try {
+			sample.setFrom(AddressBuilder.DEFAULT.parseMailbox(in.getFrom().getMailbox().getEmailAddress()));
+		} catch (ParseException e) {
+			logger.info("Illegal From field of expoerted message.");
 		}
 
 		// To
-		final List<Mailbox> toList = convertMailAddressTypeListToMailboxList(in.getToRecipients().getMailbox());
-		for (Mailbox mailbox : toList) {
-			recepients.add(mailbox.getAddress().trim());
+		try {
+			List<Mailbox> toList = convertMailAddressTypeListToMailboxList(in.getToRecipients().getMailbox());
+			for (Mailbox mailbox : toList) {
+				recepients.add(mailbox.getAddress().trim());
+			}
+			sample.setTo(toList);
+		} catch (ParseException e) {
+			logger.info("Illegal To field of expoerted message.");
 		}
-		sample.setTo(toList);
 
 		// Cc (opt)
 		if (in.getCcRecipients() != null) {
-			final List<Mailbox> ccList = convertMailAddressTypeListToMailboxList(in.getCcRecipients().getMailbox());
-			for (Mailbox mailbox : ccList) {
-				recepients.add(mailbox.getAddress().trim());
+			try {
+				final List<Mailbox> ccList = convertMailAddressTypeListToMailboxList(in.getCcRecipients().getMailbox());
+				for (Mailbox mailbox : ccList) {
+					recepients.add(mailbox.getAddress().trim());
+				}
+				sample.setCc(ccList);
+			} catch (ParseException e) {
+				logger.info("Illegal Cc field of expoerted message.");
 			}
-			sample.setCc(ccList);
 		}
 
+		logger.info("Illegal To field of expoerted message.");
 		// Subject
 		sample.setSubject(in.getSubject());
 
@@ -369,7 +363,7 @@ public class ExchangeConnector implements Connector {
 				out.setBody(sample.getBody());
 				Header h = sample.getHeader();
 				// List-Id
-				h.addField(new RawField(AdditionalFieldName.LIST_ID, "<" + address.replace("@", ".") + ">"));
+				h.addField(new RawField(MessageFieldName.LIST_ID, "<" + address.replace("@", ".") + ">"));
 				out.setHeader(h);
 				result.add(out);
 			}
@@ -378,26 +372,17 @@ public class ExchangeConnector implements Connector {
 		return result;
 	}
 
-	private String stringToContentType(String s) {
+	private static String stringToContentType(String s) {
 		if (s.toLowerCase().contains("html"))
-			return AdditionalFieldName.HTML_CONTENT_TYPE;
+			return HTML_CONTENT_TYPE;
 		else 
-			return AdditionalFieldName.PLAIN_CONTENT_TYPE;
+			return PLAIN_CONTENT_TYPE;
 	}
 
-	private static Mailbox convertMailAddressTypeToMailbox(EmailAddressType in) {
-		final String emailAddress = in.getEmailAddress();
-		if (emailAddress.contains("@")) {
-			String[] email = emailAddress.split("@", 2);
-			return new Mailbox(in.getName(), email[0], email[1]);
-		} 
-		return null;
-	}
-
-	private static List<Mailbox> convertMailAddressTypeListToMailboxList(List<EmailAddressType> inList) {
+	private static List<Mailbox> convertMailAddressTypeListToMailboxList(List<EmailAddressType> inList) throws ParseException {
 		List<Mailbox> outList = new ArrayList<Mailbox>();
 		for (EmailAddressType el : inList) {
-			final Mailbox mailbox = convertMailAddressTypeToMailbox(el);
+			final Mailbox mailbox = AddressBuilder.DEFAULT.parseMailbox(el.getEmailAddress());
 			if (mailbox != null) {
 				outList.add(mailbox);
 			}
@@ -411,7 +396,6 @@ public class ExchangeConnector implements Connector {
 	}
 
 	private class NtlmAuthenticator extends Authenticator {
-
 		private final String username;
 		private final String password;
 
@@ -419,20 +403,10 @@ public class ExchangeConnector implements Connector {
 			super();
 			this.username = username;
 			this.password = password; 
-
 		}
 
 		@Override
 		public PasswordAuthentication getPasswordAuthentication() {
-			System.out.println("*** getPasswordAuthentication ***");
-			System.out.println("host: "+getRequestingHost());
-			System.out.println("port: "+getRequestingPort());
-			System.out.println("prompt: "+getRequestingPrompt());
-			System.out.println("protocol: "+getRequestingProtocol());
-			System.out.println("scheme: "+getRequestingScheme());
-			System.out.println("site: "+getRequestingSite());
-			System.out.println("url: "+getRequestingURL()); 
-			System.out.println("***----------------------------***");
 			return (new PasswordAuthentication (username, password.toCharArray()));
 		}
 	}
