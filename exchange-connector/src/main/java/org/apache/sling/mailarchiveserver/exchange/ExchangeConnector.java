@@ -1,5 +1,6 @@
 package org.apache.sling.mailarchiveserver.exchange;
 
+import java.io.IOException;
 import java.net.Authenticator;
 import java.net.MalformedURLException;
 import java.net.PasswordAuthentication;
@@ -32,8 +33,8 @@ import org.apache.james.mime4j.message.HeaderImpl;
 import org.apache.james.mime4j.message.MessageImpl;
 import org.apache.james.mime4j.stream.RawField;
 import org.apache.sling.mailarchiveserver.api.Connector;
-import org.apache.sling.mailarchiveserver.api.MailProcessingPipeline;
 import org.apache.sling.mailarchiveserver.api.MessageFieldName;
+import org.apache.sling.mailarchiveserver.api.MessageStore;
 import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,11 +108,11 @@ public class ExchangeConnector implements Connector {
 	private static final String RETREIVE_MESSAGES_LIMIT = "retreiveMessagesLimit";
 	private int retreiveMessagesLimit;
 
+	@Reference
+	private MessageStore store;
 	private ExchangeServicePortType port = null;
 	private static final ExchangeVersionType EXCHANGE_VERSION = ExchangeVersionType.EXCHANGE_2007_SP_1;
 	private static final Logger logger = LoggerFactory.getLogger(ExchangeConnector.class);
-	@Reference
-	private MailProcessingPipeline mailProcessor;
 
 	public static final String PLAIN_CONTENT_TYPE = "text/plain";
 	public static final String HTML_CONTENT_TYPE = "text/html";
@@ -122,6 +123,7 @@ public class ExchangeConnector implements Connector {
 
 	@Activate
 	protected void activate(ComponentContext context) throws MalformedURLException {
+		@SuppressWarnings("rawtypes")
 		final Dictionary props = context.getProperties();
 		name = (String) props.get(NAME_PROP);  
 		username = (String) props.get(USERNAME_PROP);  
@@ -159,7 +161,6 @@ public class ExchangeConnector implements Connector {
 
 	public int checkNewMessages() { 
 		List<BaseItemIdType> messageIds = new ArrayList<BaseItemIdType>();
-		boolean deletion = false;
 		int limit = retreiveMessagesLimit;
 
 		try {
@@ -210,6 +211,8 @@ public class ExchangeConnector implements Connector {
 				logger.info(name + ": No new messages.");
 				return 0;
 			}
+			logger.info("{}: {} new messages retrieved from Exchange server.", name, messageIds.size());
+			// # of messages retrieved from Exchange server
 
 			// GET MESSAGES
 
@@ -228,7 +231,7 @@ public class ExchangeConnector implements Connector {
 
 			port.getItem(getRequest, requestVersion, getItemResult);
 
-			List<Message> messages = new ArrayList<Message>();
+			int savedMsgs = 0;
 			GetItemResponseType getItemResponse = getItemResult.value;
 			ArrayOfResponseMessagesType arrayOfResponseMessages2 = getItemResponse.getResponseMessages();
 			List<JAXBElement<? extends ResponseMessageType>> responseMessageTypeList2 = 
@@ -242,26 +245,17 @@ public class ExchangeConnector implements Connector {
 				List<ItemType> items = itemsElement.getItemOrMessageOrCalendarItem();
 				for( ItemType item : items ) { // usually items.size() == 1
 					MessageType message = (MessageType) item;
-					messages.addAll(convertExchangeMessageToMime4jMessages(message));
+					List<Message> messages = convertExchangeMessageToMime4jMessages(message);
+					savedMsgs += messages.size();
+					store.saveAll(messages.iterator());
 				}
 			}
-			if (mailProcessor.processNewMasseges(messages.iterator())) {
-				deletion = mailboxCleanup; 
-			}
 
-			return messageIds.size(); // # of messages retrieved for Exchange server
-			// # of messages imported to JCR is greater or equals because of messages sent to several lists
+			logger.info("{}: {} messages saved to JCR.", name, savedMsgs);
+			// # of messages saved to JCR 
+			// (is greater or equals than # of retrieved because of messages sent to several lists)
 
-		} catch (Exception e){
-
-			// TODO skip an email that results in an exception ?
-			logger.info(name + ": Error while retrieving messages. " + e.getMessage());
-			e.printStackTrace(); // PROD remove
-			return 0;
-
-		} finally {
-
-			if (deletion) {
+			if (mailboxCleanup) {
 
 				// REMOVE MESSAGES
 
@@ -270,13 +264,10 @@ public class ExchangeConnector implements Connector {
 				DisposalType deleteType = DisposalType.HARD_DELETE;
 				request.setDeleteType(deleteType);
 
-				NonEmptyArrayOfBaseItemIdsType itemIds = new NonEmptyArrayOfBaseItemIdsType();
-				List<BaseItemIdType> itemsList = itemIds.getItemIdOrOccurrenceItemIdOrRecurringMasterItemId();
-				itemsList.addAll(messageIds);
-				request.setItemIds(itemIds);
-
-				RequestServerVersion requestVersion = new RequestServerVersion();
-				requestVersion.setVersion(EXCHANGE_VERSION);
+				NonEmptyArrayOfBaseItemIdsType itemIdsToRemove = new NonEmptyArrayOfBaseItemIdsType();
+				List<BaseItemIdType> itemsToRemoveList = itemIdsToRemove.getItemIdOrOccurrenceItemIdOrRecurringMasterItemId();
+				itemsToRemoveList.addAll(messageIds);
+				request.setItemIds(itemIdsToRemove);
 
 				Holder<DeleteItemResponseType> deleteItemResult = new Holder<DeleteItemResponseType>();
 
@@ -292,8 +283,22 @@ public class ExchangeConnector implements Connector {
 								responseMessage.getResponseCode(), responseMessage.getMessageText());
 					}
 				}
+
+				logger.info("{}: Removed {} messages from Exchange server.", name, savedMsgs);
 			}
-		}
+
+			return savedMsgs; 
+
+		} catch (IOException e){
+			logger.info(name + ": Error while saving messages. " + e.getMessage());
+			return -1;
+			
+		} catch (Exception e){
+			// TODO skip an email that results in an exception ?
+			logger.info(name + ": Error while retrieving messages. " + e.getMessage());
+			e.printStackTrace(); // PROD remove
+			return -1;
+		} 
 	}
 
 

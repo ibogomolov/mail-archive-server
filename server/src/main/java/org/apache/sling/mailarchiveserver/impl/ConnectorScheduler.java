@@ -56,7 +56,7 @@ public class ConnectorScheduler implements Runnable {
 			while (!executionQueue.isEmpty() && running) {
 				Connector c = executionQueue.remove();
 				int retreived = c.checkNewMessages();
-				logger.info("Retrieved {} messages using {} connector.", retreived, c.toString());
+				logger.info("Processed {} messages using \"{}\" connector.", retreived, c.toString());
 			}
 			try {
 				TimeUnit.SECONDS.sleep(SLEEP_TIME_BETWEEN_NEW_MAIL_CHECKS);
