@@ -66,6 +66,7 @@
         <module>server</module>
         <module>exchange-connector</module>
         <module>ui</module>
+        <module>stats</module>
         <module>launchpad</module>
     </modules>
 
