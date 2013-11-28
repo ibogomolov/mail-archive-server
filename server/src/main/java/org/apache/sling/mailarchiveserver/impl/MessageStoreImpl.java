@@ -55,6 +55,7 @@ public class MessageStoreImpl implements MessageStore {
 	private static final Logger logger = LoggerFactory.getLogger(MessageStoreImpl.class);
 
 	// resourceResolverFactory is unavailable in constructor
+	// TODO but should be in activator, move there
 	private void resolverInit() throws LoginException {
 		if (resolver == null) {
 			resolver = resourceResolverFactory.getAdministrativeResourceResolver(null);
