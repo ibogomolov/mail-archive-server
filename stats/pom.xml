@@ -35,6 +35,13 @@
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
                 <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Sling-Initial-Content>
+                            initial-content; uninstall:=true
+                        </Sling-Initial-Content>
+                    </instructions>
+                </configuration>
             </plugin>
         </plugins>
     </build>
