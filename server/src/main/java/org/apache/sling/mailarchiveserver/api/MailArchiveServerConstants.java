@@ -22,4 +22,6 @@ public class MailArchiveServerConstants {
 
 	// TODO add charset const
 	public static final CharsetEncoder ENCODER = Charset.forName("UTF-8").newEncoder();
+
+    public static final String NO_SUBJECT = "no subject";
 }

@@ -64,8 +64,6 @@ public class MessageStoreImpl implements MessageStore {
 
     static final String FIELD_SEPARATOR = " : ";
     private static final String[] RE_PREFIXES = { "re:", "aw:", "fw:", "re ", "aw ", "fw " };
-    static final String NO_SUBJECT = "no subject";
-
     // for testing
     static String archivePath = MailArchiveServerConstants.ARCHIVE_PATH;
     static String resourceTypeKey = MailArchiveServerConstants.RT_KEY;
@@ -84,8 +82,6 @@ public class MessageStoreImpl implements MessageStore {
     }
 
     public void save(Message msg) throws IOException {
-        
-        
         ResourceResolver resolver = null;
         try {
             resolver = getResourceResolver();
@@ -123,7 +119,7 @@ public class MessageStoreImpl implements MessageStore {
         final String threadPath = threadKeyGen.getThreadKey(subject);
         final String threadName = removeRe(subject);
 
-        Resource parentResource = assertEachNode(resolver, archivePath,domain,list,threadPath,threadName);
+        Resource parentResource = assertEachNode(resolver, archivePath, domain, list, threadPath, threadName);
 
         String msgNode = makeJcrFriendly((String) msgProps.get(MailArchiveServerConstants.NAME_ATTRIBUTE));
         assertResource(resolver, parentResource, msgNode, msgProps);
@@ -175,10 +171,12 @@ public class MessageStoreImpl implements MessageStore {
                 BodyPart part = (BodyPart) enitiy;
                 if (part.isMimeType("text/plain")) {
                     msgBody.append(getTextPart(part));
+                    // TODO set content type
+                    break;
                 } else if (part.isMimeType("text/html")) {
-                    // TODO html body
-                    //					String html = getTxtPart(part);
-                    //					htmlBody.append(html);
+                    msgBody.append(getTextPart(part));
+                    // TODO set content type
+                    break;
                 } else if (part.getDispositionType() != null && !part.getDispositionType().equals("")) {
                     // TODO collect attachments
                     //If DispositionType is null or empty, it means that it's multipart, not attached file
@@ -204,10 +202,11 @@ public class MessageStoreImpl implements MessageStore {
         return baos.toString(MailArchiveServerConstants.ENCODER.charset().name());
     }
 
-    private static Map<String, String> getMessagePropertiesFromHeader(Header hdr) {
+    static Map<String, String> getMessagePropertiesFromHeader(Header hdr) {
         Map<String, String> props = new HashMap<String, String>();
 
         // parse header
+        // TODO think of another format rather than "text with separator"
         Set<String> processed = new HashSet<String>();
         for (Field f : hdr.getFields()) {
             String name = f.getName();
@@ -232,10 +231,12 @@ public class MessageStoreImpl implements MessageStore {
         }
         props.put(MailArchiveServerConstants.NAME_ATTRIBUTE, name);
 
-        // message subject if null
-        if (hdr.getField("Subject") == null) {
-            props.put(MailArchiveServerConstants.SUBJECT_ATTRIBUTE, NO_SUBJECT);
-        }
+        // TODO check
+        // message subject if null or empty or Re:<empty>
+//        Field subjField = hdr.getField("Subject");
+//        if (subjField == null || makeJcrFriendly(removeRe(subjField.getBody())).length() == 0) {
+//            props.put(MailArchiveServerConstants.SUBJECT_ATTRIBUTE, MailArchiveServerConstants.NO_SUBJECT);
+//        }
 
         return props;
     }

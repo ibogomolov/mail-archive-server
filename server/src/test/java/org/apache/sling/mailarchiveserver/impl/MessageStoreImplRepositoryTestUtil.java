@@ -1,6 +1,5 @@
 package org.apache.sling.mailarchiveserver.impl;
 
-import static org.apache.sling.mailarchiveserver.impl.MessageStoreImpl.NO_SUBJECT;
 import static org.apache.sling.mailarchiveserver.impl.MessageStoreImpl.getDomainNodeName;
 import static org.apache.sling.mailarchiveserver.impl.MessageStoreImpl.getListNodeName;
 import static org.apache.sling.mailarchiveserver.impl.MessageStoreImpl.makeJcrFriendly;
@@ -22,6 +21,7 @@ import org.apache.james.mime4j.stream.Field;
 import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ValueMap;
+import org.apache.sling.mailarchiveserver.api.MailArchiveServerConstants;
 
 public class MessageStoreImplRepositoryTestUtil {
 
@@ -85,7 +85,7 @@ public class MessageStoreImplRepositoryTestUtil {
 		String subject;
 		final Field subjectField = hdr.getField("Subject");
 		if (subjectField == null) {
-			subject = NO_SUBJECT;
+			subject = MailArchiveServerConstants.NO_SUBJECT;
 		} else {
 			subject = subjectField.getBody();
 		}

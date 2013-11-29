@@ -92,7 +92,7 @@ public class ExchangeConnector implements Connector {
 	private static final String PASSWORD_PROP = "password";
 	private String password = null;
 
-	@Property(value="file:Services.wsdl")
+	@Property("file:Services.wsdl")
 	private static final String WSDLPATH_PROP = "wsdlPath";
 	private String wsdlPath = null;
 

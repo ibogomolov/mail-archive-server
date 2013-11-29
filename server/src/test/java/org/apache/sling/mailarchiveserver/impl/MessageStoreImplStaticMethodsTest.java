@@ -6,6 +6,12 @@ import static org.apache.sling.mailarchiveserver.impl.MessageStoreImpl.makeJcrFr
 import static org.apache.sling.mailarchiveserver.impl.MessageStoreImpl.removeRe;
 import static org.junit.Assert.assertEquals;
 
+import java.util.Date;
+import java.util.Map;
+
+import org.apache.james.mime4j.dom.Message;
+import org.apache.james.mime4j.message.MessageImpl;
+import org.apache.sling.mailarchiveserver.api.MailArchiveServerConstants;
 import org.junit.Test;
 
 public class MessageStoreImplStaticMethodsTest {
@@ -25,6 +31,9 @@ public class MessageStoreImplStaticMethodsTest {
 		assertEquals(removeRe("re: RE: "), "");
 		assertEquals(removeRe(" re:  abc  "), "abc");
 		assertEquals(removeRe(" re:fw:  aw:RE: FW: subj "), "subj");
+		assertEquals(removeRe(""), "");
+		assertEquals(removeRe("     "), "");
+		assertEquals(removeRe("Re:   "), "");
 	}
 	
 	@Test
@@ -36,4 +45,5 @@ public class MessageStoreImplStaticMethodsTest {
 		assertEquals(getListNodeName("a.b.c.apache.org"), "a.b.c");
 		assertEquals(getDomainNodeName("a.b.c.apache.org"), "apache.org");
 	}
+	
 }
