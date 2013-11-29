@@ -45,10 +45,11 @@ public class MailStatsProcessorImpl implements MailStatsProcessor, MessageProces
     private static final String ROOT_PATH = "/content/mailarchiveserver/stats"; 
     
     public static final String DEFAULT_RESOURCE_TYPE = "mailserver/stats";
-    public static final String ORG_RESOURCE_TYPE = "mailserver/stats/destination";
+    public static final String DESTINATION_RESOURCE_TYPE = "mailserver/stats/destination";
     public static final String DATA_RESOURCE_TYPE = "mailserver/stats/data";
+    public static final String PERIOD_PROP = "period";
     private static final String [] EMPTY_STRING_ARRAY = new String[]{};
-    private static final String SOURCE_PROP_PREFIX = "FROM_";
+    static final String SOURCE_PROP_PREFIX = "FROM_";
     
     // We need to count the number of messages to a destination, 
     // per formatted timestamp and source
@@ -163,13 +164,14 @@ public class MailStatsProcessorImpl implements MailStatsProcessor, MessageProces
                     // Each org gets its own resource under our root
                     log.info("Storing {} at path {}", r, r.getPath());
                     ResourceUtil.getOrCreateResource(resolver, ROOT_PATH, DEFAULT_RESOURCE_TYPE, DEFAULT_RESOURCE_TYPE, false);
-                    ResourceUtil.getOrCreateResource(resolver, r.getOrgPath(), ORG_RESOURCE_TYPE, DEFAULT_RESOURCE_TYPE, false);
+                    ResourceUtil.getOrCreateResource(resolver, r.getOrgPath(), DESTINATION_RESOURCE_TYPE, DEFAULT_RESOURCE_TYPE, false);
                     
                     // Properties are the message counts per source for this destination
                     final Map<String, Object> data = new HashMap<String, Object>();
                     for(Map.Entry<String, Integer> e : r.getSourceCounts().entrySet()) {
                         data.put(e.getKey(), e.getValue());
                     }
+                    data.put(PERIOD_PROP, r.timestampPath);
                     data.put("sling:resourceType", DATA_RESOURCE_TYPE);
                     
                     // TODO for now this overwrites existing values,

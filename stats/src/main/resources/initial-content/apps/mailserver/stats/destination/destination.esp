@@ -1,12 +1,16 @@
 <!DOCTYPE html>
+<html>
+<head>
 <meta charset="utf-8">
 
 <%
 // d3js.org rendering of a destination's stats 
 // based on the http://bl.ocks.org/mbostock/3943967 example
 
-var title = resource.path
+var title = resource.path.replace(/.*\/(.*)/g,"$1")
 %>
+
+<title><%= title %></title>
 
 <style>
 
@@ -36,22 +40,28 @@ form {
 
 </style>
 
+<script src="http://d3js.org/d3.v3.min.js"></script>
+</head>
+
+<body>
+<h1><%= title %></h1>
 <form>
   <label><input type="radio" name="mode" value="grouped"> Grouped</label>
   <label><input type="radio" name="mode" value="stacked" checked> Stacked</label>
 </form>
-
-<script src="http://d3js.org/d3.v3.min.js"></script>
-
-<body>
-<h1><%= title %></h1>
 <div id="graph"/>
 
 <script>
+<% sling.include(resource.path + ".statsdata.json"); %>
+</script>
 
-var n = 3, // number of layers
-    m = 7, // number of samples per layer
-    stack = d3.layout.stack(),
+<script>
+
+// number of layers and samples per layer
+var n = layers.length;
+var m = statsData.length;
+
+var stack = d3.layout.stack(),
     layers = stack(d3.range(n).map(function(n) { return layerData(m, n); })),
     yGroupMax = d3.max(layers, function(layer) { return d3.max(layer, function(d) { return d.y; }); }),
     yStackMax = d3.max(layers, function(layer) { return d3.max(layer, function(d) { return d.y0 + d.y; }); });
@@ -147,14 +157,25 @@ function transitionStacked() {
       .attr("width", x.rangeBand());
 }
 
-function xTickFormat(d) {
-    return "Custom name " + d;
+// Format our tick values
+function xTickFormat(index) {
+    return statsData[index].period;
 }
 
-function layerData(nElements, seriesIndex) {
+function layerValue(layerIndex, itemIndex) {
+    var layerName = layers[layerIndex];
+    var senders = statsData[itemIndex].senders;
+    if(senders[layerName]) {
+        return senders[layerName];
+    }
+    return -1;
+}
+
+// Generate the data of a given layer
+function layerData(nElements, layerIndex) {
     var a = [];
     for (i = 0; i < nElements; ++i) a[i] = i;
-    return a.map(function(d,i) { return { x:i, y:i + seriesIndex }});
+    return a.map(function(d,i) { return { x:i, y: layerValue(layerIndex,i) }});
 }
 
 </script>
