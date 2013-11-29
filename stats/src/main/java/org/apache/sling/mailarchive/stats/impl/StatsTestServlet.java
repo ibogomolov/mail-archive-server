@@ -59,7 +59,9 @@ public class StatsTestServlet extends SlingAllMethodsServlet {
                 final Message m = it.next();
                 final String [] to = MailStatsProcessorImpl.toArray(m.getTo());
                 final String [] cc = MailStatsProcessorImpl.toArray(m.getCc());
-                processor.computeStats(m.getDate(), m.getFrom().toString(), to, cc);
+                for(String from : MailStatsProcessorImpl.toArray(m.getFrom())) {
+                    processor.computeStats(m.getDate(), from.toString(), to, cc);
+                }
                 counter++;
             }
             pw.println(counter + " messages parsed");

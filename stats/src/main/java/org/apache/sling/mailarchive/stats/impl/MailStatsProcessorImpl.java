@@ -2,10 +2,10 @@ package org.apache.sling.mailarchive.stats.impl;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -13,8 +13,6 @@ import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.james.mime4j.dom.Message;
-import org.apache.james.mime4j.dom.address.Address;
-import org.apache.james.mime4j.dom.address.AddressList;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.api.resource.ResourceUtil;
@@ -46,10 +44,11 @@ public class MailStatsProcessorImpl implements MailStatsProcessor, MessageProces
     // TODO configurable root path
     private static final String ROOT_PATH = "/content/mailarchiveserver/stats"; 
     
-    public static final String DEFAULT_RESOURCE_TYPE = "nt:unstructured";
-    public static final String ORG_RESOURCE_TYPE = "mailserver/stats/org";
+    public static final String DEFAULT_RESOURCE_TYPE = "mailserver/stats";
+    public static final String ORG_RESOURCE_TYPE = "mailserver/stats/destination";
     public static final String DATA_RESOURCE_TYPE = "mailserver/stats/data";
     private static final String [] EMPTY_STRING_ARRAY = new String[]{};
+    private static final String SOURCE_PROP_PREFIX = "FROM_";
     
     // We need to count the number of messages to a destination, 
     // per formatted timestamp and source
@@ -72,7 +71,7 @@ public class MailStatsProcessorImpl implements MailStatsProcessor, MessageProces
         }
         
         void increment(String source) {
-            source = orgMapper.mapToOrg(source);
+            source = SOURCE_PROP_PREFIX + orgMapper.mapToOrg(source);
             Integer count = sourceCounts.get(source);
             if(count == null) {
                 count = 1;
@@ -146,7 +145,9 @@ public class MailStatsProcessorImpl implements MailStatsProcessor, MessageProces
         log.debug("Processing {}", m);
         final String [] to = toArray(m.getTo());
         final String [] cc = toArray(m.getCc());
-        computeStats(m.getDate(), m.getFrom().toString(), to, cc);
+        for(String from : MailStatsProcessorImpl.toArray(m.getFrom())) {
+            computeStats(m.getDate(), from.toString(), to, cc);
+        }
         
         // TODO call this async and less often?
         flush();
@@ -193,14 +194,13 @@ public class MailStatsProcessorImpl implements MailStatsProcessor, MessageProces
         return s.replaceAll("[\\s\\.-]", "_").replaceAll("\\W", "").replaceAll("\\_", " ").trim().replaceAll(" ", "_");
     }
 
-    static String [] toArray(AddressList list) {
+    static String [] toArray(AbstractList<?> list) {
         if(list == null) {
             return null;
         }
         final List<String> result = new ArrayList<String>();
-        final Iterator<Address> it = list.iterator();
-        while(it.hasNext()) {
-            result.add(it.next().toString());
+        for(Object o : list) {
+            result.add(o.toString());
         }
         return result.toArray(EMPTY_STRING_ARRAY);
     }
