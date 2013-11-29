@@ -5,14 +5,15 @@ import java.io.IOException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.NavigableSet;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.apache.felix.scr.annotations.Activate;
@@ -57,9 +58,9 @@ public class MessageStoreImpl implements MessageStore {
             cardinality=ReferenceCardinality.OPTIONAL_MULTIPLE, 
             policy=ReferencePolicy.DYNAMIC,
             referenceInterface=MessageProcessor.class)
-    private List<ServiceReference> messageProcessors = new ArrayList<ServiceReference>();
-    private NavigableSet<ServiceReference> messageProcessorsSorted = null;
-    private boolean sorted = false;
+    private SortedSet<ServiceReference> messageProcessorRefs = new TreeSet<ServiceReference>();
+    private List<MessageProcessor> messageProcessors = new ArrayList<MessageProcessor>();
+    private boolean processorsUpdated;
     private BundleContext bundleContext = null;
 
     static final String FIELD_SEPARATOR = " : ";
@@ -69,8 +70,6 @@ public class MessageStoreImpl implements MessageStore {
     static String resourceTypeKey = MailArchiveServerConstants.RT_KEY;
 
     private static final Logger logger = LoggerFactory.getLogger(MessageStoreImpl.class);
-
-    
     
     @Activate
     private void activate(BundleContext bc) {
@@ -86,12 +85,6 @@ public class MessageStoreImpl implements MessageStore {
         try {
             resolver = getResourceResolver();
             save(resolver, msg);
-            
-         // apply message processors
-            for (ServiceReference ref : getSortedMessageProcessors()) {
-                MessageProcessor processor = (MessageProcessor) bundleContext.getService(ref);
-                processor.processMessage(msg);
-            }
         } catch (LoginException e) {
             throw new RuntimeException("LoginException", e);
         } finally {
@@ -99,10 +92,15 @@ public class MessageStoreImpl implements MessageStore {
                 resolver.close();
             }
         }
-
     }
 
     private void save(ResourceResolver resolver, Message msg) throws IOException, LoginException {
+        // apply message processors
+        for(MessageProcessor processor : getSortedMessageProcessors()) {
+            logger.debug("Calling {}", processor);
+            processor.processMessage(msg);
+        }
+        
         // into path: archive/[project.]domain/list/thread/message
         final Map<String, Object> msgProps = new HashMap<String, Object>();
         msgProps.put(resourceTypeKey, MailArchiveServerConstants.MESSAGE_RT);
@@ -127,8 +125,6 @@ public class MessageStoreImpl implements MessageStore {
     }
 
     public void saveAll(Iterator<Message> iterator) throws IOException {
-        NavigableSet<ServiceReference> localSortedMessageProcessors = getSortedMessageProcessors();
-        
         ResourceResolver resolver = null;
         try {
             resolver = getResourceResolver();
@@ -136,12 +132,6 @@ public class MessageStoreImpl implements MessageStore {
             while (iterator.hasNext()) {
                 Message msg = iterator.next();
                 save(resolver, msg);
-                
-                // apply message processors
-                for (ServiceReference ref : localSortedMessageProcessors) {
-                    MessageProcessor processor = (MessageProcessor) bundleContext.getService(ref);
-                    processor.processMessage(msg);
-                }
                 
                 mcount++;
                 if (mcount % 100 == 0) {
@@ -380,23 +370,32 @@ public class MessageStoreImpl implements MessageStore {
     }
 
     public synchronized void bindMessageProcessor(ServiceReference ref) {
-        logger.info("Message processor " + ref.toString() + " added to pool.");
-        messageProcessors.add(ref);
-        sorted = false;
-    }
-
-    public synchronized void unbindMessageProcessor(ServiceReference ref) {
-        logger.info("Message processor " + ref.toString() + " removed from pool.");
-        messageProcessors.remove(ref);
-        sorted = false;
-    }
-
-    private NavigableSet<ServiceReference> getSortedMessageProcessors() {
-        if (!sorted) {
-            messageProcessorsSorted = new TreeSet<ServiceReference>(messageProcessors);
-            sorted = true;
+        synchronized (messageProcessorRefs) {
+            messageProcessorRefs.add(ref);
         }
-        return messageProcessorsSorted;
+        processorsUpdated = true;
+        logger.info("Message processor {} added to pool.", ref);
     }
 
+    public void unbindMessageProcessor(ServiceReference ref) {
+        synchronized (messageProcessorRefs) {
+            messageProcessorRefs.remove(ref);
+        }
+        processorsUpdated = true;
+        logger.info("Message processor {} removed from pool.", ref);
+    }
+
+    private Collection<MessageProcessor> getSortedMessageProcessors() {
+        if(processorsUpdated) {
+            synchronized (messageProcessorRefs) {
+                processorsUpdated = false;
+                messageProcessors.clear();
+                for(ServiceReference ref : messageProcessorRefs) {
+                    messageProcessors.add((MessageProcessor)bundleContext.getService(ref));
+                }
+            }
+            logger.debug("Updated sorted list of MessageProcessor: {}", messageProcessors);
+        }
+        return messageProcessors;
+    }
 }
