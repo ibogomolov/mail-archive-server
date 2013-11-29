@@ -2,18 +2,25 @@ package org.apache.sling.mailarchive.stats.impl;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
+import org.apache.james.mime4j.dom.Message;
+import org.apache.james.mime4j.dom.address.Address;
+import org.apache.james.mime4j.dom.address.AddressList;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.api.resource.ResourceUtil;
 import org.apache.sling.mailarchive.stats.MailStatsProcessor;
 import org.apache.sling.mailarchive.stats.OrgMapper;
+import org.apache.sling.mailarchiveserver.api.MessageProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +31,7 @@ import org.slf4j.LoggerFactory;
  *  a Date formatter. Using a formatter that uses only year and
  *  month, for example, yields per-month data.
  */
-public class MailStatsProcessorImpl implements MailStatsProcessor {
+public class MailStatsProcessorImpl implements MailStatsProcessor, MessageProcessor {
     private final Logger log = LoggerFactory.getLogger(getClass());
     
     @Reference
@@ -34,7 +41,7 @@ public class MailStatsProcessorImpl implements MailStatsProcessor {
     private ResourceResolverFactory resourceResolverFactory;
     
     // TODO configurable format
-    final DateFormat dateFormat = new SimpleDateFormat("YYYY/MM");
+    final DateFormat dateFormat = new SimpleDateFormat("yyyy/MM");
     
     // TODO configurable root path
     private static final String ROOT_PATH = "/content/mailarchiveserver/stats"; 
@@ -42,6 +49,7 @@ public class MailStatsProcessorImpl implements MailStatsProcessor {
     public static final String DEFAULT_RESOURCE_TYPE = "nt:unstructured";
     public static final String ORG_RESOURCE_TYPE = "mailserver/stats/org";
     public static final String DATA_RESOURCE_TYPE = "mailserver/stats/data";
+    private static final String [] EMPTY_STRING_ARRAY = new String[]{};
     
     // We need to count the number of messages to a destination, 
     // per formatted timestamp and source
@@ -129,7 +137,21 @@ public class MailStatsProcessorImpl implements MailStatsProcessor {
             }
         }
     }
-    
+
+    /** Called by the mail archive server store before storing messages - 
+     *  we hook into this to compute our stats.
+     */
+    @Override
+    public void processMessage(Message m) {
+        log.debug("Processing {}", m);
+        final String [] to = toArray(m.getTo());
+        final String [] cc = toArray(m.getCc());
+        computeStats(m.getDate(), m.getFrom().toString(), to, cc);
+        
+        // TODO call this async and less often?
+        flush();
+    }
+
     /** Flush in-memory data to permanent storage */
     public void flush() {
         try {
@@ -148,6 +170,9 @@ public class MailStatsProcessorImpl implements MailStatsProcessor {
                         data.put(e.getKey(), e.getValue());
                     }
                     data.put("sling:resourceType", DATA_RESOURCE_TYPE);
+                    
+                    // TODO for now this overwrites existing values,
+                    // need to combine existing and new
                     ResourceUtil.getOrCreateResource(resolver, r.getPath(), data, DEFAULT_RESOURCE_TYPE, false);
                     
                 }
@@ -166,6 +191,18 @@ public class MailStatsProcessorImpl implements MailStatsProcessor {
     // TODO don't we have a utility for that?
     static String makeJcrFriendly(String s) {
         return s.replaceAll("[\\s\\.-]", "_").replaceAll("\\W", "").replaceAll("\\_", " ").trim().replaceAll(" ", "_");
+    }
+
+    static String [] toArray(AddressList list) {
+        if(list == null) {
+            return null;
+        }
+        final List<String> result = new ArrayList<String>();
+        final Iterator<Address> it = list.iterator();
+        while(it.hasNext()) {
+            result.add(it.next().toString());
+        }
+        return result.toArray(EMPTY_STRING_ARRAY);
     }
 
 }
