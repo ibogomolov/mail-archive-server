@@ -21,15 +21,15 @@ public class ThreadKeyGeneratorImplTest {
 		final List<Object[]> result = new ArrayList<Object[]>();
 		
 //		result.add(new Object[] {"'''''''9>*'''''''''''''''''''''''''''40>*", ""} ); 
-		result.add(new Object[] {"'abc'''9>*'''''''''''''''''''''''''''40>*", "c/cc/abc940"} ); 
-		result.add(new Object[] {"abcdefg9>*'''''''''''''''''''''''''''40>*", "g/gg/abcdefg940"} ); 
-		result.add(new Object[] {"abcdefg9>h'''''''''''''''''''''''''''40>*", "h/hh/abcdefg9h40"} ); 
-		result.add(new Object[] {"abcdefg9>hi''''''''''''''''''''''''''40>*", "h/hi/abcdefg9hi40"} ); 
-		result.add(new Object[] {"abcdefg9>hijklmnopqrstuvwxyzabcdefghi40>*", "h/hi/abcdefg9hijklmnopqrstuvwxyzabcdefghi40"} ); 
+		result.add(new Object[] {"'abc'''9>*'''''''''''''''''''''''''''40>*", "9/90/abc940"} ); 
+		result.add(new Object[] {"abcdefg9>*'''''''''''''''''''''''''''40>*", "9/90/abcdefg940"} ); 
+		result.add(new Object[] {"abcdefg9>h'''''''''''''''''''''''''''40>*", "h/h0/abcdefg9h40"} ); 
+		result.add(new Object[] {"abcdefg9>hi''''''''''''''''''''''''''40>*", "h/h0/abcdefg9hi40"} ); 
+		result.add(new Object[] {"abcdefg9>hijklmnopqrstuvwxyzabcdefghi40>*", "h/h0/abcdefg9hijklmnopqrstuvwxyzabcdefghi40"} ); 
 		result.add(new Object[] {"abcdefg9>hijklmnopqrstuvwxyzabcdefghi40>j", "h/hj/abcdefg9hijklmnopqrstuvwxyzabcdefghi40j"} ); 
-		result.add(new Object[] {"abcdefg9>hijklmnopqrstuvwxyzabcdefghi40>jk", "h/hj/abcdefg9hijklmnopqrstuvwxyzabcdefghi40jk"} ); 
-		result.add(new Object[] {"'''''''9>'''''''abc''''''''''''''''''40>*", "a/ac/9abc40"} ); 
-		result.add(new Object[] {"'''''''9>*'''''''''''''''''''''''''''40>*abc'", "a/aa/940abc"} ); 
+		result.add(new Object[] {"abcdefg9>hijklmnopqrstuvwxyzabcdefghi40>jk","h/hj/abcdefg9hijklmnopqrstuvwxyzabcdefghi40jk"} ); 
+		result.add(new Object[] {"'''''''9>'''''''abc''''''''''''''''''40>*", "9/90/9abc40"} ); 
+		result.add(new Object[] {"'''''''9>*'''''''''''''''''''''''''''40>*abc'", "9/90/940abc"} ); 
 
 		return result;
 	}

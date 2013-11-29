@@ -59,12 +59,12 @@
 						<configuration>
 							<check>
 								start with low values
-								<classRatio>50</classRatio>
-								<instructionRatio>50</instructionRatio>
-								<methodRatio>50</methodRatio>
-								<branchRatio>50</branchRatio>
-								<complexityRatio>50</complexityRatio>
-								<lineRatio>50</lineRatio>
+								<classRatio>40</classRatio>
+								<instructionRatio>40</instructionRatio>
+								<methodRatio>40</methodRatio>
+								<branchRatio>40</branchRatio>
+								<complexityRatio>40</complexityRatio>
+								<lineRatio>40</lineRatio>
 							</check>
 						</configuration>
 					</execution>

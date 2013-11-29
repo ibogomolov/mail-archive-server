@@ -1,4 +1,4 @@
-package org.apache.sling.mailarchiveserver.exchange;
+package org.apache.sling.mailarchiveserver.api;
 
 /**
  * Util class to log System.err and System.out streams.

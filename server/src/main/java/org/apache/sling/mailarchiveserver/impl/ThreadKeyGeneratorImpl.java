@@ -1,6 +1,6 @@
 package org.apache.sling.mailarchiveserver.impl;
 
-import static java.lang.Character.isLetter;
+import static java.lang.Character.isLetterOrDigit;
 import static org.apache.sling.mailarchiveserver.impl.MessageStoreImpl.makeJcrFriendly;
 import static org.apache.sling.mailarchiveserver.impl.MessageStoreImpl.removeRe;
 
@@ -27,31 +27,22 @@ public class ThreadKeyGeneratorImpl implements ThreadKeyGenerator {
     private static final int LETTER_POS_WITH_2ND_BIGGEST_ENTROPY = 40;
 
     public String getThreadKey(String subject) {
-        if (subject != null && containsLetter(subject)) {
+        if (subject != null && isAddressable(subject)) {
             subject = removeRe(subject);
         } else {
-            subject = MailArchiveServerConstants.NO_SUBJECT;
+            subject = MailArchiveServerConstants.UNADDRESSABLE_SUBJECT;
         }
 
         char prefix1;
         char prefix2;
-        //        Random rand = new Random();
         prefix1 = assignPrefix(subject, LETTER_POS_WITH_BIGGEST_ENTROPY);
-        //        try {
-        //        } catch (IllegalArgumentException e) {
-        //            prefix1 = (char) (rand.nextInt(26) + 'A'); 
-        //        }
         prefix2 = assignPrefix(subject, LETTER_POS_WITH_2ND_BIGGEST_ENTROPY);
-        //        try {
-        //        } catch (IllegalArgumentException e) {
-        //            prefix2 = (char) (rand.nextInt(26) + 'a'); 
-        //        }
         return ""+prefix1+"/"+prefix1+prefix2+"/"+ makeJcrFriendly(subject);
     }
 
-    private static boolean containsLetter(String subject) {
+    private static boolean isAddressable(String subject) {
         for (char c : subject.toCharArray()) {
-            if (isLetter(c)) {
+            if (isLetterOrDigit(c)) {
                 return true;
             }
         }
@@ -63,13 +54,13 @@ public class ThreadKeyGeneratorImpl implements ThreadKeyGenerator {
         if (subject.length() > length) {
 
             int i = length;
-            while (i > -1 && !isLetter(subject.charAt(i))) 
+            while (i > -1 && !isLetterOrDigit(subject.charAt(i))) 
                 i--;
             if (i > -1) 
                 prefix = subject.charAt(i);
             else {
                 i = length;
-                while (i<subject.length() && !isLetter(subject.charAt(i))) 
+                while (i<subject.length() && !isLetterOrDigit(subject.charAt(i))) 
                     i++;
                 if (i<subject.length()) 
                     prefix = subject.charAt(i);
@@ -80,7 +71,7 @@ public class ThreadKeyGeneratorImpl implements ThreadKeyGenerator {
         } else {
 
             int i = subject.length()-1;
-            while (i > -1 && !isLetter(subject.charAt(i))) 
+            while (i > -1 && !isLetterOrDigit(subject.charAt(i))) 
                 i--;
             if (i > -1) 
                 prefix = subject.charAt(i);

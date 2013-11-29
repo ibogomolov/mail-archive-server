@@ -85,7 +85,7 @@ public class MessageStoreImplRepositoryTestUtil {
 		String subject;
 		final Field subjectField = hdr.getField("Subject");
 		if (subjectField == null) {
-			subject = MailArchiveServerConstants.NO_SUBJECT;
+			subject = MailArchiveServerConstants.UNADDRESSABLE_SUBJECT;
 		} else {
 			subject = subjectField.getBody();
 		}
