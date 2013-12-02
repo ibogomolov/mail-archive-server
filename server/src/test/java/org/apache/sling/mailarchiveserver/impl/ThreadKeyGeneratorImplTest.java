@@ -20,7 +20,7 @@ public class ThreadKeyGeneratorImplTest {
 	public static List<Object[]> data() {
 		final List<Object[]> result = new ArrayList<Object[]>();
 		
-//		result.add(new Object[] {"'''''''9>*'''''''''''''''''''''''''''40>*", ""} ); 
+		result.add(new Object[] {"'''''''9>*'''''''''''''''''''''''''''40>*", "9/90/940"} ); 
 		result.add(new Object[] {"'abc'''9>*'''''''''''''''''''''''''''40>*", "9/90/abc940"} ); 
 		result.add(new Object[] {"abcdefg9>*'''''''''''''''''''''''''''40>*", "9/90/abcdefg940"} ); 
 		result.add(new Object[] {"abcdefg9>h'''''''''''''''''''''''''''40>*", "h/h0/abcdefg9h40"} ); 
@@ -30,6 +30,11 @@ public class ThreadKeyGeneratorImplTest {
 		result.add(new Object[] {"abcdefg9>hijklmnopqrstuvwxyzabcdefghi40>jk","h/hj/abcdefg9hijklmnopqrstuvwxyzabcdefghi40jk"} ); 
 		result.add(new Object[] {"'''''''9>'''''''abc''''''''''''''''''40>*", "9/90/9abc40"} ); 
 		result.add(new Object[] {"'''''''9>*'''''''''''''''''''''''''''40>*abc'", "9/90/940abc"} ); 
+		result.add(new Object[] {"", "a/at/unaddressable_subject"} ); 
+		result.add(new Object[] {"Re: ", "a/at/unaddressable_subject"} ); 
+		result.add(new Object[] {null, "a/at/unaddressable_subject"} ); 
+		result.add(new Object[] {"*", "a/at/unaddressable_subject"} ); 
+		result.add(new Object[] {"1.5.0", "0/00/1_5_0"} ); 
 
 		return result;
 	}
@@ -41,12 +46,6 @@ public class ThreadKeyGeneratorImplTest {
 
 	@Test
 	public void testGetThreadKey() {
-//		final Message m = mock(Message.class);
-//		final Header header = mock(Header.class);
-//		final Field subject = mock(Field.class);
-//		when(m.getHeader()).thenReturn(header);
-//		when(header.getField(Matchers.same("Subject"))).thenReturn(subject);
-//		when(subject.getBody()).thenReturn(input);
 		assertEquals(expected, generator.getThreadKey(input));
 	}
 }

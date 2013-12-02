@@ -27,10 +27,10 @@ public class ThreadKeyGeneratorImpl implements ThreadKeyGenerator {
     private static final int LETTER_POS_WITH_2ND_BIGGEST_ENTROPY = 40;
 
     public String getThreadKey(String subject) {
-        if (subject != null && isAddressable(subject)) {
-            subject = removeRe(subject);
-        } else {
+        if (subject == null || !isAddressable(removeRe(subject))) {
             subject = MailArchiveServerConstants.UNADDRESSABLE_SUBJECT;
+        } else {
+            subject = removeRe(subject);
         }
 
         char prefix1;

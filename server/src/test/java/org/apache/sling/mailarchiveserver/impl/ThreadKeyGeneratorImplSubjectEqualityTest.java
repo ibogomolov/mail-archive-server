@@ -3,7 +3,7 @@ package org.apache.sling.mailarchiveserver.impl;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-public class ThreadKeyGeneratorImplSubjectTest {
+public class ThreadKeyGeneratorImplSubjectEqualityTest {
 	private ThreadKeyGeneratorImpl generator = new ThreadKeyGeneratorImpl();
 
 	@Test

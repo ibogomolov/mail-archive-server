@@ -221,13 +221,6 @@ public class MessageStoreImpl implements MessageStore {
         }
         props.put(MailArchiveServerConstants.NAME_ATTRIBUTE, name);
 
-        // TODO check
-        // message subject if null or empty or Re:<empty>
-//        Field subjField = hdr.getField("Subject");
-//        if (subjField == null || makeJcrFriendly(removeRe(subjField.getBody())).length() == 0) {
-//            props.put(MailArchiveServerConstants.SUBJECT_ATTRIBUTE, MailArchiveServerConstants.NO_SUBJECT);
-//        }
-
         return props;
     }
 
