@@ -7,7 +7,6 @@ import static org.apache.sling.mailarchiveserver.impl.MessageStoreImpl.removeRe;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.james.mime4j.dom.Message;
-import org.apache.sling.mailarchiveserver.api.MailArchiveServerConstants;
 import org.apache.sling.mailarchiveserver.api.ThreadKeyGenerator;
 
 @Component
@@ -25,10 +24,11 @@ public class ThreadKeyGeneratorImpl implements ThreadKeyGenerator {
      */
     private static final int LETTER_POS_WITH_BIGGEST_ENTROPY = 9;
     private static final int LETTER_POS_WITH_2ND_BIGGEST_ENTROPY = 40;
+    public static final String UNADDRESSABLE_SUBJECT = "unaddressable subject";
 
     public String getThreadKey(String subject) {
         if (subject == null || !isAddressable(removeRe(subject))) {
-            subject = MailArchiveServerConstants.UNADDRESSABLE_SUBJECT;
+            subject = UNADDRESSABLE_SUBJECT;
         } else {
             subject = removeRe(subject);
         }

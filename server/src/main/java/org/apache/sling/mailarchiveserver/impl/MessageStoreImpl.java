@@ -48,6 +48,9 @@ import org.slf4j.LoggerFactory;
 @Service(MessageStore.class)
 public class MessageStoreImpl implements MessageStore {
 
+    private static final String PLAIN_MIMETYPE = "text/plain";
+    private static final String HTML_MIMETYPE = "text/html";
+
     @Reference
     private	ResourceResolverFactory resourceResolverFactory;
 
@@ -104,9 +107,42 @@ public class MessageStoreImpl implements MessageStore {
         // into path: archive/[project.]domain/list/thread/message
         final Map<String, Object> msgProps = new HashMap<String, Object>();
         msgProps.put(resourceTypeKey, MailArchiveServerConstants.MESSAGE_RT);
-        msgProps.put(MailArchiveServerConstants.BODY_ATTRIBUTE, getMessageBody(msg));
-        msgProps.putAll(getMessagePropertiesFromHeader(msg.getHeader()));
+        
+        String plainBody = null;
+        String htmlBody = null;
+        boolean hasPlainBody = false;
+        boolean hasHtmlBody = false;
+  
+        if (!msg.isMultipart()) {
+            plainBody = getTextPart(msg); 
+        } else {
+            Multipart multipart = (Multipart) msg.getBody();
+            for (Entity enitiy : multipart.getBodyParts()) {
+                BodyPart part = (BodyPart) enitiy;
+                if (part.isMimeType(PLAIN_MIMETYPE) && !hasPlainBody) {
+                    plainBody = getTextPart(part);
+                    hasPlainBody = true;
+                } else if (part.isMimeType(HTML_MIMETYPE) && !hasHtmlBody) {
+                    htmlBody = getTextPart(part);
+                    hasHtmlBody = true;
+                } else if (part.getDispositionType() != null && !part.getDispositionType().equals("")) {
+                    // TODO collect attachments
+                    //If DispositionType is null or empty, it means that it's multipart, not attached file
+                    //                  attachments.add(part);
+                    // TODO process attachments
+                } else if (part.isMultipart()) {
+                    // TODO process recursively
+                    //                  parseBodyParts((Multipart) part.getBody());
+                }
+            }
+        }
 
+        msgProps.put(MailArchiveServerConstants.BODY_ATTRIBUTE, plainBody);
+        if (hasHtmlBody) {
+            msgProps.put(MailArchiveServerConstants.HTML_BODY_ATTRIBUTE, htmlBody);
+        }
+        
+        msgProps.putAll(getMessagePropertiesFromHeader(msg.getHeader()));
         final Header hdr = msg.getHeader();
         final String listIdRaw = hdr.getField("List-Id").getBody();
         final String listId = listIdRaw.substring(1, listIdRaw.length()-1); // remove < and >
@@ -151,52 +187,17 @@ public class MessageStoreImpl implements MessageStore {
     /**
      *	code taken from http://www.mozgoweb.com/posts/how-to-parse-mime-message-using-mime4j-library/
      */
-    static String getMessageBody(Message msg) throws IOException {
-        StringBuffer msgBody = new StringBuffer();
-        if (!msg.isMultipart()) {
-            msgBody.append(getTextPart(msg));
-        } else {
-            Multipart multipart = (Multipart) msg.getBody();
-            for (Entity enitiy : multipart.getBodyParts()) {
-                BodyPart part = (BodyPart) enitiy;
-                if (part.isMimeType("text/plain")) {
-                    msgBody.append(getTextPart(part));
-                    // TODO set content type
-                    break;
-                } else if (part.isMimeType("text/html")) {
-                    msgBody.append(getTextPart(part));
-                    // TODO set content type
-                    break;
-                } else if (part.getDispositionType() != null && !part.getDispositionType().equals("")) {
-                    // TODO collect attachments
-                    //If DispositionType is null or empty, it means that it's multipart, not attached file
-                    //					attachments.add(part);
-                    // TODO process attachments
-                } else if (part.isMultipart()) {
-                    // TODO process recursively
-                    //					parseBodyParts((Multipart) part.getBody());
-                }
-            }
-        }
-
-        return msgBody.toString();
-    }
-
-    /**
-     *	code taken from http://www.mozgoweb.com/posts/how-to-parse-mime-message-using-mime4j-library/
-     */
-    private static String getTextPart(Entity part) throws IOException {
+    static String getTextPart(Entity part) throws IOException {
         TextBody tb = (TextBody) part.getBody();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         tb.writeTo(baos);
-        return baos.toString(MailArchiveServerConstants.ENCODER.charset().name());
+        return baos.toString(MailArchiveServerConstants.DEFAULT_ENCODER.charset().name());
     }
 
     static Map<String, String> getMessagePropertiesFromHeader(Header hdr) {
         Map<String, String> props = new HashMap<String, String>();
 
         // parse header
-        // TODO think of another format rather than "text with separator"
         Set<String> processed = new HashSet<String>();
         for (Field f : hdr.getFields()) {
             String name = f.getName();

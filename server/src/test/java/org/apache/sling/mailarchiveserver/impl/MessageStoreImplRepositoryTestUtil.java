@@ -21,7 +21,6 @@ import org.apache.james.mime4j.stream.Field;
 import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ValueMap;
-import org.apache.sling.mailarchiveserver.api.MailArchiveServerConstants;
 
 public class MessageStoreImplRepositoryTestUtil {
 
@@ -82,16 +81,14 @@ public class MessageStoreImplRepositoryTestUtil {
 		}
 		msgId = makeJcrFriendly(msgId);
 		
-		String subject;
+		String subject = null;
 		final Field subjectField = hdr.getField("Subject");
-		if (subjectField == null) {
-			subject = MailArchiveServerConstants.UNADDRESSABLE_SUBJECT;
-		} else {
+		if (subjectField != null) {
 			subject = subjectField.getBody();
 		}
 		
 		String threadPath = store.threadKeyGen.getThreadKey(subject);
-		String path = store.archivePath + getDomainNodeName(listId) + "/" + getListNodeName(listId) +
+		String path = MessageStoreImpl.archivePath + getDomainNodeName(listId) + "/" + getListNodeName(listId) +
 				"/" + threadPath + "/" + msgId;
 		return path;
 	}
