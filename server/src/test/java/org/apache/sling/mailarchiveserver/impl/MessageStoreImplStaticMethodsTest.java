@@ -20,7 +20,7 @@ public class MessageStoreImplStaticMethodsTest {
 	public void testMakeJcrFriendly() {
 		assertEquals("Remove each char", "", makeJcrFriendly("��!@#$%^&*()+={}[]<>,/?\\;:'\""));
 		assertEquals("Substitute each char with _ char, trimming", "a", makeJcrFriendly(".a_")); 
-		assertEquals("Substitute each char with _ char", "b____e", makeJcrFriendly("b_ .-e"));
+		assertEquals("Substitute each char with _ char", "b_e", makeJcrFriendly("b_ .-e"));
 	}
 
 	@Test

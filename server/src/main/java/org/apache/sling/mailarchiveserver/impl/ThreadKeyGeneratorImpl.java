@@ -24,20 +24,26 @@ public class ThreadKeyGeneratorImpl implements ThreadKeyGenerator {
      */
     private static final int LETTER_POS_WITH_BIGGEST_ENTROPY = 9;
     private static final int LETTER_POS_WITH_2ND_BIGGEST_ENTROPY = 40;
-    public static final String UNADDRESSABLE_SUBJECT = "unaddressable subject";
+    private static final String UNADDRESSABLE_SUBJECT = "unaddressable subject";
 
     public String getThreadKey(String subject) {
-        if (subject == null || !isAddressable(removeRe(subject))) {
-            subject = UNADDRESSABLE_SUBJECT;
+        String wordCharsSubj;
+        String noReSubj;
+        if (subject != null) {
+            noReSubj = removeRe(subject);
+            wordCharsSubj = noReSubj.replaceAll("\\W", "_");
+            if (!isAddressable(wordCharsSubj)) {
+                noReSubj = wordCharsSubj = UNADDRESSABLE_SUBJECT;
+            }
         } else {
-            subject = removeRe(subject);
+            noReSubj = wordCharsSubj = UNADDRESSABLE_SUBJECT;
         }
 
         char prefix1;
         char prefix2;
-        prefix1 = assignPrefix(subject, LETTER_POS_WITH_BIGGEST_ENTROPY);
-        prefix2 = assignPrefix(subject, LETTER_POS_WITH_2ND_BIGGEST_ENTROPY);
-        return ""+prefix1+"/"+prefix1+prefix2+"/"+ makeJcrFriendly(subject);
+        prefix1 = assignPrefix(wordCharsSubj, LETTER_POS_WITH_BIGGEST_ENTROPY);
+        prefix2 = assignPrefix(wordCharsSubj, LETTER_POS_WITH_2ND_BIGGEST_ENTROPY);
+        return ""+prefix1+"/"+prefix1+prefix2+"/"+ makeJcrFriendly(noReSubj);
     }
 
     private static boolean isAddressable(String subject) {

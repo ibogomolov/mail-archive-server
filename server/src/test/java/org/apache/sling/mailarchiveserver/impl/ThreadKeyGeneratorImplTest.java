@@ -12,7 +12,8 @@ import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class ThreadKeyGeneratorImplTest {
-	private ThreadKeyGeneratorImpl generator = new ThreadKeyGeneratorImpl();
+	private static final String UNADDRESSABLE_SUBJECT_KEY = "a/at/unaddressable_subject";
+    private ThreadKeyGeneratorImpl generator = new ThreadKeyGeneratorImpl();
 	private final String input;
 	private final String expected;
 
@@ -30,11 +31,13 @@ public class ThreadKeyGeneratorImplTest {
 		result.add(new Object[] {"abcdefg9>hijklmnopqrstuvwxyzabcdefghi40>jk","h/hj/abcdefg9hijklmnopqrstuvwxyzabcdefghi40jk"} ); 
 		result.add(new Object[] {"'''''''9>'''''''abc''''''''''''''''''40>*", "9/90/9abc40"} ); 
 		result.add(new Object[] {"'''''''9>*'''''''''''''''''''''''''''40>*abc'", "9/90/940abc"} ); 
-		result.add(new Object[] {"", "a/at/unaddressable_subject"} ); 
-		result.add(new Object[] {"Re: ", "a/at/unaddressable_subject"} ); 
-		result.add(new Object[] {null, "a/at/unaddressable_subject"} ); 
-		result.add(new Object[] {"*", "a/at/unaddressable_subject"} ); 
+		result.add(new Object[] {"", UNADDRESSABLE_SUBJECT_KEY} ); 
+		result.add(new Object[] {"Re: ", UNADDRESSABLE_SUBJECT_KEY} ); 
+		result.add(new Object[] {null, UNADDRESSABLE_SUBJECT_KEY} ); 
+		result.add(new Object[] {"*", UNADDRESSABLE_SUBJECT_KEY} ); 
 		result.add(new Object[] {"1.5.0", "0/00/1_5_0"} ); 
+		result.add(new Object[] {"把握正确方向,做个效率为先的领导助手", UNADDRESSABLE_SUBJECT_KEY} ); 
+		result.add(new Object[] {"remove   consecutive - . - whitespaces", "c/cs/remove_consecutive_whitespaces"} ); 
 
 		return result;
 	}
