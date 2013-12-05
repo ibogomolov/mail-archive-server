@@ -27,6 +27,7 @@ import org.apache.james.mime4j.dom.Header;
 import org.apache.james.mime4j.dom.Message;
 import org.apache.james.mime4j.dom.Multipart;
 import org.apache.james.mime4j.dom.TextBody;
+import org.apache.james.mime4j.dom.field.FieldName;
 import org.apache.james.mime4j.message.BodyPart;
 import org.apache.james.mime4j.stream.Field;
 import org.apache.sling.api.resource.LoginException;
@@ -36,6 +37,7 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.mailarchiveserver.api.MailArchiveServerConstants;
+import org.apache.sling.mailarchiveserver.api.MessageFieldName;
 import org.apache.sling.mailarchiveserver.api.MessageProcessor;
 import org.apache.sling.mailarchiveserver.api.MessageStore;
 import org.apache.sling.mailarchiveserver.api.ThreadKeyGenerator;
@@ -67,18 +69,18 @@ public class MessageStoreImpl implements MessageStore {
     private BundleContext bundleContext = null;
 
     static final String FIELD_SEPARATOR = " : ";
-    private static final String[] RE_PREFIXES = { "re:", "aw:", "fw:", "re ", "aw ", "fw " };
+    private static final String[] RE_PREFIXES = { "re:", "aw:", "fw:", "re ", "aw ", "fw ", "答复"};
     // for testing
     static String archivePath = MailArchiveServerConstants.ARCHIVE_PATH;
     static String resourceTypeKey = MailArchiveServerConstants.RT_KEY;
 
     private static final Logger logger = LoggerFactory.getLogger(MessageStoreImpl.class);
-    
+
     @Activate
     private void activate(BundleContext bc) {
         bundleContext = bc;
     }
-    
+
     protected ResourceResolver getResourceResolver() throws LoginException {
         return resourceResolverFactory.getAdministrativeResourceResolver(null);
     }
@@ -103,28 +105,26 @@ public class MessageStoreImpl implements MessageStore {
             logger.debug("Calling {}", processor);
             processor.processMessage(msg);
         }
-        
+
         // into path: archive/[project.]domain/list/thread/message
         final Map<String, Object> msgProps = new HashMap<String, Object>();
         msgProps.put(resourceTypeKey, MailArchiveServerConstants.MESSAGE_RT);
-        
+
         String plainBody = null;
         String htmlBody = null;
-        boolean hasPlainBody = false;
-        boolean hasHtmlBody = false;
-  
+        boolean hasBody = false;
+
         if (!msg.isMultipart()) {
             plainBody = getTextPart(msg); 
         } else {
             Multipart multipart = (Multipart) msg.getBody();
             for (Entity enitiy : multipart.getBodyParts()) {
                 BodyPart part = (BodyPart) enitiy;
-                if (part.isMimeType(PLAIN_MIMETYPE) && !hasPlainBody) {
+                if (part.isMimeType(PLAIN_MIMETYPE) && !hasBody) {
                     plainBody = getTextPart(part);
-                    hasPlainBody = true;
-                } else if (part.isMimeType(HTML_MIMETYPE) && !hasHtmlBody) {
+                    hasBody = true;
+                } else if (part.isMimeType(HTML_MIMETYPE) && !hasBody) {
                     htmlBody = getTextPart(part);
-                    hasHtmlBody = true;
                 } else if (part.getDispositionType() != null && !part.getDispositionType().equals("")) {
                     // TODO collect attachments
                     //If DispositionType is null or empty, it means that it's multipart, not attached file
@@ -137,11 +137,13 @@ public class MessageStoreImpl implements MessageStore {
             }
         }
 
-        msgProps.put(MailArchiveServerConstants.BODY_ATTRIBUTE, plainBody);
-        if (hasHtmlBody) {
-            msgProps.put(MailArchiveServerConstants.HTML_BODY_ATTRIBUTE, htmlBody);
+        if (plainBody != null) {
+            msgProps.put(MessageFieldName.PLAIN_BODY, plainBody);
         }
-        
+        if (htmlBody != null) {
+            msgProps.put(MessageFieldName.HTML_BODY, htmlBody);
+        }
+
         msgProps.putAll(getMessagePropertiesFromHeader(msg.getHeader()));
         final Header hdr = msg.getHeader();
         final String listIdRaw = hdr.getField("List-Id").getBody();
@@ -149,15 +151,16 @@ public class MessageStoreImpl implements MessageStore {
 
         final String list = getListNodeName(listId);
         final String domain = getDomainNodeName(listId);
-        final String subject = (String) msgProps.get(MailArchiveServerConstants.SUBJECT_ATTRIBUTE);
+        final String subject = (String) msgProps.get(FieldName.SUBJECT);
         final String threadPath = threadKeyGen.getThreadKey(subject);
         final String threadName = removeRe(subject);
 
         Resource parentResource = assertEachNode(resolver, archivePath, domain, list, threadPath, threadName);
 
-        String msgNode = makeJcrFriendly((String) msgProps.get(MailArchiveServerConstants.NAME_ATTRIBUTE));
-        assertResource(resolver, parentResource, msgNode, msgProps);
-        updateThread(resolver, parentResource, msgProps);
+        String msgNode = makeJcrFriendly((String) msgProps.get(MessageFieldName.NAME));
+        if (assertResource(resolver, parentResource, msgNode, msgProps)) {
+            updateThread(resolver, parentResource, msgProps);
+        }
     }
 
     public void saveAll(Iterator<Message> iterator) throws IOException {
@@ -168,7 +171,7 @@ public class MessageStoreImpl implements MessageStore {
             while (iterator.hasNext()) {
                 Message msg = iterator.next();
                 save(resolver, msg);
-                
+
                 mcount++;
                 if (mcount % 100 == 0) {
                     logger.debug(mcount+" messages processed.");
@@ -220,7 +223,7 @@ public class MessageStoreImpl implements MessageStore {
         } else {
             name = Integer.toHexString(hdr.getField("Date").hashCode());
         }
-        props.put(MailArchiveServerConstants.NAME_ATTRIBUTE, name);
+        props.put(MessageFieldName.NAME, name);
 
         return props;
     }
@@ -306,12 +309,12 @@ public class MessageStoreImpl implements MessageStore {
     private static Map<String, Object> setProperties(String resourceType, String name) {
         Map<String, Object> props = new HashMap<String, Object>();
         props.put(resourceTypeKey, resourceType);
-        props.put(MailArchiveServerConstants.NAME_ATTRIBUTE, name);
+        props.put(MessageFieldName.NAME, name);
         return props;
 
     }
 
-    private static void assertResource(ResourceResolver resolver, Resource parent, String name, Map<String, Object> newProps) 
+    private static boolean assertResource(ResourceResolver resolver, Resource parent, String name, Map<String, Object> newProps) 
             throws LoginException, PersistenceException {
         String checkPath = parent.getPath()+"/"+name;
         final Resource checkResource = resolver.getResource(checkPath);
@@ -323,29 +326,31 @@ public class MessageStoreImpl implements MessageStore {
             } else {
                 logger.debug(String.format("Resource created at %s with resource type %s.", newResource.getPath(), newProps.get(resourceTypeKey).toString()));
             }
+            return true;
         } else {
             logger.debug(String.format("Resource at %s already exists.", checkResource.getPath()));
+            return false;
         }
     }
 
-    private void updateThread(ResourceResolver resolver, Resource thread, Map<String, Object> msgProps) throws PersistenceException {
+    private static void updateThread(ResourceResolver resolver, Resource thread, Map<String, Object> msgProps) throws PersistenceException {
         final ModifiableValueMap thrdProps = thread.adaptTo(ModifiableValueMap.class);
-        Long prop = (Long) thrdProps.get(MailArchiveServerConstants.UPDATED_ATTRIBUTE);
+        Long prop = (Long) thrdProps.get(MessageFieldName.LAST_UPDATE);
         Date updatedDate = null; 
         if (prop != null) {
             updatedDate = new Date(prop);
         }
-        final String msgProp = (String) msgProps.get(MailArchiveServerConstants.DATE_ATTRIBUTE);
+        final String msgProp = (String) msgProps.get(FieldName.DATE);
         SimpleDateFormat sdf = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z");
         final Date msgDate = sdf.parse(msgProp, new ParsePosition(0));
         if (updatedDate == null || msgDate.after(updatedDate)) {
-            thrdProps.put(MailArchiveServerConstants.UPDATED_ATTRIBUTE, msgDate.getTime());
+            thrdProps.put(MessageFieldName.LAST_UPDATE, msgDate.getTime());
             resolver.commit();
         } 
     }
 
     static String makeJcrFriendly(String s) {
-        return s.replaceAll("[\\s\\.-]", "_").replaceAll("\\W", "").replaceAll("\\_", " ").trim().replaceAll(" ", "_");
+        return s.replaceAll("[\\s\\.-]+", "_").replaceAll("\\W", "").replaceAll("\\_", " ").trim().replaceAll("[ ]+", "_");
     }
 
     static String removeRe(String s) {
