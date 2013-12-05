@@ -7,13 +7,6 @@ public class MailArchiveServerConstants {
 	
 	public static final String ARCHIVE_PATH = "/content/mailarchiveserver/archive/";
 	
-	public static final String NAME_ATTRIBUTE = "jcr:text";
-	public static final String DATE_ATTRIBUTE = "Date";
-	public static final String BODY_ATTRIBUTE = "Body";
-	public static final String HTML_BODY_ATTRIBUTE = "htmlBody";
-	public static final String SUBJECT_ATTRIBUTE = "Subject";
-	public static final String UPDATED_ATTRIBUTE = "lastUpdate";
-
 	//RT = ResourceType
 	public static final String RT_KEY = "sling:resourceType";
 	public static final String DOMAIN_RT = "mailarchiveserver/domain";

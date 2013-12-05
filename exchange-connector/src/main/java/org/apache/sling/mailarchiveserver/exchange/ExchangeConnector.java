@@ -348,7 +348,6 @@ public class ExchangeConnector implements Connector {
             }
         }
 
-        logger.info("Illegal To field of expoerted message.");
         // Subject
         sample.setSubject(in.getSubject());
 
