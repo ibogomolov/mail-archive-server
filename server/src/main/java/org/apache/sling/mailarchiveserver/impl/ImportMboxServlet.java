@@ -11,9 +11,9 @@ import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestParameter;
 import org.apache.sling.api.servlets.SlingAllMethodsServlet;
-import org.apache.sling.mailarchiveserver.api.MailArchiveServerConstants;
 import org.apache.sling.mailarchiveserver.api.MboxParser;
 import org.apache.sling.mailarchiveserver.api.MessageStore;
+import org.apache.sling.mailarchiveserver.util.MailArchiveServerConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

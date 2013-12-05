@@ -36,11 +36,11 @@ import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
-import org.apache.sling.mailarchiveserver.api.MailArchiveServerConstants;
-import org.apache.sling.mailarchiveserver.api.MessageFieldName;
 import org.apache.sling.mailarchiveserver.api.MessageProcessor;
 import org.apache.sling.mailarchiveserver.api.MessageStore;
 import org.apache.sling.mailarchiveserver.api.ThreadKeyGenerator;
+import org.apache.sling.mailarchiveserver.util.MailArchiveServerConstants;
+import org.apache.sling.mailarchiveserver.util.MessageFieldName;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
@@ -71,8 +71,8 @@ public class MessageStoreImpl implements MessageStore {
     static final String FIELD_SEPARATOR = " : ";
     private static final String[] RE_PREFIXES = { "re:", "aw:", "fw:", "re ", "aw ", "fw ", "答复"};
     // for testing
-    static String archivePath = MailArchiveServerConstants.ARCHIVE_PATH;
-    static String resourceTypeKey = MailArchiveServerConstants.RT_KEY;
+    String archivePath = MailArchiveServerConstants.ARCHIVE_PATH;
+    String resourceTypeKey = MailArchiveServerConstants.RT_KEY;
 
     private static final Logger logger = LoggerFactory.getLogger(MessageStoreImpl.class);
 
@@ -129,7 +129,6 @@ public class MessageStoreImpl implements MessageStore {
                     // TODO collect attachments
                     //If DispositionType is null or empty, it means that it's multipart, not attached file
                     //                  attachments.add(part);
-                    // TODO process attachments
                 } else if (part.isMultipart()) {
                     // TODO process recursively
                     //                  parseBodyParts((Multipart) part.getBody());
@@ -255,7 +254,7 @@ public class MessageStoreImpl implements MessageStore {
         }
     }
 
-    private static Resource assertEachNode(ResourceResolver resolver, String archive, String domain, String list, 
+    private Resource assertEachNode(ResourceResolver resolver, String archive, String domain, String list, 
             String threadPath, String threadName) throws PersistenceException, LoginException {
         final String pathToMessage = archive+domain+"/"+list+"/"+threadPath;
 
@@ -306,7 +305,7 @@ public class MessageStoreImpl implements MessageStore {
 
     }
 
-    private static Map<String, Object> setProperties(String resourceType, String name) {
+    private Map<String, Object> setProperties(String resourceType, String name) {
         Map<String, Object> props = new HashMap<String, Object>();
         props.put(resourceTypeKey, resourceType);
         props.put(MessageFieldName.NAME, name);
@@ -314,7 +313,7 @@ public class MessageStoreImpl implements MessageStore {
 
     }
 
-    private static boolean assertResource(ResourceResolver resolver, Resource parent, String name, Map<String, Object> newProps) 
+    private boolean assertResource(ResourceResolver resolver, Resource parent, String name, Map<String, Object> newProps) 
             throws LoginException, PersistenceException {
         String checkPath = parent.getPath()+"/"+name;
         final Resource checkResource = resolver.getResource(checkPath);

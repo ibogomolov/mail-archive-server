@@ -22,8 +22,8 @@ import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.discovery.impl.setup.MockedResourceResolver;
-import org.apache.sling.mailarchiveserver.api.MailArchiveServerConstants;
 import org.apache.sling.mailarchiveserver.api.MboxParser;
+import org.apache.sling.mailarchiveserver.util.MailArchiveServerConstants;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -89,8 +89,6 @@ public class MessageStoreImplRepositoryTest {
 		store.saveAll(parser.parse(new FileInputStream(file)));
 		assertStructure();
 	}
-
-	// TODO add no-subject message test
 
 	private void assertSaveMessage(String messageFile) throws MimeException, IOException, FileNotFoundException {
 		MessageBuilder builder = new DefaultMessageBuilder();

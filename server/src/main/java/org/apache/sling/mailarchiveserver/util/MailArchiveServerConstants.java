@@ -1,4 +1,4 @@
-package org.apache.sling.mailarchiveserver.api;
+package org.apache.sling.mailarchiveserver.util;
 
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
@@ -14,6 +14,5 @@ public class MailArchiveServerConstants {
 	public static final String THREAD_RT = "mailarchiveserver/thread";
 	public static final String MESSAGE_RT = "mailarchiveserver/message";
 
-	// TODO add charset const
 	public static final CharsetEncoder DEFAULT_ENCODER = Charset.forName("UTF-8").newEncoder();
 }

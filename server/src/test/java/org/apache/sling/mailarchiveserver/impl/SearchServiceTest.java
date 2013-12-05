@@ -32,14 +32,7 @@ public class SearchServiceTest {
 				+ "OR LOWER(From) LIKE '%word%')" 
 		} );	
 		
-		/**
-		 * FIXME !
-		 * logically this is true, but I had an idea to AND conditions on "hello" and "word"
-		 * because currently there is too much search results
-		 * 
-		 * or better order by score because "logically this is true"
-		 * ask for an opinion 
-		 */
+		// TODO logically this is true, practically order by score because
 		params.add(new Object[] {"two words", "hello word", QueryBuilderImpl.BASE + " AND " 
 				+ "(LOWER(Body) LIKE '%hello%' "
 				+ "OR LOWER(Body) LIKE '%word%' "

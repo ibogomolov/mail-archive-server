@@ -88,7 +88,7 @@ public class MessageStoreImplRepositoryTestUtil {
 		}
 		
 		String threadPath = store.threadKeyGen.getThreadKey(subject);
-		String path = MessageStoreImpl.archivePath + getDomainNodeName(listId) + "/" + getListNodeName(listId) +
+		String path = store.archivePath + getDomainNodeName(listId) + "/" + getListNodeName(listId) +
 				"/" + threadPath + "/" + msgId;
 		return path;
 	}

@@ -11,11 +11,6 @@ import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.mailarchiveserver.api.SearchQueryParser;
 
-/**
- * TODO describe search lang grammar in wiki
- * 
- * @author Igor Bogomolov
- */
 @Component
 @Service(SearchQueryParser.class)
 public class SearchQueryParserImpl implements SearchQueryParser {
@@ -82,7 +77,6 @@ public class SearchQueryParserImpl implements SearchQueryParser {
 		map.put(tokenClass, ls);
 	}
 
-	// TODO move to MASconstants 
 	public static final Set<String> SEARCH_PARAMETERES = new HashSet<String>();
 	public static final Set<String> MESSAGE_FIELDS = new HashSet<String>();
 	public static final Map<String, String> SEARCH_PARAMETER_TO_MESSAGE_FIELD_MAP = new HashMap<String, String>();

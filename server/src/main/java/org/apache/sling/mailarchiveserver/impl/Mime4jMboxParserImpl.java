@@ -19,8 +19,8 @@ import org.apache.james.mime4j.dom.MessageBuilder;
 import org.apache.james.mime4j.mboxiterator.CharBufferWrapper;
 import org.apache.james.mime4j.mboxiterator.MboxIterator;
 import org.apache.james.mime4j.message.DefaultMessageBuilder;
-import org.apache.sling.mailarchiveserver.api.MailArchiveServerConstants;
 import org.apache.sling.mailarchiveserver.api.MboxParser;
+import org.apache.sling.mailarchiveserver.util.MailArchiveServerConstants;
 
 @Component
 @Service(MboxParser.class)

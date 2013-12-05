@@ -33,8 +33,8 @@ import org.apache.james.mime4j.message.HeaderImpl;
 import org.apache.james.mime4j.message.MessageImpl;
 import org.apache.james.mime4j.stream.RawField;
 import org.apache.sling.mailarchiveserver.api.Connector;
-import org.apache.sling.mailarchiveserver.api.MessageFieldName;
 import org.apache.sling.mailarchiveserver.api.MessageStore;
+import org.apache.sling.mailarchiveserver.util.MessageFieldName;
 import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -114,10 +114,6 @@ public class ExchangeConnector implements Connector {
     private ExchangeServicePortType port = null;
     private static final ExchangeVersionType EXCHANGE_VERSION = ExchangeVersionType.EXCHANGE_2007_SP_1;
     private static final Logger logger = LoggerFactory.getLogger(ExchangeConnector.class);
-
-    public ExchangeConnector() {
-        //		SysStreamsLogger.bindSystemStreams(); // PROD remove
-    }
 
     @Activate
     protected void activate(ComponentContext context) throws MalformedURLException {
@@ -294,7 +290,6 @@ public class ExchangeConnector implements Connector {
         } catch (Exception e){
             // TODO skip an email that results in an exception ?
             logger.info(name + ": Error while retrieving messages. " + e.getMessage());
-            e.printStackTrace(); // PROD remove
             return -1;
         } 
     }
@@ -314,7 +309,7 @@ public class ExchangeConnector implements Connector {
         if (in.getInReplyTo() != null) {
             header.addField(new RawField(MessageFieldName.IN_REPLY_TO, in.getInReplyTo()));
         }
-        // Content-Type TODO
+        // Content-Type TODO add content type
         //		tmpHeader.addField(new RawField(FieldName.CONTENT_TYPE, stringToContentType(in.getBody().getBodyType().value())));
 
         // From

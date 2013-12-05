@@ -11,7 +11,7 @@ import java.util.Map;
 
 import org.apache.james.mime4j.dom.Message;
 import org.apache.james.mime4j.message.MessageImpl;
-import org.apache.sling.mailarchiveserver.api.MailArchiveServerConstants;
+import org.apache.sling.mailarchiveserver.util.MailArchiveServerConstants;
 import org.junit.Test;
 
 public class MessageStoreImplStaticMethodsTest {

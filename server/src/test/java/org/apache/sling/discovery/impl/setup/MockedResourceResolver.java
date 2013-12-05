@@ -40,7 +40,6 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.commons.testing.jcr.RepositoryProvider;
 
-// PROD get this package with Maven
 public class MockedResourceResolver implements ResourceResolver {
 
 	private final Repository repository;
