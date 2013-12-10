@@ -128,4 +128,17 @@
             <scope>provided</scope>
         </dependency>
      </dependencies>
+
+     <!-- prevent updating james-mime4j snapshot bundles -->
+    <repositories>
+        <repository>
+            <id>apache.snapshots</id>
+            <name>Apache Snapshot Repository</name>
+            <url>http://repository.apache.org/snapshots</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+    
 </project>

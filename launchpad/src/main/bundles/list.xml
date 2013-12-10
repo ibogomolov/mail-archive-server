@@ -1,8 +1,86 @@
 <?xml version="1.0"?>
-<!-- from launchpad/builder/src/main/bundles -->
 <bundles>
+    <startLevel level="boot">
+        <!-- bootstrap bundles, must allow the installer core to start -->
+        <bundle>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.5</version>
+        </bundle>
+        <bundle>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.commons.log</artifactId>
+            <version>3.0.3-SNAPSHOT</version>
+        </bundle>
+        <bundle>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.commons.logservice</artifactId>
+            <version>1.0.2</version>
+        </bundle>
+        <bundle>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+            <version>1.7.5</version>
+        </bundle>
+        <bundle>
+            <groupId>org.slf4j</groupId>
+            <artifactId>log4j-over-slf4j</artifactId>
+            <version>1.7.5</version>
+        </bundle>
+        <bundle>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.settings</artifactId>
+            <version>1.3.0</version>
+        </bundle>
+        <bundle>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.fragment.xml</artifactId>
+            <version>1.0.2</version>
+        </bundle>
+        <bundle>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.fragment.transaction</artifactId>
+            <version>1.0.0</version>
+        </bundle>
+        <bundle>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.javax.activation</artifactId>
+            <version>0.1.0</version>
+        </bundle>
+        <bundle>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.fragment.ws</artifactId>
+            <version>1.0.2</version>
+        </bundle>
+        <bundle>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.launchpad.installer</artifactId>
+            <version>1.2.0</version>
+        </bundle>
+        <bundle>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.installer.core</artifactId>
+            <version>3.4.7-SNAPSHOT</version>
+        </bundle>
+        <bundle>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.installer.provider.file</artifactId>
+            <version>1.0.2</version>
+        </bundle>
+        <bundle>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>org.apache.felix.configadmin</artifactId>
+            <version>1.6.0</version>
+        </bundle>
+        <bundle>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>org.apache.felix.eventadmin</artifactId>
+            <version>1.3.2</version>
+        </bundle>
+    </startLevel>
+    
     <startLevel level="0">
-        <!-- Dependencies for Default Start Level -->
+        <!-- Default Start Level -->
         <bundle>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
@@ -91,8 +169,8 @@
         </bundle>
         <bundle>
             <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.settings</artifactId>
-            <version>1.3.0</version>
+            <artifactId>org.apache.sling.serviceusermapper</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
         </bundle>
         <bundle>
             <groupId>org.apache.sling</groupId>
@@ -228,21 +306,6 @@
         
         <bundle>
             <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.launchpad.installer</artifactId>
-            <version>1.2.0</version>
-        </bundle>
-        <bundle>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.installer.api</artifactId>
-            <version>1.0.0</version>
-        </bundle>
-        <bundle>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.installer.core</artifactId>
-            <version>3.4.6</version>
-        </bundle>
-        <bundle>
-            <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.installer.console</artifactId>
             <version>1.0.0</version>
         </bundle>
@@ -253,60 +316,8 @@
         </bundle>
         <bundle>
             <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.installer.provider.file</artifactId>
-            <version>1.0.2</version>
-        </bundle>
-        <bundle>
-            <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.installer.provider.jcr</artifactId>
             <version>3.1.6</version>
-        </bundle>
-    </startLevel>
-    <startLevel level="1">
-        <bundle>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.6.4</version>
-        </bundle>
-        <bundle>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.commons.log</artifactId>
-            <version>3.0.0</version>
-        </bundle>
-        <bundle>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.commons.logservice</artifactId>
-            <version>1.0.2</version>
-        </bundle>
-        <bundle>
-            <groupId>org.slf4j</groupId>
-            <artifactId>jcl-over-slf4j</artifactId>
-            <version>1.6.4</version>
-        </bundle>
-        <bundle>
-            <groupId>org.slf4j</groupId>
-            <artifactId>log4j-over-slf4j</artifactId>
-            <version>1.6.4</version>
-        </bundle>
-        <bundle>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.fragment.xml</artifactId>
-            <version>1.0.2</version>
-        </bundle>
-        <bundle>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.fragment.transaction</artifactId>
-            <version>1.0.0</version>
-        </bundle>
-        <bundle>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.fragment.activation</artifactId>
-            <version>1.0.2</version>
-        </bundle>
-        <bundle>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.fragment.ws</artifactId>
-            <version>1.0.2</version>
         </bundle>
     </startLevel>
     <startLevel level="5">
@@ -410,23 +421,23 @@
     <startLevel level="10">
         <bundle>
             <groupId>org.apache.felix</groupId>
-            <artifactId>org.apache.felix.eventadmin</artifactId>
-            <version>1.3.2</version>
-        </bundle>
-        <bundle>
-            <groupId>org.apache.felix</groupId>
             <artifactId>org.apache.felix.scr</artifactId>
-            <version>1.6.2</version>
-        </bundle>
-        <bundle>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>org.apache.felix.configadmin</artifactId>
-            <version>1.6.0</version>
+            <version>1.8.0</version>
         </bundle>
         <bundle>
             <groupId>org.apache.felix</groupId>
             <artifactId>org.apache.felix.metatype</artifactId>
-            <version>1.0.6</version>
+            <version>1.0.8</version>
+        </bundle>
+        <bundle>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-core</artifactId>
+            <version>1.2</version>
+        </bundle>
+        <bundle>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-bundle</artifactId>
+            <version>1.2</version>
         </bundle>
     </startLevel>
 
@@ -454,27 +465,19 @@
         <bundle>
             <groupId>org.apache.jackrabbit</groupId>
             <artifactId>jackrabbit-api</artifactId>
-            <version>2.4.2</version>
+            <version>2.7.1</version>
         </bundle>
         <bundle>
             <groupId>org.apache.derby</groupId>
             <artifactId>derby</artifactId>
             <version>10.5.3.0_1</version>
-        </bundle>
-        <bundle>
-            <groupId>org.apache.tika</groupId>
-            <artifactId>tika-core</artifactId>
-            <version>1.0</version>
-        </bundle>
-        <bundle>
-            <groupId>org.apache.tika</groupId>
-            <artifactId>tika-bundle</artifactId>
-            <version>1.0</version>
+            <runModes>jackrabbit</runModes>
         </bundle>
         <bundle>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.jcr.jackrabbit.server</artifactId>
             <version>2.1.2</version>
+            <runModes>jackrabbit</runModes>
         </bundle>
         <bundle>
             <groupId>org.apache.sling</groupId>
@@ -489,37 +492,97 @@
         <bundle>
             <groupId>org.apache.jackrabbit</groupId>
             <artifactId>jackrabbit-jcr-commons</artifactId>
-            <version>2.4.2</version>
+            <version>2.7.1</version>
         </bundle>
         <bundle>
             <groupId>org.apache.jackrabbit</groupId>
             <artifactId>jackrabbit-spi</artifactId>
-            <version>2.4.2</version>
+            <version>2.7.1</version>
         </bundle>
         <bundle>
             <groupId>org.apache.jackrabbit</groupId>
             <artifactId>jackrabbit-spi-commons</artifactId>
-            <version>2.4.2</version>
+            <version>2.7.1</version>
         </bundle>
         <bundle>
             <groupId>org.apache.jackrabbit</groupId>
             <artifactId>jackrabbit-webdav</artifactId>
-            <version>2.4.2</version>
+            <version>2.7.1</version>
         </bundle>
         <bundle>
             <groupId>org.apache.jackrabbit</groupId>
             <artifactId>jackrabbit-jcr-rmi</artifactId>
-            <version>2.4.2</version>
+            <version>2.7.1</version>
         </bundle>
         <bundle>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.jcr.webdav</artifactId>
-            <version>2.1.2</version>
+            <version>2.2.0</version>
         </bundle>
         <bundle>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.jcr.davex</artifactId>
-            <version>1.1.0</version>
+            <version>1.2.0</version>
+        </bundle>
+    </startLevel>
+   
+    <startLevel level="15">
+        <!-- Oak-specific bundles -->
+        <bundle>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.jcr.oak.server</artifactId>
+            <version>0.0.1-SNAPSHOT</version> <!-- not released -->
+            <runModes>oak</runModes>
+        </bundle>
+        <bundle>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>14.0.1</version>
+            <runModes>oak</runModes>
+        </bundle>
+        <bundle>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>oak-core</artifactId>
+            <version>0.10</version>
+            <runModes>oak</runModes>
+        </bundle>
+        <!-- embedded in oak.server for now
+        <bundle>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>oak-jcr</artifactId>
+            <version>0.10</version>
+            <runModes>oak</runModes>
+        </bundle>
+        -->
+        <bundle>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>oak-commons</artifactId>
+            <version>0.10</version>
+            <runModes>oak</runModes>
+        </bundle>
+        <bundle>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>oak-mk</artifactId>
+            <version>0.10</version>
+            <runModes>oak</runModes>
+        </bundle>
+        <bundle>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>oak-mk-api</artifactId>
+            <version>0.10</version>
+            <runModes>oak</runModes>
+        </bundle>
+        <bundle>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>oak-mk-remote</artifactId>
+            <version>0.10</version>
+            <runModes>oak</runModes>
+        </bundle>
+        <bundle>
+            <groupId>org.apache.jackrabbit</groupId>
+            <artifactId>oak-lucene</artifactId>
+            <version>0.10</version>
+            <runModes>oak</runModes>
         </bundle>
     </startLevel>
     <startLevel level="16">
@@ -545,6 +608,12 @@
             <version>0.0.1-SNAPSHOT</version>
         </bundle>
         
+        
+        <bundle>
+            <groupId>org.apache.james</groupId>
+            <artifactId>apache-mime4j-storage</artifactId>
+            <version>0.8.0-SNAPSHOT</version>
+        </bundle>
         <bundle>
             <groupId>org.apache.james</groupId>
             <artifactId>apache-mime4j-core</artifactId>
