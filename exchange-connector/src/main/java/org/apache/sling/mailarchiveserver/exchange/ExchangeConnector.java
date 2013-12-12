@@ -313,11 +313,8 @@ public class ExchangeConnector implements Connector {
         //		tmpHeader.addField(new RawField(FieldName.CONTENT_TYPE, stringToContentType(in.getBody().getBodyType().value())));
 
         // From
-        try {
-            sample.setFrom(AddressBuilder.DEFAULT.parseMailbox(in.getFrom().getMailbox().getEmailAddress()));
-        } catch (ParseException e) {
-            logger.info("Illegal From field of expoerted message.");
-        }
+        EmailAddressType fromMailbox = in.getFrom().getMailbox();
+        header.addField(new RawField(FieldName.FROM, fromMailbox.getName() +" <"+ fromMailbox.getEmailAddress() +">"));
 
         // To
         try {
