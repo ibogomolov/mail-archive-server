@@ -1,5 +1,12 @@
 package org.apache.sling.mailarchiveserver.impl;
 
+import static org.apache.james.mime4j.dom.field.FieldName.SUBJECT;
+import static org.apache.sling.mailarchiveserver.util.MessageFieldName.*;
+import static org.apache.sling.mailarchiveserver.util.MessageFieldName.HTML_BODY;
+import static org.apache.sling.mailarchiveserver.util.MessageFieldName.LIST_ID;
+import static org.apache.sling.mailarchiveserver.util.MessageFieldName.NAME;
+import static org.apache.sling.mailarchiveserver.util.MessageFieldName.PLAIN_BODY;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.ParsePosition;
@@ -22,6 +29,7 @@ import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.ReferenceCardinality;
 import org.apache.felix.scr.annotations.ReferencePolicy;
 import org.apache.felix.scr.annotations.Service;
+import org.apache.james.mime4j.dom.BinaryBody;
 import org.apache.james.mime4j.dom.Entity;
 import org.apache.james.mime4j.dom.Header;
 import org.apache.james.mime4j.dom.Message;
@@ -108,57 +116,74 @@ public class MessageStoreImpl implements MessageStore {
 
         // into path: archive/[project.]domain/list/thread/message
         final Map<String, Object> msgProps = new HashMap<String, Object>();
+        final List<BodyPart> attachments = new ArrayList<BodyPart>(); 
+        
         msgProps.put(resourceTypeKey, MailArchiveServerConstants.MESSAGE_RT);
 
-        String plainBody = null;
-        String htmlBody = null;
-        boolean hasBody = false;
+        StringBuilder plainBody = new StringBuilder();
+        StringBuilder htmlBody = new StringBuilder();
+        Boolean hasBody = false;
 
         if (!msg.isMultipart()) {
-            plainBody = getTextPart(msg); 
+            plainBody = new StringBuilder(getTextPart(msg)); 
         } else {
             Multipart multipart = (Multipart) msg.getBody();
-            for (Entity enitiy : multipart.getBodyParts()) {
-                BodyPart part = (BodyPart) enitiy;
-                if (part.isMimeType(PLAIN_MIMETYPE) && !hasBody) {
-                    plainBody = getTextPart(part);
-                    hasBody = true;
-                } else if (part.isMimeType(HTML_MIMETYPE) && !hasBody) {
-                    htmlBody = getTextPart(part);
-                } else if (part.getDispositionType() != null && !part.getDispositionType().equals("")) {
-                    // TODO collect attachments
-                    //If DispositionType is null or empty, it means that it's multipart, not attached file
-                    //                  attachments.add(part);
-                } else if (part.isMultipart()) {
-                    // TODO process recursively
-                    //                  parseBodyParts((Multipart) part.getBody());
-                }
-            }
+            recursiveMultipartProcessing(multipart, plainBody, htmlBody, hasBody, attachments);
         }
 
         if (plainBody != null) {
-            msgProps.put(MessageFieldName.PLAIN_BODY, plainBody);
+            msgProps.put(PLAIN_BODY, plainBody.toString());
         }
         if (htmlBody != null) {
-            msgProps.put(MessageFieldName.HTML_BODY, htmlBody);
+            msgProps.put(HTML_BODY, htmlBody.toString());
         }
 
         msgProps.putAll(getMessagePropertiesFromHeader(msg.getHeader()));
         final Header hdr = msg.getHeader();
-        final String listIdRaw = hdr.getField("List-Id").getBody();
+        final String listIdRaw = hdr.getField(LIST_ID).getBody();
         final String listId = listIdRaw.substring(1, listIdRaw.length()-1); // remove < and >
 
         final String list = getListNodeName(listId);
         final String domain = getDomainNodeName(listId);
-        final String subject = (String) msgProps.get(FieldName.SUBJECT);
+        final String subject = (String) msgProps.get(SUBJECT);
         final String threadPath = threadKeyGen.getThreadKey(subject);
         final String threadName = removeRe(subject);
 
         Resource parentResource = assertEachNode(resolver, archivePath, domain, list, threadPath, threadName);
 
-        String msgNode = makeJcrFriendly((String) msgProps.get(MessageFieldName.NAME));
-        if (assertResource(resolver, parentResource, msgNode, msgProps)) {
+        String msgNodeName = makeJcrFriendly((String) msgProps.get(NAME));
+        boolean isMsgNodeCreated = assertResource(resolver, parentResource, msgNodeName, msgProps);
+        if (isMsgNodeCreated) {
+            Resource msgResource = resolver.getResource(parentResource, msgNodeName);
+            for (BodyPart att : attachments) {
+                final Map<String, Object> attProps = new HashMap<String, Object>();
+                parseHeaderToProps(att.getHeader(), attProps);
+                BinaryBody bb = (BinaryBody) att.getBody();
+                attProps.put(CONTENT, bb);
+                
+                String attNodeName = makeJcrFriendly((String) attProps.get(FILENAME));
+                assertResource(resolver, msgResource, attNodeName, attProps);
+            }
+
             updateThread(resolver, parentResource, msgProps);
+        }
+    }
+    
+    private static void recursiveMultipartProcessing(Multipart multipart, StringBuilder plainBody, StringBuilder htmlBody, Boolean hasBody, List<BodyPart> attachments) throws IOException {
+        for (Entity enitiy : multipart.getBodyParts()) {
+            BodyPart part = (BodyPart) enitiy;
+            if (part.isMimeType(PLAIN_MIMETYPE) && !hasBody) {
+                plainBody.append(getTextPart(part));
+                hasBody = true;
+            } else if (part.isMimeType(HTML_MIMETYPE) && !hasBody) {
+                htmlBody.append(getTextPart(part));
+            } else if (part.isMultipart()) {
+                // TODO process recursively
+                // parseBodyParts((Multipart) part.getBody());
+            } else if (part.getDispositionType() != null && !part.getDispositionType().equals("")) {
+                // if DispositionType is null or empty, it means that it's multipart, not attached file
+                attachments.add(part);
+            }
         }
     }
 
@@ -196,10 +221,25 @@ public class MessageStoreImpl implements MessageStore {
         return baos.toString(MailArchiveServerConstants.DEFAULT_ENCODER.charset().name());
     }
 
-    static Map<String, String> getMessagePropertiesFromHeader(Header hdr) {
-        Map<String, String> props = new HashMap<String, String>();
+    static Map<String, Object> getMessagePropertiesFromHeader(Header hdr) {
+        Map<String, Object> props = new HashMap<String, Object>();
 
-        // parse header
+        parseHeaderToProps(hdr, props);
+
+        // message name
+        String name;
+        if (hdr.getField("Message-ID") != null) {
+            name = hdr.getField("Message-ID").getBody();
+            name = name.substring(1, name.length()-1); // remove < and >
+        } else {
+            name = Integer.toHexString(hdr.getField("Date").hashCode());
+        }
+        props.put(MessageFieldName.NAME, name);
+
+        return props;
+    }
+
+    private static void parseHeaderToProps(Header hdr, Map<String, Object> props) {
         Set<String> processed = new HashSet<String>();
         for (Field f : hdr.getFields()) {
             String name = f.getName();
@@ -213,18 +253,6 @@ public class MessageStoreImpl implements MessageStore {
                 props.put(name, value.substring(0, value.length()-FIELD_SEPARATOR.length()));
             }
         }
-
-        // message name
-        String name;
-        if (hdr.getField("Message-ID") != null) {
-            name = hdr.getField("Message-ID").getBody();
-            name = name.substring(1, name.length()-1); // remove < and >
-        } else {
-            name = Integer.toHexString(hdr.getField("Date").hashCode());
-        }
-        props.put(MessageFieldName.NAME, name);
-
-        return props;
     }
 
     static String getListNodeName(String listId) {

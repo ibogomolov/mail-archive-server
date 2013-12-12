@@ -92,6 +92,12 @@
 			<version>0.8.0-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.apache.james</groupId>
+			<artifactId>apache-mime4j-storage</artifactId>
+			<version>0.8.0-SNAPSHOT</version>
+			<scope>provided</scope>
+		</dependency>
 
 		<dependency>
 			<groupId>org.apache.sling</groupId>
