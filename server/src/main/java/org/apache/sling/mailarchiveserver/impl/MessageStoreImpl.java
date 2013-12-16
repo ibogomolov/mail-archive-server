@@ -2,10 +2,6 @@ package org.apache.sling.mailarchiveserver.impl;
 
 import static org.apache.james.mime4j.dom.field.FieldName.SUBJECT;
 import static org.apache.sling.mailarchiveserver.util.MessageFieldName.*;
-import static org.apache.sling.mailarchiveserver.util.MessageFieldName.HTML_BODY;
-import static org.apache.sling.mailarchiveserver.util.MessageFieldName.LIST_ID;
-import static org.apache.sling.mailarchiveserver.util.MessageFieldName.NAME;
-import static org.apache.sling.mailarchiveserver.util.MessageFieldName.PLAIN_BODY;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -29,7 +25,9 @@ import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.ReferenceCardinality;
 import org.apache.felix.scr.annotations.ReferencePolicy;
 import org.apache.felix.scr.annotations.Service;
+import org.apache.jackrabbit.util.Text;
 import org.apache.james.mime4j.dom.BinaryBody;
+import org.apache.james.mime4j.dom.Body;
 import org.apache.james.mime4j.dom.Entity;
 import org.apache.james.mime4j.dom.Header;
 import org.apache.james.mime4j.dom.Message;
@@ -58,8 +56,8 @@ import org.slf4j.LoggerFactory;
 @Service(MessageStore.class)
 public class MessageStoreImpl implements MessageStore {
 
-    private static final String PLAIN_MIMETYPE = "text/plain";
-    private static final String HTML_MIMETYPE = "text/html";
+    public static final String PLAIN_MIMETYPE = "text/plain";
+    public static final String HTML_MIMETYPE = "text/html";
 
     @Reference
     private	ResourceResolverFactory resourceResolverFactory;
@@ -117,7 +115,7 @@ public class MessageStoreImpl implements MessageStore {
         // into path: archive/[project.]domain/list/thread/message
         final Map<String, Object> msgProps = new HashMap<String, Object>();
         final List<BodyPart> attachments = new ArrayList<BodyPart>(); 
-        
+
         msgProps.put(resourceTypeKey, MailArchiveServerConstants.MESSAGE_RT);
 
         StringBuilder plainBody = new StringBuilder();
@@ -131,10 +129,8 @@ public class MessageStoreImpl implements MessageStore {
             recursiveMultipartProcessing(multipart, plainBody, htmlBody, hasBody, attachments);
         }
 
-        if (plainBody != null) {
-            msgProps.put(PLAIN_BODY, plainBody.toString());
-        }
-        if (htmlBody != null) {
+        msgProps.put(PLAIN_BODY, plainBody.toString());
+        if (htmlBody.length() > 0) {
             msgProps.put(HTML_BODY, htmlBody.toString());
         }
 
@@ -158,18 +154,22 @@ public class MessageStoreImpl implements MessageStore {
             for (BodyPart att : attachments) {
                 final Map<String, Object> attProps = new HashMap<String, Object>();
                 parseHeaderToProps(att.getHeader(), attProps);
-                BinaryBody bb = (BinaryBody) att.getBody();
-                attProps.put(CONTENT, bb);
-                
-                String attNodeName = makeJcrFriendly((String) attProps.get(FILENAME));
+                Body body = att.getBody();
+                if (body instanceof BinaryBody) {
+                    attProps.put(CONTENT, ((BinaryBody) body).getInputStream());
+                } else if (body instanceof TextBody) {
+                    attProps.put(CONTENT, ((TextBody) body).getInputStream());
+                }
+
+                String attNodeName = Text.escapeIllegalJcrChars(att.getFilename());
                 assertResource(resolver, msgResource, attNodeName, attProps);
             }
 
             updateThread(resolver, parentResource, msgProps);
         }
     }
-    
-    private static void recursiveMultipartProcessing(Multipart multipart, StringBuilder plainBody, StringBuilder htmlBody, Boolean hasBody, List<BodyPart> attachments) throws IOException {
+
+    static void recursiveMultipartProcessing(Multipart multipart, StringBuilder plainBody, StringBuilder htmlBody, Boolean hasBody, List<BodyPart> attachments) throws IOException {
         for (Entity enitiy : multipart.getBodyParts()) {
             BodyPart part = (BodyPart) enitiy;
             if (part.isMimeType(PLAIN_MIMETYPE) && !hasBody) {
@@ -348,11 +348,7 @@ public class MessageStoreImpl implements MessageStore {
         if (checkResource == null) {
             final Resource newResource = resolver.create(parent, name, newProps);
             resolver.commit();
-            if (newProps == null) {
-                logger.debug(String.format("Resource created at %s without parameters.", newResource.getPath()));
-            } else {
-                logger.debug(String.format("Resource created at %s with resource type %s.", newResource.getPath(), newProps.get(resourceTypeKey).toString()));
-            }
+            logger.debug(String.format("Resource created at %s .", newResource.getPath()));
             return true;
         } else {
             logger.debug(String.format("Resource at %s already exists.", checkResource.getPath()));

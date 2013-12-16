@@ -18,6 +18,8 @@
  */
 package org.apache.sling.discovery.impl.setup;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -34,6 +36,7 @@ import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
@@ -258,6 +261,8 @@ public class MockedResourceResolver implements ResourceResolver {
                         child.setProperty(entry.getKey(), (String)entry.getValue());
                     } else if (entry.getValue() instanceof Boolean) {
                         child.setProperty(entry.getKey(), (Boolean)entry.getValue());
+                    } else if (entry.getValue() instanceof InputStream) {
+                        child.setProperty(entry.getKey(), new String(IOUtils.toByteArray((InputStream)entry.getValue())));
                     } else {
                         throw new UnsupportedOperationException("Not implemented");
                     }
@@ -265,6 +270,8 @@ public class MockedResourceResolver implements ResourceResolver {
             }
             return getResource(parent, name);
         } catch (RepositoryException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }

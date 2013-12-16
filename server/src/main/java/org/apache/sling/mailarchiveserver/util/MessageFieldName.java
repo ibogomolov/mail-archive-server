@@ -12,5 +12,6 @@ public class MessageFieldName {
     public static final String LAST_UPDATE = "lastUpdate";
     public static final String X_IMPORT_LOG = "X-mailarchive-import";
     public static final String X_ADDC_PATH = "X-addc-path";
-    public static final String FILENAME = "filename";
+    public static final String ENCODING = "jcr:encoding";
+//    public static final String FILENAME = "filename";
 }

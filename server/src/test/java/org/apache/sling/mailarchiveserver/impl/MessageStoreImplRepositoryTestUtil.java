@@ -1,5 +1,6 @@
 package org.apache.sling.mailarchiveserver.impl;
 
+import static org.apache.sling.mailarchiveserver.util.MessageFieldName.*;
 import static org.apache.sling.mailarchiveserver.impl.MessageStoreImpl.getDomainNodeName;
 import static org.apache.sling.mailarchiveserver.impl.MessageStoreImpl.getListNodeName;
 import static org.apache.sling.mailarchiveserver.impl.MessageStoreImpl.makeJcrFriendly;
@@ -112,12 +113,14 @@ public class MessageStoreImplRepositoryTestUtil {
 		}
 		sc.close();
 	
-		assertEquals("Expecting same number of headers", expectedHeaders.size(), m.keySet().size()-1); // -1 for body
+		assertEquals("Expecting same number of headers", expectedHeaders.keySet().size(), m.keySet().size()-1); // -1 for Body, should be no htmlBody
 	
 		for (String header : m.keySet()) {
-			if (!header.equalsIgnoreCase("body")) {
+			if (!header.equals(PLAIN_BODY) && !header.equals(HTML_BODY)) {
 				for (String value : m.get(header, String.class).split(MessageStoreImpl.FIELD_SEPARATOR)) {
-					assertTrue("Expecting same value of header \""+header+"\"", expectedHeaders.get(header).contains(value));
+					List<String> expectedHeader = expectedHeaders.get(header);
+					assertNotNull("Expecting header \""+header+"\" to exist", expectedHeader);
+                    assertTrue("Expecting same value of header \""+header+"\"", expectedHeader.contains(value));
 				}
 			}
 		}
