@@ -108,7 +108,7 @@ public class MessageStoreImplRepositoryTest {
 
 		File headersFile = new File(TEST_FOLDER + specialPathFromFilePath(messageFile, HEADERS_SUFFIX));
 		if (headersFile.exists()) {
-			MessageStoreImplRepositoryTestUtil.assertHeaders(m, headersFile);
+			MessageStoreImplRepositoryTestUtil.assertHeaders(headersFile, m);
 		}
 
 		assertTrue(headersFile.exists() || bodyFile.exists()); // test at least something 

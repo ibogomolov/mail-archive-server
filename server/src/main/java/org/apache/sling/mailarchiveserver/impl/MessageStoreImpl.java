@@ -1,7 +1,12 @@
 package org.apache.sling.mailarchiveserver.impl;
 
 import static org.apache.james.mime4j.dom.field.FieldName.SUBJECT;
-import static org.apache.sling.mailarchiveserver.util.MessageFieldName.*;
+import static org.apache.sling.mailarchiveserver.util.MessageFieldName.CONTENT;
+import static org.apache.sling.mailarchiveserver.util.MessageFieldName.HTML_BODY;
+import static org.apache.sling.mailarchiveserver.util.MessageFieldName.LIST_ID;
+import static org.apache.sling.mailarchiveserver.util.MessageFieldName.NAME;
+import static org.apache.sling.mailarchiveserver.util.MessageFieldName.PLAIN_BODY;
+import static org.apache.sling.mailarchiveserver.util.MessageFieldName.X_ORIGINAL_HEADER;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -35,6 +40,7 @@ import org.apache.james.mime4j.dom.Multipart;
 import org.apache.james.mime4j.dom.TextBody;
 import org.apache.james.mime4j.dom.field.FieldName;
 import org.apache.james.mime4j.message.BodyPart;
+import org.apache.james.mime4j.message.DefaultMessageWriter;
 import org.apache.james.mime4j.stream.Field;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.ModifiableValueMap;
@@ -42,6 +48,7 @@ import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
+import org.apache.sling.mailarchiveserver.api.AttachmentFilter;
 import org.apache.sling.mailarchiveserver.api.MessageProcessor;
 import org.apache.sling.mailarchiveserver.api.MessageStore;
 import org.apache.sling.mailarchiveserver.api.ThreadKeyGenerator;
@@ -61,10 +68,10 @@ public class MessageStoreImpl implements MessageStore {
 
     @Reference
     private	ResourceResolverFactory resourceResolverFactory;
-
     @Reference
     ThreadKeyGenerator threadKeyGen;
-
+    @Reference
+    AttachmentFilter attachmentFilter;
     @Reference(
             cardinality=ReferenceCardinality.OPTIONAL_MULTIPLE, 
             policy=ReferencePolicy.DYNAMIC,
@@ -135,6 +142,12 @@ public class MessageStoreImpl implements MessageStore {
         }
 
         msgProps.putAll(getMessagePropertiesFromHeader(msg.getHeader()));
+        
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        new DefaultMessageWriter().writeHeader(msg.getHeader(), baos);
+        String origHdr = baos.toString(MailArchiveServerConstants.DEFAULT_ENCODER.charset().name());
+        msgProps.put(X_ORIGINAL_HEADER, origHdr);
+        
         final Header hdr = msg.getHeader();
         final String listIdRaw = hdr.getField(LIST_ID).getBody();
         final String listId = listIdRaw.substring(1, listIdRaw.length()-1); // remove < and >
@@ -152,6 +165,9 @@ public class MessageStoreImpl implements MessageStore {
         if (isMsgNodeCreated) {
             Resource msgResource = resolver.getResource(parentResource, msgNodeName);
             for (BodyPart att : attachments) {
+                if (!attachmentFilter.isEligible(att)) {
+                    continue;
+                }
                 final Map<String, Object> attProps = new HashMap<String, Object>();
                 parseHeaderToProps(att.getHeader(), attProps);
                 Body body = att.getBody();
@@ -172,17 +188,18 @@ public class MessageStoreImpl implements MessageStore {
     static void recursiveMultipartProcessing(Multipart multipart, StringBuilder plainBody, StringBuilder htmlBody, Boolean hasBody, List<BodyPart> attachments) throws IOException {
         for (Entity enitiy : multipart.getBodyParts()) {
             BodyPart part = (BodyPart) enitiy;
-            if (part.isMimeType(PLAIN_MIMETYPE) && !hasBody) {
-                plainBody.append(getTextPart(part));
-                hasBody = true;
-            } else if (part.isMimeType(HTML_MIMETYPE) && !hasBody) {
-                htmlBody.append(getTextPart(part));
-            } else if (part.isMultipart()) {
-                // TODO process recursively
-                // parseBodyParts((Multipart) part.getBody());
-            } else if (part.getDispositionType() != null && !part.getDispositionType().equals("")) {
+            if (part.getDispositionType() != null && !part.getDispositionType().equals("")) {
                 // if DispositionType is null or empty, it means that it's multipart, not attached file
                 attachments.add(part);
+            } else {
+                if (part.isMimeType(PLAIN_MIMETYPE) && !hasBody) {
+                    plainBody.append(getTextPart(part));
+                    hasBody = true;
+                } else if (part.isMimeType(HTML_MIMETYPE) && !hasBody) {
+                    htmlBody.append(getTextPart(part));
+                } else if (part.isMultipart()) {
+                    recursiveMultipartProcessing((Multipart) part.getBody(), plainBody, htmlBody, hasBody, attachments);
+                } 
             }
         }
     }

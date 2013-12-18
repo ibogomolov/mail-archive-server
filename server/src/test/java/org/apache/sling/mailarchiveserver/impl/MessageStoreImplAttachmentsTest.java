@@ -20,7 +20,6 @@ import java.util.Random;
 import org.apache.james.mime4j.dom.BinaryBody;
 import org.apache.james.mime4j.dom.Body;
 import org.apache.james.mime4j.dom.Entity;
-import org.apache.james.mime4j.dom.Header;
 import org.apache.james.mime4j.dom.Message;
 import org.apache.james.mime4j.dom.Multipart;
 import org.apache.james.mime4j.dom.TextBody;
@@ -63,6 +62,7 @@ public class MessageStoreImplAttachmentsTest {
             }
         };
         store.threadKeyGen = new ThreadKeyGeneratorImpl();
+        store.attachmentFilter = new AttachmentFilterImpl();
         store.archivePath = testRoot.getPath() + "/";
         store.resourceTypeKey = MessageStoreImplRepositoryTest.TEST_RT_KEY;
     }
@@ -78,30 +78,60 @@ public class MessageStoreImplAttachmentsTest {
     @Test
     public void simpleMultipartMessageTest() throws IOException {
         Multipart multipart = new MultipartImpl("mixed");
-        BodyPart body = createTextAttachment("This is the first part of the template..", "plain");
-        multipart.addBodyPart(body);
+        BodyPart att0 = createTextBody("This is the first part of the template..", "plain", true);
+        multipart.addBodyPart(att0);
         BodyPart att1 = createRandomBinaryAttachment(200);
         multipart.addBodyPart(att1);
         BodyPart att2 = createRandomBinaryAttachment(300);
         multipart.addBodyPart(att2);
-        BodyPart att3 = createTextAttachment("Some sample text here...?!", "html");
+        BodyPart att3 = createTextBody("Some sample text here...?!", "html", true);
         multipart.addBodyPart(att3);
         BodyPart att4 = createRandomBinaryAttachment(100);
         multipart.addBodyPart(att4);
-        BodyPart att5 = createTextAttachment("Some other text here...?!", "plain");
+        BodyPart att5 = createTextBody("Some other text here...?!", "plain", true);
         multipart.addBodyPart(att5);
+        
         MessageImpl message = new MessageImpl();
         message.setMultipart(multipart);
         message.setSubject("Template message");
-
         message.setDate(new Date());
-        Header h = message.getHeader();
-        h.setField(new RawField(LIST_ID, "<list.example.com>"));
+        message.getHeader().setField(new RawField(LIST_ID, "<list.example.com>"));
 
-        assertSaveMessageWithAttachments(message);
+        assertSaveMessageWithAttachments(message, 6);
+    }
+    
+    @Test
+    public void recursiveMultipartMessageTest() throws IOException {
+        Multipart multipart = new MultipartImpl("mixed");
+        BodyPart att1 = createRandomBinaryAttachment(100);
+        multipart.addBodyPart(att1);
+        BodyPart att2 = createRandomBinaryAttachment(133);
+        multipart.addBodyPart(att2);
+        
+        Multipart nestedMultipart = new MultipartImpl("mixed");
+        BodyPart nBody = createTextBody("Some sample text here...?!", "plain", false);
+        nestedMultipart.addBodyPart(nBody);
+        BodyPart nAtt1 = createRandomBinaryAttachment(300);
+        nestedMultipart.addBodyPart(nAtt1);
+        BodyPart NAtt2 = createRandomBinaryAttachment(100);
+        nestedMultipart.addBodyPart(NAtt2);
+        BodyPart nAtt3 = createTextBody("Some other text here...<br>?!", "html", true);
+        nestedMultipart.addBodyPart(nAtt3);
+        
+        BodyPart nestedMessage = new BodyPart();
+        nestedMessage.setMultipart(nestedMultipart);
+        multipart.addBodyPart(nestedMessage);
+
+        MessageImpl message = new MessageImpl();
+        message.setMultipart(multipart);
+        message.setSubject("Template message");
+        message.setDate(new Date());
+        message.getHeader().setField(new RawField(LIST_ID, "<list.example.com>"));
+
+        assertSaveMessageWithAttachments(message, 5);
     }
 
-    private void assertSaveMessageWithAttachments(Message msg) throws IOException {
+    private void assertSaveMessageWithAttachments(Message msg, int num) throws IOException {
         store.save(msg);
 
         List<BodyPart> attList = new LinkedList<BodyPart>();
@@ -109,6 +139,7 @@ public class MessageStoreImplAttachmentsTest {
         @SuppressWarnings("unchecked")
         Queue<BodyPart> attachmentsMsg = (Queue<BodyPart>) attList;
         assertTrue("No attachments found", attachmentsMsg.size() > 0);
+        assertEquals("", num, attachmentsMsg.size());
         
         final Resource r = resolver.getResource(getResourcePath(msg, store));
         assertNotNull("Expecting non-null Resource", r);
@@ -134,20 +165,22 @@ public class MessageStoreImplAttachmentsTest {
     }
 
     private String getBinPart(Entity part) throws IOException {
-        BinaryBody tb = (BinaryBody) part.getBody();
+        BinaryBody bb = (BinaryBody) part.getBody();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        tb.writeTo(baos);
+        bb.writeTo(baos);
         return new String(baos.toByteArray());
     }
 
     /*
      * taken from http://svn.apache.org/repos/asf/james/mime4j/trunk/examples/src/main/java/org/apache/james/mime4j/samples/transform/TransformMessage.java
      */
-    private static BodyPart createTextAttachment(String text, String subtype) {
+    private static BodyPart createTextBody(String text, String subtype, boolean isAttachment) {
         TextBody body = new StorageBodyFactory().textBody(text, MailArchiveServerConstants.DEFAULT_ENCODER.charset().name());
 
         BodyPart bodyPart = new BodyPart();
-        bodyPart.setContentDisposition("attachment", "file"+Math.random());
+        if (isAttachment) {
+            bodyPart.setContentDisposition("attachment", "file"+Math.random());
+        }
         bodyPart.setText(body, subtype);
 
         return bodyPart;
