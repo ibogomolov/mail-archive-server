@@ -119,7 +119,7 @@ public class MessageStoreImpl implements MessageStore {
             processor.processMessage(msg);
         }
 
-        // into path: archive/[project.]domain/list/thread/message
+        // into path: archive/domain/list/thread/message
         final Map<String, Object> msgProps = new HashMap<String, Object>();
         final List<BodyPart> attachments = new ArrayList<BodyPart>(); 
 
@@ -136,7 +136,7 @@ public class MessageStoreImpl implements MessageStore {
             recursiveMultipartProcessing(multipart, plainBody, htmlBody, hasBody, attachments);
         }
 
-        msgProps.put(PLAIN_BODY, plainBody.toString());
+        msgProps.put(PLAIN_BODY, plainBody.toString().replaceAll("\r\n", "\n"));
         if (htmlBody.length() > 0) {
             msgProps.put(HTML_BODY, htmlBody.toString());
         }
