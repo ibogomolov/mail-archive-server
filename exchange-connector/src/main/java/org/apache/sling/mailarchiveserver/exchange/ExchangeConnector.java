@@ -8,6 +8,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -22,12 +23,14 @@ import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
+import org.apache.james.mime4j.dom.Body;
 import org.apache.james.mime4j.dom.Header;
 import org.apache.james.mime4j.dom.Message;
 import org.apache.james.mime4j.dom.address.Mailbox;
 import org.apache.james.mime4j.dom.field.FieldName;
 import org.apache.james.mime4j.field.address.AddressBuilder;
 import org.apache.james.mime4j.field.address.ParseException;
+import org.apache.james.mime4j.message.AbstractHeader;
 import org.apache.james.mime4j.message.BodyBuilder;
 import org.apache.james.mime4j.message.HeaderImpl;
 import org.apache.james.mime4j.message.MessageImpl;
@@ -103,7 +106,7 @@ public class ExchangeConnector implements Connector {
 
     @Property
     private static final String MAILINGLISTS_PROP = "mailingLists";
-    private Set<String> mailingLists;
+    Set<String> mailingLists;
 
     @Property(intValue=100)
     private static final String RETREIVE_MESSAGES_LIMIT = "retreiveMessagesLimit";
@@ -237,12 +240,13 @@ public class ExchangeConnector implements Connector {
                 }
                 ArrayOfRealItemsType itemsElement = response.getItems();
                 List<ItemType> items = itemsElement.getItemOrMessageOrCalendarItem();
-                for( ItemType item : items ) { // usually items.size() == 1
-                    MessageType message = (MessageType) item;
-                    List<Message> messages = convertExchangeMessageToMime4jMessages(message);
-                    savedMsgs += messages.size();
-                    store.saveAll(messages.iterator());
+
+                List<Message> messages = new ArrayList<Message>();
+                for( ItemType item : items ) {
+                    messages.addAll(convertExchangeMessageToMime4jMessages((MessageType) item));
                 }
+                store.saveAll(messages.iterator());
+                savedMsgs = messages.size();
             }
 
             logger.info("{}: {} messages saved to JCR.", name, savedMsgs);
@@ -284,37 +288,37 @@ public class ExchangeConnector implements Connector {
             return savedMsgs; 
 
         } catch (IOException e){
-            logger.info(name + ": Error while saving messages. " + e.getMessage());
+            logger.info(name + ": I/O error while checking for new messages. " + e.getMessage());
             return -1;
 
         } catch (Exception e){
             // TODO skip an email that results in an exception ?
-            logger.info(name + ": Error while retrieving messages. " + e.getMessage());
+            logger.info(name + ": Error while checking for new messages. " + e.getMessage());
             return -1;
         } 
     }
 
-
+    // TODO process attachments
     public List<Message> convertExchangeMessageToMime4jMessages(MessageType in) {
 
         List<Message> result = new ArrayList<Message>();
-        MessageImpl sample = new MessageImpl();
-        sample.setHeader(new HeaderImpl());
-        Set<String> recepients = new HashSet<String>();
+        final MessageImpl sampleMessage = new MessageImpl();
+        sampleMessage.setHeader(new HeaderImpl());
+        Set<String> recepients = new LinkedHashSet<String>();
 
-        final Header header = sample.getHeader();
+        final Header sampleHeader = sampleMessage.getHeader();
         // Message-Id
-        header.addField(new RawField(FieldName.MESSAGE_ID, in.getInternetMessageId()));
+        sampleHeader.addField(new RawField(FieldName.MESSAGE_ID, in.getInternetMessageId()));
         // In-Reply-To (opt)
         if (in.getInReplyTo() != null) {
-            header.addField(new RawField(MessageFieldName.IN_REPLY_TO, in.getInReplyTo()));
+            sampleHeader.addField(new RawField(MessageFieldName.IN_REPLY_TO, in.getInReplyTo()));
         }
         // Content-Type TODO add content type
-        //		tmpHeader.addField(new RawField(FieldName.CONTENT_TYPE, stringToContentType(in.getBody().getBodyType().value())));
+        //      tmpHeader.addField(new RawField(FieldName.CONTENT_TYPE, stringToContentType(in.getBody().getBodyType().value())));
 
         // From
         EmailAddressType fromMailbox = in.getFrom().getMailbox();
-        header.addField(new RawField(FieldName.FROM, fromMailbox.getName() +" <"+ fromMailbox.getEmailAddress() +">"));
+        sampleHeader.addField(new RawField(FieldName.FROM, fromMailbox.getName() +" <"+ fromMailbox.getEmailAddress() +">"));
 
         // To
         try {
@@ -322,7 +326,7 @@ public class ExchangeConnector implements Connector {
             for (Mailbox mailbox : toList) {
                 recepients.add(mailbox.getAddress().trim().toLowerCase());
             }
-            sample.setTo(toList);
+            sampleMessage.setTo(toList);
         } catch (ParseException e) {
             logger.info("Illegal To field of expoerted message.");
         }
@@ -334,31 +338,31 @@ public class ExchangeConnector implements Connector {
                 for (Mailbox mailbox : ccList) {
                     recepients.add(mailbox.getAddress().trim().toLowerCase());
                 }
-                sample.setCc(ccList);
+                sampleMessage.setCc(ccList);
             } catch (ParseException e) {
                 logger.info("Illegal Cc field of expoerted message.");
             }
         }
 
         // Subject
-        sample.setSubject(in.getSubject());
+        sampleMessage.setSubject(in.getSubject());
 
         // Date (sent date)
-        sample.setDate(in.getDateTimeSent().toGregorianCalendar().getTime());
+        sampleMessage.setDate(in.getDateTimeSent().toGregorianCalendar().getTime());
 
         // Body
-        BodyBuilder bb = BodyBuilder.create();
-        bb.setText(in.getBody().getValue());
-        sample.setBody(bb.buildText());
+        BodyBuilder bodybuilder = BodyBuilder.create();
+        bodybuilder.setText(in.getBody().getValue());
+        Body sampleBody = bodybuilder.buildText();
 
         for (String address : recepients) {
             if (mailingLists.contains(address.toLowerCase())) {
                 Message out = new MessageImpl();
-                out.setBody(sample.getBody());
-                Header h = sample.getHeader();
+                out.setBody(sampleBody); // share same body
+                Header outHeader = new AbstractHeader(sampleHeader){}; // copy header fields
                 // List-Id
-                h.addField(new RawField(MessageFieldName.LIST_ID, "<" + address.replace("@", ".") + ">"));
-                out.setHeader(h);
+                outHeader.setField(new RawField(MessageFieldName.LIST_ID, "<" + address.replace("@", ".") + ">"));
+                out.setHeader(outHeader);
                 result.add(out);
             }
         }
