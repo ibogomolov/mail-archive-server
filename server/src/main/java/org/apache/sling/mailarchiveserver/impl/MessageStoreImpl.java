@@ -142,12 +142,12 @@ public class MessageStoreImpl implements MessageStore {
         }
 
         msgProps.putAll(getMessagePropertiesFromHeader(msg.getHeader()));
-        
+
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         new DefaultMessageWriter().writeHeader(msg.getHeader(), baos);
         String origHdr = baos.toString(MailArchiveServerConstants.DEFAULT_ENCODER.charset().name());
         msgProps.put(X_ORIGINAL_HEADER, origHdr);
-        
+
         final Header hdr = msg.getHeader();
         final String listIdRaw = hdr.getField(LIST_ID).getBody();
         final String listId = listIdRaw.substring(1, listIdRaw.length()-1); // remove < and >

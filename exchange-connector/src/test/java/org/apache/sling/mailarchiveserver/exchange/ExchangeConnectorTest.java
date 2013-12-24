@@ -69,7 +69,7 @@ public class ExchangeConnectorTest {
         bt.setValue("This is body.");
         message.setBody(bt);
         
-        List<Message> msgs = exCon.convertExchangeMessageToMime4jMessages(message);
+        List<Message> msgs = exCon.convertExchangeMessageToMime4jMessages(message, null);
         assertEquals(2, msgs.size());
         
         assertTrue(msgs.get(0).getHeader().getField(MessageFieldName.LIST_ID).getBody().contains("one"));

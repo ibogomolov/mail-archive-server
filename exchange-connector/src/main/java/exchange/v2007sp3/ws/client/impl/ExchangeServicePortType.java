@@ -979,5 +979,14 @@ public interface ExchangeServicePortType {
         RequestServerVersion requestVersion,
         @WebParam(name = "DeleteItemResponse", targetNamespace = "http://schemas.microsoft.com/exchange/services/2006/messages", mode = WebParam.Mode.OUT, partName = "DeleteItemResult")
         Holder<DeleteItemResponseType> deleteItemResult);
-
+    
+    @WebMethod(operationName = "GetAttachment", action = "http://schemas.microsoft.com/exchange/services/2006/messages/GetAttachment")
+    public void getAttachment(
+        @WebParam(name = "GetAttachment", targetNamespace = "http://schemas.microsoft.com/exchange/services/2006/messages", partName = "request")
+        GetAttachmentType request,
+        @WebParam(name = "RequestServerVersion", targetNamespace = "http://schemas.microsoft.com/exchange/services/2006/types", header = true, partName = "RequestVersion")
+        RequestServerVersion requestVersion,
+        @WebParam(name = "GetAttachmentResponse", targetNamespace = "http://schemas.microsoft.com/exchange/services/2006/messages", mode = WebParam.Mode.OUT, partName = "GetAttachmentResult")
+        Holder<GetAttachmentResponseType> getAttachmentResult);
+    
 }
